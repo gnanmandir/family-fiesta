@@ -156,8 +156,6 @@ Thank you for ordering from Family Fiesta!
       // Add trailing columns
       row['Order Date'] = o.dateDisplay;
       row['Order Time'] = o.timeDisplay;
-      row['Status'] = o.status;
-      row['Device ID'] = o.deviceId;
 
       return row;
     });
@@ -184,9 +182,7 @@ Thank you for ordering from Family Fiesta!
     // Add width for trailing columns
     cols.push(
       { wch: 14 }, // Order Date
-      { wch: 12 }, // Order Time
-      { wch: 12 }, // Status
-      { wch: 22 }  // Device ID
+      { wch: 12 }  // Order Time
     );
 
     wsOrders['!cols'] = cols;
