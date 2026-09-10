@@ -41,9 +41,19 @@ import { LoginPage } from './components/LoginPage';
 import { calculateAllowedBudget } from './utils/budget';
 
 export default function App() {
+  // Navigation & Core States
   const [currentView, setCurrentView] = useState<
     'login' | 'home' | 'menu' | 'confirmation' | 'submitted' | 'admin'
-  >('login');
+  >(() => {
+    const savedAdminToken = localStorage.getItem('admin_token');
+    const savedView = localStorage.getItem('app_current_view') as any;
+    if (savedAdminToken || savedView === 'admin') return 'admin';
+    const activeStudent = localStorage.getItem('active_student_id');
+    if (activeStudent && savedView && ['home', 'menu', 'confirmation', 'submitted'].includes(savedView)) {
+      return savedView;
+    }
+    return activeStudent ? 'home' : 'login';
+  });
 
   // Application Data States
   const [students, setStudents] = useState<Student[]>([]);
@@ -51,15 +61,43 @@ export default function App() {
   const [orders, setOrders] = useState<Order[]>([]);
 
   // Selection & Cart States
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [peopleCount, setPeopleCount] = useState<number>(1);
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(() => {
+    const activeStudentId = localStorage.getItem('active_student_id');
+    if (!activeStudentId) return null;
+    const cached = getCachedStudents();
+    return cached.find((s) => s.id === activeStudentId) || null;
+  });
+
+  const [peopleCount, setPeopleCount] = useState<number>(() => {
+    const saved = localStorage.getItem('active_people_count');
+    return saved ? parseInt(saved, 10) || 1 : 1;
+  });
+
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    try {
+      const raw = localStorage.getItem('active_cart');
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return [];
+  });
+
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
-  const [activeOrder, setActiveOrder] = useState<Order | null>(null);
+  const [activeOrder, setActiveOrder] = useState<Order | null>(() => {
+    try {
+      const savedNum = localStorage.getItem('active_order_number');
+      if (savedNum) {
+        const cached = getCachedOrders();
+        return cached.find((o) => o.orderNumber === savedNum) || null;
+      }
+    } catch (e) {}
+    return null;
+  });
   const [isEditingOrder, setIsEditingOrder] = useState<boolean>(false);
 
   // Admin Auth States
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(false);
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
+    return Boolean(localStorage.getItem('admin_token'));
+  });
   const [isAdminLoginModalOpen, setIsAdminLoginModalOpen] = useState<boolean>(false);
 
   // On App Mount: Initialize data & check One Device One Order rule
@@ -87,33 +125,51 @@ export default function App() {
     const cachedOrders = getCachedOrders();
     setOrders(cachedOrders);
 
-    const activeStudentId = localStorage.getItem('active_student_id');
-    if (activeStudentId && cachedStudents.length > 0) {
-      const st = cachedStudents.find((s) => s.id === activeStudentId);
-      if (st) {
-        setSelectedStudent(st);
-        const existingOrder = cachedOrders.find(
-          (o) =>
-            (o.studentId && o.studentId.toLowerCase() === activeStudentId.toLowerCase()) ||
-            (o.fullName && o.fullName.toLowerCase() === st.fullName.toLowerCase()) ||
-            (o.studentName && o.studentName.toLowerCase() === st.fullName.toLowerCase())
-        );
-        if (existingOrder) {
-          setActiveOrder(existingOrder);
-          setCurrentView('submitted');
+    const savedAdminToken = localStorage.getItem('admin_token');
+    const savedView = localStorage.getItem('app_current_view');
+
+    // 1. If Admin session is active, strictly stay in Admin panel!
+    if (savedAdminToken || savedView === 'admin') {
+      setIsAdminLoggedIn(true);
+      setCurrentView('admin');
+    } else {
+      // 2. Student session flow
+      const activeStudentId = localStorage.getItem('active_student_id');
+      if (activeStudentId && cachedStudents.length > 0) {
+        const st = cachedStudents.find((s) => s.id === activeStudentId);
+        if (st) {
+          setSelectedStudent(st);
+          const existingOrder = cachedOrders.find(
+            (o) =>
+              (o.studentId && o.studentId.toLowerCase() === activeStudentId.toLowerCase()) ||
+              (o.fullName && o.fullName.toLowerCase() === st.fullName.toLowerCase()) ||
+              (o.studentName && o.studentName.toLowerCase() === st.fullName.toLowerCase())
+          );
+          if (existingOrder) {
+            setActiveOrder(existingOrder);
+            if (savedView === 'confirmation') {
+              setCurrentView('confirmation');
+            } else {
+              setCurrentView('submitted');
+            }
+          } else {
+            setActiveOrder(null);
+            if (savedView === 'menu') {
+              setCurrentView('menu');
+            } else {
+              setCurrentView('home');
+            }
+          }
         } else {
+          setSelectedStudent(null);
           setActiveOrder(null);
-          setCurrentView('home');
+          setCurrentView('login');
         }
-      } else {
+      } else if (!activeStudentId) {
         setSelectedStudent(null);
         setActiveOrder(null);
         setCurrentView('login');
       }
-    } else if (!activeStudentId) {
-      setSelectedStudent(null);
-      setActiveOrder(null);
-      setCurrentView('login');
     }
 
     // Asynchronously fetch fresh data from backend
@@ -127,6 +183,14 @@ export default function App() {
         setStudents(stList);
         setMenuItems(menuList);
         setOrders(orderList);
+
+        const currentAdminToken = localStorage.getItem('admin_token');
+        const currentSavedView = localStorage.getItem('app_current_view');
+        if (currentAdminToken || currentSavedView === 'admin') {
+          setIsAdminLoggedIn(true);
+          setCurrentView('admin');
+          return;
+        }
 
         // Check if active student already has an order
         const savedStudentId = localStorage.getItem('active_student_id');
@@ -143,11 +207,17 @@ export default function App() {
           );
           if (studentOrder) {
             setActiveOrder(studentOrder);
-            setCurrentView('submitted');
+            if (currentSavedView === 'confirmation') {
+              setCurrentView('confirmation');
+            } else {
+              setCurrentView('submitted');
+            }
           } else {
             setActiveOrder(null);
-            if (foundSt) {
-              setCurrentView((prev) => (prev === 'login' || prev === 'submitted' ? 'home' : prev));
+            if (currentSavedView === 'menu') {
+              setCurrentView('menu');
+            } else if (foundSt) {
+              setCurrentView((prev) => (prev === 'menu' ? 'menu' : 'home'));
             }
           }
         } else {
@@ -238,6 +308,27 @@ export default function App() {
     const intervalId = setInterval(syncLatestData, 5000);
     return () => clearInterval(intervalId);
   }, []);
+
+  // Persist session navigation state to localStorage so refresh keeps current view
+  useEffect(() => {
+    localStorage.setItem('app_current_view', currentView);
+  }, [currentView]);
+
+  useEffect(() => {
+    localStorage.setItem('active_cart', JSON.stringify(cart));
+  }, [cart]);
+
+  useEffect(() => {
+    localStorage.setItem('active_people_count', String(peopleCount));
+  }, [peopleCount]);
+
+  useEffect(() => {
+    if (activeOrder?.orderNumber) {
+      localStorage.setItem('active_order_number', activeOrder.orderNumber);
+    } else {
+      localStorage.removeItem('active_order_number');
+    }
+  }, [activeOrder]);
 
   // Handler for student select in Home
   const handleSelectStudent = async (student: Student | null) => {
@@ -562,6 +653,7 @@ export default function App() {
   };
 
   const handleAdminLogin = () => {
+    localStorage.setItem('admin_token', 'admin_session_' + Date.now());
     setIsAdminLoggedIn(true);
     setCurrentView('admin');
   };
@@ -570,6 +662,10 @@ export default function App() {
     localStorage.removeItem('active_student_id');
     localStorage.removeItem('jusso_device_order_v6');
     localStorage.removeItem('admin_token');
+    localStorage.removeItem('app_current_view');
+    localStorage.removeItem('active_cart');
+    localStorage.removeItem('active_people_count');
+    localStorage.removeItem('active_order_number');
     setSelectedStudent(null);
     setActiveOrder(null);
     setIsAdminLoggedIn(false);
@@ -580,6 +676,7 @@ export default function App() {
 
   // Admin Actions
   const handleAdminLoginSuccess = () => {
+    localStorage.setItem('admin_token', 'admin_session_' + Date.now());
     setIsAdminLoggedIn(true);
     setIsAdminLoginModalOpen(false);
     setCurrentView('admin');
@@ -588,6 +685,7 @@ export default function App() {
   const handleAdminLogout = () => {
     setIsAdminLoggedIn(false);
     localStorage.removeItem('admin_token');
+    localStorage.removeItem('app_current_view');
     setCurrentView('login');
   };
 
