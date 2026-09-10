@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
-import { Order, OrderStatus } from '../../types';
+import { Order, OrderStatus, Student } from '../../types';
 import { generateAndDownloadPDFReceipt } from '../../utils/pdfGenerator';
+import { INITIAL_STUDENTS } from '../../data/students';
 import {
   Search,
   Filter,
@@ -23,11 +24,32 @@ import {
 
 interface OrderTableProps {
   orders: Order[];
+  students?: Student[];
   onUpdateStatus?: (orderNumber: string, status: OrderStatus) => void;
+}
+
+export function getOrderGmNo(order: Order, studentsList?: Student[]): number {
+  const pool = studentsList && studentsList.length > 0 ? studentsList : INITIAL_STUDENTS;
+  const found = pool.find(
+    (s) =>
+      s.id.toLowerCase() === order.studentId.toLowerCase() ||
+      s.fullName.toLowerCase() === (order.fullName || '').toLowerCase() ||
+      s.fullName.toLowerCase() === order.studentName.toLowerCase()
+  );
+  if (found && found.gmNo) return found.gmNo;
+
+  const match = order.studentId.match(/-(\d+)$/);
+  if (match) return parseInt(match[1], 10);
+
+  const num = parseInt(order.studentId, 10);
+  if (!isNaN(num)) return num;
+
+  return 999999;
 }
 
 export const OrderTable: React.FC<OrderTableProps> = ({
   orders,
+  students,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrderForReceipt, setSelectedOrderForReceipt] = useState<Order | null>(null);
@@ -35,14 +57,21 @@ export const OrderTable: React.FC<OrderTableProps> = ({
   const filteredOrders = orders.filter((o) => {
     const query = searchQuery.toLowerCase().trim();
     if (!query) return true;
+    const gmNo = getOrderGmNo(o, students);
     return (
       o.orderNumber.toLowerCase().includes(query) ||
       o.studentName.toLowerCase().includes(query) ||
       o.parentName.toLowerCase().includes(query) ||
       o.fullName.toLowerCase().includes(query) ||
-      o.studentId.toLowerCase().includes(query)
+      o.studentId.toLowerCase().includes(query) ||
+      (gmNo !== 999999 && String(gmNo).includes(query))
     );
   });
+
+  // Sort orders by GM No in ascending order (1, 2, 3, ...)
+  const sortedOrders = [...filteredOrders].sort(
+    (a, b) => getOrderGmNo(a, students) - getOrderGmNo(b, students)
+  );
 
   // Calculate sheet totals
   const sheetTotalRevenue = filteredOrders.reduce((sum, o) => sum + o.totalAmount, 0);
@@ -244,7 +273,7 @@ Thank you for ordering from Family Fiesta!
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by student name, parent name, student ID, or token #..."
+            placeholder="Search by student name, GM No, token #..."
             className="w-full pl-10 pr-4 py-2 bg-stone-50 border border-stone-200 rounded-lg text-stone-900 placeholder-stone-400 text-xs focus:outline-none focus:border-orange-700 focus:bg-white transition-all"
           />
         </div>
@@ -257,6 +286,7 @@ Thank you for ordering from Family Fiesta!
             <thead>
               <tr className="bg-stone-50 border-b border-stone-200 text-stone-600 font-semibold uppercase tracking-wider text-[11px]">
                 <th className="p-3.5 whitespace-nowrap">Order #</th>
+                <th className="p-3.5 whitespace-nowrap">GM No.</th>
                 <th className="p-3.5 whitespace-nowrap">Student Name</th>
                 <th className="p-3.5 whitespace-nowrap text-center">Group</th>
                 <th className="p-3.5 whitespace-nowrap min-w-[200px]">Ordered Items Breakdown</th>
@@ -267,19 +297,25 @@ Thank you for ordering from Family Fiesta!
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100 text-stone-700">
-              {filteredOrders.length > 0 ? (
-                filteredOrders.map((order) => {
+              {sortedOrders.length > 0 ? (
+                sortedOrders.map((order) => {
                   const itemsSummary = order.items
                     .map((i) => `${i.quantity}x ${i.name} (₹${i.total})`)
                     .join(', ');
 
                   const isWithinBudget = order.totalAmount <= order.allowedBudget;
                   const studentName = order.fullName || order.studentName.replace(/\s*\(.*\)/, '').trim();
+                  const gmNo = getOrderGmNo(order, students);
 
                   return (
                     <tr key={order.orderNumber} className="hover:bg-stone-50/80 transition-colors">
                       <td className="p-3.5 font-mono font-bold text-orange-700 whitespace-nowrap">
                         #{order.orderNumber}
+                      </td>
+                      <td className="p-3.5 whitespace-nowrap">
+                        <span className="font-mono font-bold text-stone-900 bg-stone-100 border border-stone-200 px-2 py-0.5 rounded text-xs">
+                          {gmNo !== 999999 ? gmNo : '-'}
+                        </span>
                       </td>
                       <td className="p-3.5 font-bold text-stone-900 whitespace-nowrap">
                         {studentName}
@@ -325,7 +361,7 @@ Thank you for ordering from Family Fiesta!
                 })
               ) : (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-stone-500 font-medium">
+                  <td colSpan={9} className="p-8 text-center text-stone-500 font-medium">
                     No order records found matching your query.
                   </td>
                 </tr>
@@ -372,7 +408,9 @@ Thank you for ordering from Family Fiesta!
               </div>
               <div>
                 <span className="text-stone-400 text-[10px] block uppercase font-bold">GM No.</span>
-                <span className="font-semibold text-stone-900 font-mono">{selectedOrderForReceipt.studentId}</span>
+                <span className="font-semibold text-stone-900 font-mono">
+                  {getOrderGmNo(selectedOrderForReceipt, students) !== 999999 ? getOrderGmNo(selectedOrderForReceipt, students) : selectedOrderForReceipt.studentId}
+                </span>
               </div>
               <div>
                 <span className="text-stone-400 text-[10px] block uppercase font-bold">Guests</span>

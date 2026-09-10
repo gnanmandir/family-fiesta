@@ -206,6 +206,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="rounded-2xl bg-white border border-stone-200 p-6 shadow-xs">
             <OrderTable
               orders={orders}
+              students={students}
               onUpdateStatus={onUpdateOrderStatus}
             />
           </div>
