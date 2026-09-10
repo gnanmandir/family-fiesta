@@ -1118,3 +1118,7 @@ export const INITIAL_STUDENTS: Student[] = [
     "grade": "Std 10"
   }
 ];
+
+export function getStudentDisplayName(student: Student): string {
+  return student.fullName;
+}
