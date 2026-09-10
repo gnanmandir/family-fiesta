@@ -1,6 +1,6 @@
 import React from 'react';
 import { Student } from '../types';
-import { Check, Users, User, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
+import { Check, Users, User, ArrowRight, ShieldCheck, Sparkles, Lock } from 'lucide-react';
 
 import { 
   calculateAllowedBudget, 
@@ -18,6 +18,7 @@ interface HomePageProps {
   onStartOrdering: () => void;
   onOpenAdmin?: () => void;
   onSignOut?: () => void;
+  ordersOpen?: boolean;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -25,6 +26,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   peopleCount,
   onChangePeopleCount,
   onStartOrdering,
+  ordersOpen = true,
 }) => {
   const allowedBudget = calculateAllowedBudget(peopleCount);
 
@@ -37,6 +39,26 @@ export const HomePage: React.FC<HomePageProps> = ({
       default: return '';
     }
   };
+
+  // If ordering is closed, show a notice instead of the normal page
+  if (!ordersOpen) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-12 sm:py-20 animate-in fade-in duration-500">
+        <div className="bg-white border border-slate-200 rounded-3xl shadow-sm p-8 sm:p-10 text-center space-y-4">
+          <div className="w-14 h-14 rounded-full bg-red-50 border border-red-200 flex items-center justify-center mx-auto">
+            <Lock className="w-7 h-7 text-red-500" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900">Ordering is Closed</h2>
+          <p className="text-sm text-slate-500 leading-relaxed">
+            No prior order was found for your account. Online ordering for Family Fiesta has concluded.
+          </p>
+          <p className="text-xs text-slate-400">
+            If you believe this is a mistake, please contact an organizer.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-4 sm:py-6 animate-in fade-in duration-500">

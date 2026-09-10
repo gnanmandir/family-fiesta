@@ -273,4 +273,25 @@ export const supabaseService = {
       method: 'DELETE',
     }).catch(() => {});
   },
+
+  // --- App Settings (Master Ordering Switch) ---
+  getOrderingStatus: async (): Promise<boolean> => {
+    try {
+      const rows = await supabaseFetch<any[]>('app_settings?key=eq.orders_open&select=value');
+      if (rows && rows.length > 0) {
+        return rows[0].value === 'true';
+      }
+    } catch (e) {
+      // Table may not exist yet, default to open
+    }
+    return true; // default: orders open
+  },
+
+  setOrderingStatus: async (isOpen: boolean): Promise<void> => {
+    await supabaseFetch<any[]>('app_settings?on_conflict=key', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+      body: JSON.stringify({ key: 'orders_open', value: String(isOpen) }),
+    });
+  },
 };

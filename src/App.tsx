@@ -59,6 +59,7 @@ export default function App() {
   const [students, setStudents] = useState<Student[]>([]);
   const [menuItems, setMenuItems] = useState<FoodItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [ordersOpen, setOrdersOpen] = useState<boolean>(true);
 
   // Selection & Cart States
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(() => {
@@ -175,14 +176,16 @@ export default function App() {
     // Asynchronously fetch fresh data from backend
     const loadBackendData = async () => {
       try {
-        const [stList, menuList, orderList] = await Promise.all([
+        const [stList, menuList, orderList, isOpen] = await Promise.all([
           fetchStudents(),
           fetchMenuItems(),
           fetchOrders(),
+          api.getOrderingStatus(),
         ]);
         setStudents(stList);
         setMenuItems(menuList);
         setOrders(orderList);
+        setOrdersOpen(isOpen);
 
         const currentAdminToken = localStorage.getItem('admin_token');
         const currentSavedView = localStorage.getItem('app_current_view');
@@ -290,9 +293,10 @@ export default function App() {
   useEffect(() => {
     const syncLatestData = async () => {
       try {
-        const [freshMenu, freshOrders] = await Promise.all([
+        const [freshMenu, freshOrders, isOpen] = await Promise.all([
           fetchMenuItems(),
           fetchOrders(),
+          api.getOrderingStatus(),
         ]);
         if (freshMenu && freshMenu.length > 0) {
           setMenuItems(freshMenu);
@@ -300,6 +304,7 @@ export default function App() {
         if (freshOrders && freshOrders.length > 0) {
           setOrders(freshOrders);
         }
+        setOrdersOpen(isOpen);
       } catch (e) {
         // Silent
       }
@@ -646,6 +651,10 @@ export default function App() {
     if (existing) {
       setActiveOrder(existing);
       setCurrentView('submitted');
+    } else if (!ordersOpen) {
+      // Orders are closed and student has no order — show closed notice
+      setActiveOrder(null);
+      setCurrentView('home');
     } else {
       setActiveOrder(null);
       setCurrentView('home');
@@ -725,6 +734,16 @@ export default function App() {
     setCurrentView('home');
   };
 
+  const handleToggleOrdering = async (isOpen: boolean) => {
+    try {
+      await api.setOrderingStatus(isOpen);
+      setOrdersOpen(isOpen);
+    } catch (e) {
+      console.error('Error toggling ordering status:', e);
+      alert('Failed to update ordering status. Please try again.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-500/20 selection:text-slate-900 relative overflow-x-hidden">
 
@@ -764,6 +783,7 @@ export default function App() {
             students={students}
             onStudentLogin={handleStudentLogin}
             onAdminLogin={handleAdminLogin}
+            ordersOpen={ordersOpen}
           />
         )}
 
@@ -777,6 +797,7 @@ export default function App() {
             onStartOrdering={handleStartOrdering}
             onOpenAdmin={() => setIsAdminLoginModalOpen(true)}
             onSignOut={handleSignOut}
+            ordersOpen={ordersOpen}
           />
         )}
 
@@ -809,7 +830,8 @@ export default function App() {
           <OrderConfirmation
             order={activeOrder}
             onRefreshOrder={(up) => setActiveOrder(up)}
-            onEditOrder={handleEditOrder}
+            onEditOrder={ordersOpen ? handleEditOrder : undefined}
+            ordersOpen={ordersOpen}
           />
         )}
 
@@ -826,6 +848,8 @@ export default function App() {
             onClearAllOrders={handleClearAllOrders}
             onExitAdmin={handleAdminLogout}
             onLogoutAdmin={handleAdminLogout}
+            ordersOpen={ordersOpen}
+            onToggleOrdering={handleToggleOrdering}
           />
         )}
       </main>

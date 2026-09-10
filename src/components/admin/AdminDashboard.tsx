@@ -14,6 +14,7 @@ import {
   Trash2,
   Lock,
   LogOut,
+  Power,
 } from 'lucide-react';
 import { AnalyticsCharts } from './AnalyticsCharts';
 import { OrderTable } from './OrderTable';
@@ -32,6 +33,8 @@ interface AdminDashboardProps {
   onClearAllOrders: () => void;
   onExitAdmin: () => void;
   onLogoutAdmin: () => void;
+  ordersOpen?: boolean;
+  onToggleOrdering?: (isOpen: boolean) => void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -46,6 +49,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onClearAllOrders,
   onExitAdmin,
   onLogoutAdmin,
+  ordersOpen = true,
+  onToggleOrdering,
 }) => {
   const [activeTab, setActiveTab] = useState<
     'overview' | 'orders' | 'students' | 'food' | 'settings'
@@ -103,6 +108,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
 
           <div className="flex items-center space-x-3">
+            {/* Master Ordering Toggle */}
+            {onToggleOrdering && (
+              <button
+                type="button"
+                onClick={() => {
+                  const newState = !ordersOpen;
+                  const msg = newState
+                    ? 'Re-open ordering? Students will be able to place new orders again.'
+                    : 'Close ordering? Students will only be able to view/download existing receipts.';
+                  if (confirm(msg)) {
+                    onToggleOrdering(newState);
+                  }
+                }}
+                className={`px-3.5 py-2 rounded-xl font-semibold text-xs tracking-wide flex items-center space-x-1.5 active:scale-95 transition-all cursor-pointer border ${
+                  ordersOpen
+                    ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
+                    : 'bg-red-50 hover:bg-red-100 text-red-700 border-red-200'
+                }`}
+                title={ordersOpen ? 'Orders are OPEN — click to close' : 'Orders are CLOSED — click to re-open'}
+              >
+                <Power className="w-4 h-4" />
+                <span>{ordersOpen ? 'Orders: Open' : 'Orders: Closed'}</span>
+                <span className={`w-2 h-2 rounded-full ${ordersOpen ? 'bg-emerald-500' : 'bg-red-500'}`} />
+              </button>
+            )}
+
             <button
               type="button"
               onClick={onLogoutAdmin}
@@ -238,6 +269,42 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             <div className="space-y-4 text-xs">
               
+              {/* Master Ordering Switch */}
+              {onToggleOrdering && (
+                <div className={`p-4 rounded-xl flex items-center justify-between ${ordersOpen ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`}>
+                  <div>
+                    <h4 className={`font-bold text-sm ${ordersOpen ? 'text-emerald-900' : 'text-red-900'}`}>
+                      Master Ordering Switch
+                    </h4>
+                    <p className={`mt-0.5 ${ordersOpen ? 'text-emerald-700' : 'text-red-700'}`}>
+                      {ordersOpen
+                        ? 'Orders are currently OPEN. Students can place & edit orders.'
+                        : 'Orders are CLOSED. Students can only view & download their existing receipts.'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newState = !ordersOpen;
+                      const msg = newState
+                        ? 'Re-open ordering? Students will be able to place new orders again.'
+                        : 'Close ordering? Students will only be able to view/download existing receipts.';
+                      if (confirm(msg)) {
+                        onToggleOrdering(newState);
+                      }
+                    }}
+                    className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap ml-3 cursor-pointer transition-colors shadow-xs flex items-center space-x-1.5 ${
+                      ordersOpen
+                        ? 'bg-red-600 hover:bg-red-700 text-white'
+                        : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                    }`}
+                  >
+                    <Power className="w-4 h-4" />
+                    <span>{ordersOpen ? 'Close Orders' : 'Open Orders'}</span>
+                  </button>
+                </div>
+              )}
+
               {/* Reset Device Lock */}
               <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 flex items-center justify-between">
                 <div>

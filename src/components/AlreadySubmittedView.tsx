@@ -7,9 +7,10 @@ interface AlreadySubmittedViewProps {
   order: Order;
   onRefreshOrder?: (updated: Order) => void;
   onEditOrder?: () => void;
+  ordersOpen?: boolean;
 }
 
-export const AlreadySubmittedView: React.FC<AlreadySubmittedViewProps> = ({ order, onRefreshOrder, onEditOrder }) => {
+export const AlreadySubmittedView: React.FC<AlreadySubmittedViewProps> = ({ order, onRefreshOrder, onEditOrder, ordersOpen = true }) => {
   return (
     <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-6">
       
@@ -29,10 +30,10 @@ export const AlreadySubmittedView: React.FC<AlreadySubmittedViewProps> = ({ orde
         </div>
 
         <p className="text-xs text-slate-400">
-          You can modify your dishes anytime.
+          {ordersOpen ? 'You can modify your dishes anytime.' : 'Ordering is now closed. Your order is finalized.'}
         </p>
 
-        {onEditOrder && (
+        {ordersOpen && onEditOrder && (
           <div className="pt-2">
             <button
               type="button"
@@ -47,7 +48,7 @@ export const AlreadySubmittedView: React.FC<AlreadySubmittedViewProps> = ({ orde
       </div>
 
       {/* Embedded Order Confirmation View */}
-      <OrderConfirmation order={order} onRefreshOrder={onRefreshOrder} onEditOrder={onEditOrder} />
+      <OrderConfirmation order={order} onRefreshOrder={onRefreshOrder} onEditOrder={ordersOpen ? onEditOrder : undefined} ordersOpen={ordersOpen} />
 
     </div>
   );

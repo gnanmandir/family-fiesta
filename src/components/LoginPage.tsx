@@ -1,18 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Student } from '../types';
 import familyFiestaLogo from '../assets/images/family_fiesta_logo_1787459637243.jpg';
-import { Eye, EyeOff, AlertCircle, User } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, User, Info } from 'lucide-react';
 
 interface LoginPageProps {
   students: Student[];
   onStudentLogin: (student: Student) => void;
   onAdminLogin: () => void;
+  ordersOpen?: boolean;
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({
   students,
   onStudentLogin,
   onAdminLogin,
+  ordersOpen = true,
 }) => {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -160,6 +162,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           alt="Family Fiesta 2026"
           className="w-48 sm:w-56 max-h-[190px] sm:max-h-[200px] object-contain mx-auto mb-3 sm:mb-4"
         />
+
+        {/* Orders Closed Notice Banner */}
+        {!ordersOpen && (
+          <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-start space-x-2 font-medium animate-in fade-in">
+            <Info className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-600" />
+            <div>
+              <span className="font-bold text-amber-900">Online ordering is now closed.</span>
+              <span className="block mt-0.5 text-amber-700">Already ordered? Sign in below to view and download your food coupons & receipt.</span>
+            </div>
+          </div>
+        )}
 
         {/* Login Form */}
         <form onSubmit={handleLogin} autoComplete="off" className="w-full space-y-3">

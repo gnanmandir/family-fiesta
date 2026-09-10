@@ -404,4 +404,24 @@ export const api = {
     const res = await fetchJson<{ success: boolean; data: any }>(`${API_BASE}/admin/stats`);
     return res.data;
   },
+
+  // --- App Settings (Master Ordering Switch) ---
+  getOrderingStatus: async (): Promise<boolean> => {
+    if (isSupabaseConfigured) {
+      try {
+        return await supabaseService.getOrderingStatus();
+      } catch (e) {
+        console.warn('[Supabase] Failed to fetch ordering status:', e);
+      }
+    }
+    // Default: orders are open
+    return true;
+  },
+
+  setOrderingStatus: async (isOpen: boolean): Promise<void> => {
+    if (isSupabaseConfigured) {
+      await supabaseService.setOrderingStatus(isOpen);
+      return;
+    }
+  },
 };

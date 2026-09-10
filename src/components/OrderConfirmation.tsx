@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Order } from '../types';
-import { CheckCircle2, Ticket, Edit3, Download } from 'lucide-react';
+import { CheckCircle2, Ticket, Edit3, Download, Lock } from 'lucide-react';
 import { generateAndDownloadPDFReceipt } from '../utils/pdfGenerator';
 import { INITIAL_STUDENTS } from '../data/students';
 interface OrderConfirmationProps {
   order: Order;
   onRefreshOrder?: (updated: Order) => void;
   onEditOrder?: () => void;
+  ordersOpen?: boolean;
 }
 
-export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onRefreshOrder, onEditOrder }) => {
+export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onRefreshOrder, onEditOrder, ordersOpen = true }) => {
   const [currentOrder, setCurrentOrder] = useState<Order>(order);
 
   useEffect(() => {
@@ -113,6 +114,13 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onR
               <Edit3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span>Edit / Change Order Items</span>
             </button>
+          )}
+
+          {!ordersOpen && !onEditOrder && (
+            <div className="flex-1 bg-slate-100 border border-slate-200 text-slate-400 rounded-xl py-2 font-bold flex items-center justify-center space-x-2 text-xs sm:text-sm cursor-not-allowed">
+              <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span>Editing Locked — Orders Closed</span>
+            </div>
           )}
         </div>
 
