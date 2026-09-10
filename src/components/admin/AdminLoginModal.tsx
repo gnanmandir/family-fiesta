@@ -13,7 +13,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
   onClose,
   onLoginSuccess,
 }) => {
-  const [username, setUsername] = useState('familyfiesta');
+  const [username, setUsername] = useState('dada');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +41,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
         setError(false);
         setPassword('');
         onLoginSuccess();
-      } else if (cleanPwd === 'dadaniruma5868') {
+      } else if (cleanUser === 'dada' && cleanPwd === 'dada58') {
         localStorage.setItem('admin_token', 'session_' + Date.now());
         setError(false);
         setPassword('');
@@ -50,7 +50,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
         setError(true);
       }
     } catch (err) {
-      if (cleanPwd === 'dadaniruma5868') {
+      if (cleanUser === 'dada' && cleanPwd === 'dada58') {
         localStorage.setItem('admin_token', 'session_' + Date.now());
         setError(false);
         setPassword('');

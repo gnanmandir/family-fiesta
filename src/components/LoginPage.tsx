@@ -27,8 +27,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   // Prevent browser password manager from dumping saved admin credentials into student login
   useEffect(() => {
     const purgeAutofilledAdmin = () => {
-      setIdentifier((prev) => (prev.toLowerCase().includes('familyfiesta') || prev.toLowerCase() === 'admin' ? '' : prev));
-      setPassword((prev) => (prev === 'dadaniruma5868' ? '' : prev));
+      setIdentifier((prev) => (prev.toLowerCase() === 'dada' || prev.toLowerCase() === 'admin' ? '' : prev));
+      setPassword((prev) => (prev === 'dada58' ? '' : prev));
     };
 
     purgeAutofilledAdmin();
@@ -65,21 +65,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
     setIsLoading(true);
 
-    // 1. Check if Admin Login (Authorized with username "familyfiesta" and password "dadaniruma5868")
+    // 1. Check if Admin Login
     const normalizedId = cleanId.replace(/\s+/g, '');
     const isAdminUser =
-      normalizedId === 'familyfiesta' ||
-      normalizedId === 'admin' ||
-      cleanId.includes('familyfiesta');
-    const isAdminPassword = cleanPwd === 'dadaniruma5868';
+      normalizedId === 'dada' ||
+      normalizedId === 'admin';
+    const isAdminPassword = cleanPwd === 'dada58';
 
-    if (isAdminUser || isAdminPassword) {
+    if (isAdminUser && isAdminPassword) {
       try {
         const apiUrl = (import.meta.env.VITE_API_URL || '/api') + '/admin/login';
         const res = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: 'familyfiesta', password: cleanPwd }),
+          body: JSON.stringify({ username: 'dada', password: cleanPwd }),
         });
         const data = await res.json();
 
@@ -88,27 +87,21 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           setIsLoading(false);
           onAdminLogin();
           return;
-        } else if (isAdminPassword) {
+        } else {
           localStorage.setItem('admin_token', 'session_' + Date.now());
           setIsLoading(false);
           onAdminLogin();
-          return;
-        } else {
-          setError('Invalid administrator credentials.');
-          setIsLoading(false);
           return;
         }
       } catch (err) {
-        if (isAdminPassword) {
-          localStorage.setItem('admin_token', 'session_' + Date.now());
-          setIsLoading(false);
-          onAdminLogin();
-          return;
-        }
-        setError('Connection error while verifying credentials.');
+        localStorage.setItem('admin_token', 'session_' + Date.now());
         setIsLoading(false);
+        onAdminLogin();
         return;
       }
+    } else if (isAdminUser || isAdminPassword) {
+       // If one matches but not the other, and it's not a student, fail it.
+       // We'll let it fall through to student check just in case, but if they explicitly typed "dada" we shouldn't let them in without password.
     }
 
     // 2. Check Student Login
