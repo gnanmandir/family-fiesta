@@ -66,7 +66,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search student, GM No, grade..."
-            className="w-full pl-9 pr-3 py-2 bg-stone-50 border border-stone-200 rounded-lg text-stone-900 placeholder-stone-400 text-xs focus:outline-none focus:border-orange-700 focus:bg-white transition-all"
+            className="w-full pl-9 pr-3 py-2 bg-stone-50 border border-stone-200 rounded-lg text-stone-900 placeholder-stone-400 text-xs focus:outline-none focus:border-indigo-600 focus:bg-white transition-all"
           />
         </div>
 
@@ -78,7 +78,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
               onClick={() => setFilter(f)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 filter === f
-                  ? 'bg-stone-900 text-white shadow-xs'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
                   : 'bg-stone-100 text-stone-600 hover:bg-stone-200 hover:text-stone-900'
               }`}
             >

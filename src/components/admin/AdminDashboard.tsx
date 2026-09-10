@@ -77,16 +77,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const studentsRemaining = totalStudents - studentsOrdered;
 
   return (
-    <div className="min-h-screen bg-[#FAF9F5] text-stone-900 pb-20">
+    <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
       
       {/* Top Admin Navigation Header */}
-      <div className="sticky top-0 z-40 bg-white border-b border-stone-200 px-4 sm:px-6 lg:px-10 py-3.5 shadow-xs">
+      <div className="sticky top-0 z-40 bg-white border-b border-slate-200 px-4 sm:px-6 lg:px-10 py-3.5 shadow-xs">
         <div className="max-w-[1600px] w-full mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-3.5">
             <button
               type="button"
               onClick={onExitAdmin}
-              className="p-2.5 rounded-xl bg-stone-100 border border-stone-200 text-stone-700 hover:text-stone-900 hover:bg-stone-200 cursor-pointer transition-colors"
+              className="p-2.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-200 cursor-pointer transition-colors"
               title="Return to Main Portal"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -94,8 +94,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="flex items-center space-x-2.5">
               <Logo size="sm" />
               <div>
-                <h1 className="text-lg sm:text-xl font-bold text-stone-900 tracking-tight">Family Fiesta Admin</h1>
-                <p className="text-[10px] text-orange-700 font-semibold uppercase tracking-wider">
+                <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Family Fiesta Admin</h1>
+                <p className="text-[10px] text-indigo-600 font-semibold uppercase tracking-wider">
                   Stall Operations & Reports
                 </p>
               </div>
@@ -106,7 +106,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <button
               type="button"
               onClick={onLogoutAdmin}
-              className="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-200 font-semibold text-xs tracking-wide flex items-center space-x-1.5 active:scale-95 transition-all cursor-pointer"
+              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-semibold text-xs tracking-wide flex items-center space-x-1.5 active:scale-95 transition-all cursor-pointer"
               title="Log Out of Admin Panel"
             >
               <LogOut className="w-4 h-4" />
@@ -119,7 +119,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       <div className="max-w-[1600px] w-full mx-auto p-4 sm:px-6 lg:px-10 py-6 lg:py-8 space-y-6">
         
         {/* Navigation Tabs Bar */}
-        <div className="flex items-center space-x-1.5 overflow-x-auto bg-white p-1.5 rounded-xl border border-stone-200 shadow-xs custom-scrollbar">
+        <div className="flex items-center space-x-1.5 overflow-x-auto bg-white p-1.5 rounded-xl border border-slate-200 shadow-xs custom-scrollbar">
           {[
             { id: 'overview', label: 'Analytics & Charts', icon: <LayoutDashboard className="w-4 h-4" /> },
             { id: 'orders', label: `Live Orders (${totalOrders})`, icon: <ShoppingBag className="w-4 h-4" /> },
@@ -135,8 +135,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`px-3.5 py-2 rounded-lg font-semibold text-xs whitespace-nowrap transition-all duration-150 flex items-center space-x-2 cursor-pointer ${
                   isActive
-                    ? 'bg-stone-900 text-white shadow-xs'
-                    : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
                 {tab.icon}
@@ -153,42 +153,42 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {/* KPI Cards Row */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               
-              <div className="p-5 rounded-xl bg-white border border-stone-200 shadow-xs space-y-1">
-                <div className="flex items-center justify-between text-stone-500 font-medium text-xs">
+              <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-xs space-y-1">
+                <div className="flex items-center justify-between text-slate-500 font-medium text-xs">
                   <span>Gross Revenue</span>
-                  <IndianRupee className="w-4 h-4 text-orange-700" />
+                  <IndianRupee className="w-4 h-4 text-indigo-600" />
                 </div>
-                <div className="text-2xl sm:text-3xl font-bold text-stone-900 font-mono">₹{totalRevenue}</div>
-                <div className="text-[10px] text-stone-400">Total processed</div>
+                <div className="text-2xl sm:text-3xl font-bold text-slate-900 font-mono">₹{totalRevenue}</div>
+                <div className="text-[10px] text-slate-400">Total processed</div>
               </div>
 
-              <div className="p-5 rounded-xl bg-white border border-stone-200 shadow-xs space-y-1">
-                <div className="flex items-center justify-between text-stone-500 font-medium text-xs">
+              <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-xs space-y-1">
+                <div className="flex items-center justify-between text-slate-500 font-medium text-xs">
                   <span>Total Orders</span>
-                  <ShoppingBag className="w-4 h-4 text-orange-700" />
+                  <ShoppingBag className="w-4 h-4 text-indigo-600" />
                 </div>
-                <div className="text-2xl sm:text-3xl font-bold text-stone-900 font-mono">{totalOrders}</div>
-                <div className="text-[10px] text-stone-400">Logged in queue</div>
+                <div className="text-2xl sm:text-3xl font-bold text-slate-900 font-mono">{totalOrders}</div>
+                <div className="text-[10px] text-slate-400">Logged in queue</div>
               </div>
 
-              <div className="p-5 rounded-xl bg-white border border-stone-200 shadow-xs space-y-1">
-                <div className="flex items-center justify-between text-stone-500 font-medium text-xs">
+              <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-xs space-y-1">
+                <div className="flex items-center justify-between text-slate-500 font-medium text-xs">
                   <span>Average Ticket</span>
-                  <TrendingUp className="w-4 h-4 text-orange-700" />
+                  <TrendingUp className="w-4 h-4 text-indigo-600" />
                 </div>
-                <div className="text-2xl sm:text-3xl font-bold text-stone-900 font-mono">₹{avgOrderBill}</div>
-                <div className="text-[10px] text-stone-400">Per student order</div>
+                <div className="text-2xl sm:text-3xl font-bold text-slate-900 font-mono">₹{avgOrderBill}</div>
+                <div className="text-[10px] text-slate-400">Per student order</div>
               </div>
 
-              <div className="p-5 rounded-xl bg-white border border-stone-200 shadow-xs space-y-1">
-                <div className="flex items-center justify-between text-stone-500 font-medium text-xs">
+              <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-xs space-y-1">
+                <div className="flex items-center justify-between text-slate-500 font-medium text-xs">
                   <span>Top Bestseller</span>
-                  <Award className="w-4 h-4 text-orange-700" />
+                  <Award className="w-4 h-4 text-indigo-600" />
                 </div>
-                <div className="text-base sm:text-lg font-bold text-stone-900 truncate" title={mostOrderedItem}>
+                <div className="text-base sm:text-lg font-bold text-slate-900 truncate" title={mostOrderedItem}>
                   {mostOrderedItem}
                 </div>
-                <div className="text-[10px] text-orange-700 font-medium">{highestQty} portions ordered</div>
+                <div className="text-[10px] text-indigo-600 font-medium">{highestQty} portions ordered</div>
               </div>
 
             </div>

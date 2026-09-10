@@ -274,7 +274,7 @@ Thank you for ordering from Family Fiesta!
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by student name, GM No, token #..."
-            className="w-full pl-10 pr-4 py-2 bg-stone-50 border border-stone-200 rounded-lg text-stone-900 placeholder-stone-400 text-xs focus:outline-none focus:border-orange-700 focus:bg-white transition-all"
+            className="w-full pl-10 pr-4 py-2 bg-stone-50 border border-stone-200 rounded-lg text-stone-900 placeholder-stone-400 text-xs focus:outline-none focus:border-indigo-600 focus:bg-white transition-all"
           />
         </div>
       </div>
@@ -309,7 +309,7 @@ Thank you for ordering from Family Fiesta!
 
                   return (
                     <tr key={order.orderNumber} className="hover:bg-stone-50/80 transition-colors">
-                      <td className="p-3.5 font-mono font-bold text-orange-700 whitespace-nowrap">
+                      <td className="p-3.5 font-mono font-bold text-indigo-600 whitespace-nowrap">
                         #{order.orderNumber}
                       </td>
                       <td className="p-3.5 whitespace-nowrap">
@@ -384,7 +384,7 @@ Thank you for ordering from Family Fiesta!
             </button>
 
             <div className="border-b border-stone-100 pb-3">
-              <span className="px-2.5 py-0.5 rounded-full bg-orange-50 text-orange-800 border border-orange-200 text-[10px] font-bold uppercase tracking-wider">
+              <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold uppercase tracking-wider">
                 Order Receipt Token
               </span>
               <h3 className="text-xl font-bold text-stone-900 mt-1 font-mono">Order #{selectedOrderForReceipt.orderNumber}</h3>
@@ -444,13 +444,13 @@ Thank you for ordering from Family Fiesta!
             <div className="border-t border-stone-100 pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <span className="text-stone-400 text-xs block font-medium">Total Bill</span>
-                <span className="text-orange-700 font-bold text-2xl font-mono">₹{selectedOrderForReceipt.totalAmount}</span>
+                <span className="text-indigo-600 font-bold text-2xl font-mono">₹{selectedOrderForReceipt.totalAmount}</span>
               </div>
               <div className="no-print flex items-center space-x-2 flex-wrap gap-y-2">
                 <button
                   type="button"
                   onClick={() => generateAndDownloadPDFReceipt(selectedOrderForReceipt)}
-                  className="px-3.5 py-2 rounded-xl bg-orange-700 hover:bg-orange-800 text-white font-bold text-xs tracking-wide flex items-center space-x-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
+                  className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs tracking-wide flex items-center space-x-1.5 shadow-md shadow-indigo-500/20 active:scale-95 transition-all cursor-pointer"
                   title="Download official PDF receipt"
                 >
                   <FileText className="w-3.5 h-3.5" />

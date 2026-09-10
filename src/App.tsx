@@ -665,7 +665,7 @@ export default function App() {
           <LoginPage
             students={students}
             onStudentLogin={handleStudentLogin}
-            onAdminLogin={() => setIsAdminLoginModalOpen(true)}
+            onAdminLogin={handleAdminLogin}
           />
         )}
 

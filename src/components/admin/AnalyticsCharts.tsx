@@ -40,7 +40,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ orders }) => {
           <h3 className="text-sm sm:text-base font-bold text-stone-900 tracking-tight">
             Most Ordered Dishes
           </h3>
-          <span className="text-[10px] font-semibold text-orange-800 bg-orange-50 px-2.5 py-1 rounded-md border border-orange-200">
+          <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-200">
             Live Quantities
           </span>
         </div>
@@ -64,7 +64,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ orders }) => {
                     }}
                     formatter={(value: any) => [`${value} Portions`, 'Quantity Ordered']}
                   />
-                  <Bar dataKey="count" fill="#C2410C" radius={[6, 6, 0, 0]}>
+                  <Bar dataKey="count" fill="#4F46E5" radius={[6, 6, 0, 0]}>
                     <LabelList dataKey="count" position="top" fill="#1C1917" fontSize={12} fontWeight="bold" />
                   </Bar>
                 </BarChart>
@@ -83,7 +83,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ orders }) => {
                     className="flex items-center justify-between px-3 py-2 rounded-lg bg-stone-50 border border-stone-200 shadow-xs"
                   >
                     <span className="text-stone-800 font-medium truncate pr-1" title={item.fullName}>
-                      <span className="text-orange-700 font-bold mr-1">#{idx + 1}</span>
+                      <span className="text-indigo-600 font-bold mr-1">#{idx + 1}</span>
                       {item.fullName}
                     </span>
                     <span className="font-bold text-stone-900 px-2 py-0.5 rounded bg-white border border-stone-200 text-xs shrink-0 font-mono">

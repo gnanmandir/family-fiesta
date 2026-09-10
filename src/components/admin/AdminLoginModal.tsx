@@ -99,17 +99,17 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                 if (error) setError(false);
               }}
               placeholder="Username..."
-              className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-400 text-sm focus:outline-none focus:bg-white focus:border-orange-700 focus:ring-1 focus:ring-orange-700/20 transition-all shadow-xs"
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:bg-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 transition-all shadow-xs"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
               Password
             </label>
             <div className="relative">
-              <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+              <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="password"
                 value={password}
@@ -118,7 +118,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                   if (error) setError(false);
                 }}
                 placeholder="Enter password..."
-                className="w-full pl-10 pr-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-400 text-sm focus:outline-none focus:bg-white focus:border-orange-700 focus:ring-1 focus:ring-orange-700/20 transition-all shadow-xs"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:bg-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 transition-all shadow-xs"
                 autoFocus
                 required
               />
@@ -126,8 +126,8 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
           </div>
 
           {error && (
-            <div className="p-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-xs flex items-center space-x-2 font-medium">
-              <AlertCircle className="w-4 h-4 text-amber-700 flex-shrink-0" />
+            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center space-x-2 font-medium">
+              <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
               <span>Invalid username or password.</span>
             </div>
           )}
@@ -135,7 +135,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 px-4 rounded-xl bg-orange-700 hover:bg-orange-800 text-white font-bold text-sm tracking-wide shadow-xs active:scale-[0.99] transition-all cursor-pointer disabled:opacity-60"
+            className="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm tracking-wide shadow-md shadow-indigo-500/20 active:scale-[0.99] transition-all cursor-pointer disabled:opacity-60"
           >
             {isLoading ? 'Verifying...' : 'Unlock Portal'}
           </button>

@@ -173,7 +173,7 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
         <button
           type="button"
           onClick={handleOpenAdd}
-          className="px-4 py-2.5 rounded-xl bg-orange-700 hover:bg-orange-800 text-white font-bold text-xs tracking-wide shadow-xs flex items-center space-x-2 active:scale-95 cursor-pointer transition-all"
+          className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs tracking-wide shadow-md shadow-indigo-500/20 flex items-center space-x-2 active:scale-95 cursor-pointer transition-all"
         >
           <Plus className="w-4 h-4" />
           <span>Add New Dish</span>
@@ -266,7 +266,7 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full p-2.5 bg-stone-50 border border-stone-200 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:border-orange-700 focus:bg-white transition-all"
+                  className="w-full p-2.5 bg-stone-50 border border-stone-200 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:border-indigo-600 focus:bg-white transition-all"
                 />
               </div>
 
@@ -278,7 +278,7 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
                   min={10}
                   value={price}
                   onChange={(e) => setPrice(Number(e.target.value))}
-                  className="w-full p-2.5 bg-stone-50 border border-stone-200 rounded-lg text-stone-900 focus:outline-none focus:border-orange-700 focus:bg-white transition-all font-mono"
+                  className="w-full p-2.5 bg-stone-50 border border-stone-200 rounded-lg text-stone-900 focus:outline-none focus:border-indigo-600 focus:bg-white transition-all font-mono"
                 />
               </div>
 
@@ -289,7 +289,7 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
                   required
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full p-2.5 bg-stone-50 border border-stone-200 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:border-orange-700 focus:bg-white transition-all"
+                  className="w-full p-2.5 bg-stone-50 border border-stone-200 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:border-indigo-600 focus:bg-white transition-all"
                 />
               </div>
 
@@ -341,12 +341,12 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploadingImage}
-                    className="w-full p-4 border-2 border-dashed border-stone-300 hover:border-orange-700 rounded-xl bg-stone-50 hover:bg-orange-50/20 flex flex-col items-center justify-center cursor-pointer transition-all group"
+                    className="w-full p-4 border-2 border-dashed border-stone-300 hover:border-indigo-600 rounded-xl bg-stone-50 hover:bg-indigo-50/20 flex flex-col items-center justify-center cursor-pointer transition-all group"
                   >
-                    <div className="w-9 h-9 rounded-lg bg-stone-100 text-stone-600 flex items-center justify-center mb-1.5 group-hover:text-orange-700 transition-colors">
+                    <div className="w-9 h-9 rounded-lg bg-stone-100 text-stone-600 flex items-center justify-center mb-1.5 group-hover:text-indigo-600 transition-colors">
                       <Upload className="w-4 h-4" />
                     </div>
-                    <span className="text-xs font-bold text-stone-800 group-hover:text-orange-700">
+                    <span className="text-xs font-bold text-stone-800 group-hover:text-indigo-600">
                       {isUploadingImage ? 'Processing photo...' : 'Click to Upload Dish Image'}
                     </span>
                     <span className="text-[10px] text-stone-400 mt-0.5">
@@ -362,7 +362,7 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
                   id="chefSpec"
                   checked={isChefSpecial}
                   onChange={(e) => setIsChefSpecial(e.target.checked)}
-                  className="w-4 h-4 rounded text-orange-700 focus:ring-orange-700 border-stone-300"
+                  className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-600 border-stone-300"
                 />
                 <label htmlFor="chefSpec" className="text-stone-800 font-medium cursor-pointer">
                   Tag as Chef's Special
@@ -371,7 +371,7 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
 
               <button
                 type="submit"
-                className="w-full py-2.5 rounded-xl bg-orange-700 hover:bg-orange-800 text-white font-bold tracking-wide shadow-xs mt-2 cursor-pointer transition-all"
+                className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold tracking-wide shadow-md shadow-indigo-500/20 mt-2 cursor-pointer transition-all"
               >
                 {editingItem ? 'Save Changes' : 'Create Dish'}
               </button>
