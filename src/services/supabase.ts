@@ -256,6 +256,12 @@ export const supabaseService = {
       `orders?order_number=eq.${encodeURIComponent(orderNumber)}&select=*`
     );
     const r = rows[0];
+
+    // Safety check: verify if the update actually applied
+    if (r.total_amount !== payload.total_amount && payload.total_amount !== undefined) {
+      alert("WARNING: Supabase received the edit request but refused to update the database row. This is almost certainly because your Supabase 'orders' table is missing an UPDATE Row Level Security (RLS) policy.");
+    }
+
     return {
       orderNumber: r.order_number,
       studentId: r.student_id,
