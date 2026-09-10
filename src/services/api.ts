@@ -254,6 +254,12 @@ export const api = {
   },
 
   updateOrder: async (orderNumber: string, orderPayload: Partial<Order>): Promise<Order> => {
+    if (isTursoConfigured) {
+      // return await tursoService.updateOrder(orderNumber, orderPayload);
+    }
+    if (isSupabaseConfigured) {
+      return await supabaseService.updateOrder(orderNumber, orderPayload);
+    }
     const res = await fetchJson<{ success: boolean; data: Order }>(
       `${API_BASE}/orders/${encodeURIComponent(orderNumber)}`,
       {

@@ -17,7 +17,7 @@ async function supabaseFetch<T>(endpoint: string, options: RequestInit = {}): Pr
     ...(options.headers || {}),
   };
 
-  const res = await fetch(url, { ...options, headers });
+  const res = await fetch(url, { cache: 'no-cache', ...options, headers });
   if (!res.ok) {
     let errorText = `Supabase Error (${res.status}): ${res.statusText}`;
     try {
@@ -238,6 +238,40 @@ export const supabaseService = {
     }
 
     return order;
+  },
+
+  updateOrder: async (orderNumber: string, orderPayload: Partial<Order>): Promise<Order> => {
+    const payload: any = {};
+    if (orderPayload.peopleCount !== undefined) payload.people_count = orderPayload.peopleCount;
+    if (orderPayload.allowedBudget !== undefined) payload.allowed_budget = orderPayload.allowedBudget;
+    if (orderPayload.items !== undefined) payload.items = orderPayload.items;
+    if (orderPayload.totalAmount !== undefined) payload.total_amount = orderPayload.totalAmount;
+
+    await supabaseFetch(`orders?order_number=eq.${encodeURIComponent(orderNumber)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+
+    const rows = await supabaseFetch<any[]>(
+      `orders?order_number=eq.${encodeURIComponent(orderNumber)}&select=*`
+    );
+    const r = rows[0];
+    return {
+      orderNumber: r.order_number,
+      studentId: r.student_id,
+      studentName: r.student_name,
+      parentName: r.parent_name || '',
+      fullName: r.full_name || '',
+      deviceId: r.device_id,
+      peopleCount: Number(r.people_count) || 1,
+      allowedBudget: Number(r.allowed_budget),
+      items: r.items || [],
+      totalAmount: Number(r.total_amount),
+      status: r.status as OrderStatus,
+      createdAt: r.created_at,
+      dateDisplay: r.date_display || '',
+      timeDisplay: r.time_display || '',
+    };
   },
 
   updateOrderStatus: async (orderNumber: string, status: OrderStatus): Promise<void> => {
