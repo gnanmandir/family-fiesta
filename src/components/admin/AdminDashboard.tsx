@@ -56,6 +56,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     'overview' | 'orders' | 'students' | 'food' | 'settings'
   >('overview');
 
+  const handleProtectedAction = (action: () => void, message: string = "Enter admin password to proceed:") => {
+    const pwd = prompt(message);
+    if (pwd === 'dada58') {
+      action();
+    } else if (pwd !== null) {
+      alert('Incorrect password.');
+    }
+  };
+
   const totalOrders = orders.length;
   const totalRevenue = orders.reduce((sum, o) => sum + o.totalAmount, 0);
   const avgOrderBill = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
@@ -118,7 +127,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     ? 'Re-open ordering? Students will be able to place new orders again.'
                     : 'Close ordering? Students will only be able to view/download existing receipts.';
                   if (confirm(msg)) {
-                    onToggleOrdering(newState);
+                    handleProtectedAction(() => onToggleOrdering(newState), 'Enter admin password to toggle ordering:');
                   }
                 }}
                 className={`px-3.5 py-2 rounded-xl font-semibold text-xs tracking-wide flex items-center space-x-1.5 active:scale-95 transition-all cursor-pointer border ${
@@ -290,7 +299,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         ? 'Re-open ordering? Students will be able to place new orders again.'
                         : 'Close ordering? Students will only be able to view/download existing receipts.';
                       if (confirm(msg)) {
-                        onToggleOrdering(newState);
+                        handleProtectedAction(() => onToggleOrdering(newState), 'Enter admin password to toggle ordering:');
                       }
                     }}
                     className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap ml-3 cursor-pointer transition-colors shadow-xs flex items-center space-x-1.5 ${
@@ -314,8 +323,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    onResetDeviceLock();
-                    alert('Device lock cleared successfully.');
+                    handleProtectedAction(() => {
+                      onResetDeviceLock();
+                      alert('Device lock cleared successfully.');
+                    }, 'Enter admin password to clear device lock:');
                   }}
                   className="px-4 py-2 rounded-lg bg-stone-900 hover:bg-stone-800 text-white font-semibold whitespace-nowrap ml-3 cursor-pointer transition-colors shadow-xs"
                 >
@@ -333,8 +344,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   type="button"
                   onClick={() => {
                     if (confirm('Are you sure you want to delete ALL orders? This action is irreversible.')) {
-                      onClearAllOrders();
-                      alert('All orders wiped successfully.');
+                      handleProtectedAction(() => {
+                        onClearAllOrders();
+                        alert('All orders wiped successfully.');
+                      }, 'Enter admin password to confirm WIPE ALL ORDERS:');
                     }
                   }}
                   className="px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 text-white font-semibold whitespace-nowrap ml-3 cursor-pointer transition-colors shadow-xs"
