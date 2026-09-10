@@ -257,9 +257,7 @@ Thank you for ordering from Family Fiesta!
             <thead>
               <tr className="bg-stone-50 border-b border-stone-200 text-stone-600 font-semibold uppercase tracking-wider text-[11px]">
                 <th className="p-3.5 whitespace-nowrap">Order #</th>
-                <th className="p-3.5 whitespace-nowrap">Student First</th>
-                <th className="p-3.5 whitespace-nowrap">Parent Name</th>
-                <th className="p-3.5 whitespace-nowrap">Full Name & ID</th>
+                <th className="p-3.5 whitespace-nowrap">Student Name</th>
                 <th className="p-3.5 whitespace-nowrap text-center">Group</th>
                 <th className="p-3.5 whitespace-nowrap min-w-[200px]">Ordered Items Breakdown</th>
                 <th className="p-3.5 whitespace-nowrap">Total ₹</th>
@@ -276,7 +274,7 @@ Thank you for ordering from Family Fiesta!
                     .join(', ');
 
                   const isWithinBudget = order.totalAmount <= order.allowedBudget;
-                  const cleanStudentFirst = order.studentName.replace(/\s*\(.*\)/, '').trim();
+                  const studentName = order.fullName || order.studentName.replace(/\s*\(.*\)/, '').trim();
 
                   return (
                     <tr key={order.orderNumber} className="hover:bg-stone-50/80 transition-colors">
@@ -284,14 +282,7 @@ Thank you for ordering from Family Fiesta!
                         #{order.orderNumber}
                       </td>
                       <td className="p-3.5 font-bold text-stone-900 whitespace-nowrap">
-                        {cleanStudentFirst}
-                      </td>
-                      <td className="p-3.5 text-stone-600 whitespace-nowrap font-medium">
-                        {order.parentName}
-                      </td>
-                      <td className="p-3.5 text-stone-700 whitespace-nowrap">
-                        <span className="font-semibold text-stone-900">{order.fullName}</span>
-                        <span className="ml-1 text-[10px] text-stone-400 font-mono font-bold">({order.studentId})</span>
+                        {studentName}
                       </td>
                       <td className="p-3.5 font-bold text-center whitespace-nowrap">
                         <span className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 border border-stone-200">
@@ -334,7 +325,7 @@ Thank you for ordering from Family Fiesta!
                 })
               ) : (
                 <tr>
-                  <td colSpan={10} className="p-8 text-center text-stone-500 font-medium">
+                  <td colSpan={8} className="p-8 text-center text-stone-500 font-medium">
                     No order records found matching your query.
                   </td>
                 </tr>
