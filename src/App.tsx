@@ -216,6 +216,29 @@ export default function App() {
     return () => evtSource.close();
   }, [activeOrder]);
 
+  // Periodic background sync: ensures any menu price/availability/item change in Admin reflects on all devices within seconds
+  useEffect(() => {
+    const syncLatestData = async () => {
+      try {
+        const [freshMenu, freshOrders] = await Promise.all([
+          fetchMenuItems(),
+          fetchOrders(),
+        ]);
+        if (freshMenu && freshMenu.length > 0) {
+          setMenuItems(freshMenu);
+        }
+        if (freshOrders && freshOrders.length > 0) {
+          setOrders(freshOrders);
+        }
+      } catch (e) {
+        // Silent
+      }
+    };
+
+    const intervalId = setInterval(syncLatestData, 5000);
+    return () => clearInterval(intervalId);
+  }, []);
+
   // Handler for student select in Home
   const handleSelectStudent = async (student: Student | null) => {
     if (!student) {
@@ -284,6 +307,7 @@ export default function App() {
     }
 
     setCart([]);
+    fetchMenuItems().then((m) => m && m.length > 0 && setMenuItems(m)).catch(() => {});
     setCurrentView('menu');
   };
 
@@ -501,6 +525,9 @@ export default function App() {
   const handleStudentLogin = async (student: Student) => {
     setSelectedStudent(student);
     localStorage.setItem('active_student_id', student.id);
+
+    // Fetch latest fresh menu items from backend
+    fetchMenuItems().then((m) => m && m.length > 0 && setMenuItems(m)).catch(() => {});
 
     // Clean any prior device lock from another student
     const devLock = getDeviceOrder();

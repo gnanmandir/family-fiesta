@@ -91,6 +91,17 @@ export const api = {
       return items;
     }
     if (isSupabaseConfigured) {
+      try {
+        const existing = await supabaseService.getMenuItems();
+        const incomingIds = new Set(items.map((i) => i.id));
+        for (const ex of existing) {
+          if (!incomingIds.has(ex.id)) {
+            await supabaseService.deleteMenuItem(ex.id);
+          }
+        }
+      } catch (e) {
+        console.warn('Error syncing deleted menu items with Supabase:', e);
+      }
       for (const item of items) {
         await supabaseService.saveMenuItem(item);
       }
