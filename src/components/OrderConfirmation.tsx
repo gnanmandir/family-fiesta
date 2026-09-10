@@ -39,7 +39,7 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onR
               GM #{INITIAL_STUDENTS.find((s) => s.id === currentOrder.studentId || s.fullName === currentOrder.fullName)?.gmNo || currentOrder.studentId}
             </div>
             <div className="text-[10px] sm:text-xs text-slate-500 mt-1 font-medium">
-              Present this receipt at the food counter
+              Present this receipt at the coupon counter
             </div>
           </div>
         </div>
