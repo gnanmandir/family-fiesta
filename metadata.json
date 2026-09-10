@@ -1,0 +1,6 @@
+{
+  "name": "Family Fiesta",
+  "description": "Mobile-first food ordering system for Family Fiesta with budget protection, student directory, and admin analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

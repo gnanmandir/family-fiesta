@@ -1,0 +1,118 @@
+import jsPDF from 'jspdf';
+import { Order } from '../types';
+
+import { INITIAL_STUDENTS } from '../data/students';
+import familyFiestaLogo from '../assets/images/family_fiesta_logo_1787459637243.jpg';
+
+export const generateAndDownloadPDFReceipt = async (order: Order) => {
+  const doc = new jsPDF();
+  const cleanStudentName = order.studentName.replace(/\s*\(.*\)/, '').trim();
+  const student = INITIAL_STUDENTS.find((s) => s.id === order.studentId || s.fullName === order.fullName);
+  const gmNumber = student ? String(student.gmNo) : 'N/A';
+
+  const img = new Image();
+  img.src = familyFiestaLogo;
+  await new Promise((resolve) => {
+    img.onload = resolve;
+  });
+
+  // Header Banner
+  doc.setFillColor(30, 16, 60); // Dark Purple
+  doc.rect(0, 0, 210, 38, 'F');
+
+  const imgWidth = 45; 
+  const imgHeight = (img.height * imgWidth) / img.width;
+  doc.addImage(img, 'JPEG', 105 - (imgWidth / 2), 5, imgWidth, imgHeight);
+
+  doc.setTextColor(220, 210, 255);
+  doc.setFontSize(11);
+  doc.text('OFFICIAL ORDER RECEIPT & FOOD COUPONS', 105, 32, { align: 'center' });
+
+  // Order Summary Box
+  doc.setDrawColor(180, 150, 240);
+  doc.setLineWidth(0.5);
+  doc.roundedRect(15, 45, 180, 32, 3, 3);
+
+  doc.setTextColor(30, 16, 60);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`Order Token : #${order.orderNumber}`, 22, 55);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(50, 50, 50);
+  doc.text(`Date & Time : ${order.dateDisplay || ''} ${order.timeDisplay}`, 22, 63);
+  doc.text(`Guests : ${order.peopleCount}`, 140, 63);
+  doc.text(`Budget : Rs. ${order.allowedBudget}`, 22, 71);
+
+  // Student & Parent Details
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(30, 16, 60);
+  doc.text('STUDENT & PARENT DETAILS', 15, 88);
+
+  doc.setLineWidth(0.3);
+  doc.setDrawColor(200, 200, 220);
+  doc.line(15, 91, 195, 91);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(40, 40, 40);
+  doc.text(`Student Name : ${cleanStudentName}`, 20, 99);
+  doc.text(`GM Number    : ${gmNumber}`, 120, 99);
+  doc.text(`Parent Name  : ${order.parentName}`, 20, 107);
+
+  // Ordered Items
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(30, 16, 60);
+  doc.text('ORDERED ITEMS', 15, 122);
+  doc.line(15, 125, 195, 125);
+
+  // Table Header
+  doc.setFillColor(240, 235, 255);
+  doc.rect(15, 129, 180, 8, 'F');
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(30, 16, 60);
+  doc.text('Item Description', 20, 135);
+  doc.text('Qty', 125, 135, { align: 'center' });
+  doc.text('Price', 155, 135, { align: 'right' });
+  doc.text('Total', 190, 135, { align: 'right' });
+
+  let y = 143;
+  order.items.forEach((item, index) => {
+    if (index % 2 === 1) {
+      doc.setFillColor(250, 250, 253);
+      doc.rect(15, y - 5, 180, 8, 'F');
+    }
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(40, 40, 40);
+    doc.text(item.name, 20, y);
+    doc.text(`${item.quantity}`, 125, y, { align: 'center' });
+    doc.text(`Rs. ${item.price}`, 155, y, { align: 'right' });
+    doc.text(`Rs. ${item.total}`, 190, y, { align: 'right' });
+    y += 8;
+  });
+
+  // Total Summary
+  doc.setLineWidth(0.5);
+  doc.setDrawColor(30, 16, 60);
+  doc.line(15, y, 195, y);
+  y += 9;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(30, 16, 60);
+  doc.text('TOTAL AMOUNT PAID:', 100, y);
+  doc.setTextColor(180, 90, 0);
+  doc.text(`Rs. ${order.totalAmount}`, 190, y, { align: 'right' });
+
+  // Footer
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(9);
+  doc.setTextColor(120, 120, 120);
+  doc.text('Thank you for ordering with Family Fiesta!', 105, 280, { align: 'center' });
+
+  doc.save(`Family_Fiesta_Coupons_Receipt_${order.orderNumber}.pdf`);
+};

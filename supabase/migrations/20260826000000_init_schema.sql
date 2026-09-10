@@ -1,0 +1,221 @@
+-- =====================================================================
+-- FAMILY FIESTA 2026 - OFFICIAL SUPABASE MIGRATION
+-- =====================================================================
+
+-- 1. Create Tables
+CREATE TABLE IF NOT EXISTS public.students (
+    id TEXT PRIMARY KEY,
+    first_name TEXT NOT NULL,
+    parent_name TEXT NOT NULL,
+    full_name TEXT NOT NULL,
+    grade TEXT DEFAULT 'Gurukul Roster',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.menu_items (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    category TEXT NOT NULL,
+    description TEXT DEFAULT '',
+    price NUMERIC NOT NULL,
+    image TEXT NOT NULL,
+    is_veg BOOLEAN DEFAULT TRUE,
+    is_chef_special BOOLEAN DEFAULT FALSE,
+    is_available BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.orders (
+    order_number TEXT PRIMARY KEY,
+    student_id TEXT NOT NULL,
+    student_name TEXT NOT NULL,
+    parent_name TEXT DEFAULT '',
+    full_name TEXT DEFAULT '',
+    device_id TEXT NOT NULL,
+    people_count INTEGER NOT NULL DEFAULT 1,
+    allowed_budget NUMERIC NOT NULL,
+    items JSONB NOT NULL DEFAULT '[]'::jsonb,
+    total_amount NUMERIC NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'Pending',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    date_display TEXT DEFAULT '',
+    time_display TEXT DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS public.device_locks (
+    device_id TEXT PRIMARY KEY,
+    student_id TEXT NOT NULL,
+    student_name TEXT NOT NULL,
+    order_number TEXT NOT NULL,
+    order_date TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. Row Level Security Policies
+ALTER TABLE public.students ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.menu_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.device_locks ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public access to students" ON public.students;
+CREATE POLICY "Public access to students" ON public.students FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public access to menu_items" ON public.menu_items;
+CREATE POLICY "Public access to menu_items" ON public.menu_items FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public access to orders" ON public.orders;
+CREATE POLICY "Public access to orders" ON public.orders FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public access to device_locks" ON public.device_locks;
+CREATE POLICY "Public access to device_locks" ON public.device_locks FOR ALL USING (true) WITH CHECK (true);
+
+-- 3. Seed Menu Items
+INSERT INTO public.menu_items (id, name, category, description, price, image, is_veg, is_chef_special, is_available)
+VALUES
+('FOOD-101', 'Club Sandwich', 'Chaat & Street Food', 'Three layers of deliciousness, packed with flavor and served with a creamy mayo dip & crispy wafers! 🥪🔥', 60, 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=600&q=80', true, true, true),
+('FOOD-102', 'Pani Puri', 'Chaat & Street Food', 'Crispy puris, tasty masala & refreshing mint water! 🌿🥣', 20, 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=600&q=80', true, true, true),
+('FOOD-103', 'Chole Kulcha', 'Main Course', 'Crispy kulcha, flavourful Amritsari chole & fresh onion salad—a perfect Punjabi feast! 🌶️🥙', 65, 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&w=600&q=80', true, true, true),
+('FOOD-104', 'Jamun Lemon Mojito', 'Beverages & Drinks', 'Jamun, lemon & fizzy soda with a sweet-salty twist! 🍇🍋✨', 20, 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80', true, false, true),
+('FOOD-105', 'Blueberry Trifle', 'Desserts', 'Crunchy biscuit, creamy vanilla cake & blueberry layers topped with juicy blueberries—a dreamy dessert in every spoonful! 🫐✨', 35, 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=600&q=80', true, false, true),
+('FOOD-106', 'Millet Khichdi', 'Healthy Special', 'Wholesome & comforting dish cooked with organic foxtail millet, yellow moong dal, desi ghee & herbs.', 40, 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=600&q=80', true, false, true)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    category = EXCLUDED.category,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    image = EXCLUDED.image,
+    is_chef_special = EXCLUDED.is_chef_special,
+    is_available = EXCLUDED.is_available;
+
+-- 4. Seed All 124 Gurukul Students
+INSERT INTO public.students (id, first_name, parent_name, full_name, grade)
+VALUES
+('STU-1001', 'Aditya', 'Ashishkumar', 'aditya Ashishkumar Patel', 'Gurukul Roster'),
+('STU-1002', 'Aarav', 'Arjunbhai', 'Aarav Arjunbhai Parekh', 'Gurukul Roster'),
+('STU-1003', 'Aaruj', 'Dinesh', 'Aaruj Dinesh Rawat', 'Gurukul Roster'),
+('STU-1004', 'Aary', 'Deepakbhai', 'Aary Deepakbhai Patel', 'Gurukul Roster'),
+('STU-1005', 'Abhi', 'Chandrakant', 'Abhi Chandrakant Dodiya', 'Gurukul Roster'),
+('STU-1006', 'Abhimanyu', 'Gitakumari', 'Abhimanyu Gitakumari Anand', 'Gurukul Roster'),
+('STU-1007', 'Akshar', 'Mukeshbhai', 'Akshar Mukeshbhai Aghara', 'Gurukul Roster'),
+('STU-1008', 'Aniket', 'Kirtibhai', 'Aniket Kirtibhai Chaudhari', 'Gurukul Roster'),
+('STU-1009', 'Aniruddh', 'Hiteshbhai', 'Aniruddh Hiteshbhai Monpara', 'Gurukul Roster'),
+('STU-1010', 'Ansh', 'Manojbhai', 'Ansh Manojbhai Patel', 'Gurukul Roster'),
+('STU-1011', 'Aryan', 'Manoj', 'Aryan Manoj Daxina', 'Gurukul Roster'),
+('STU-1012', 'Ayushmaan', 'Sandeepkumar', 'Ayushmaan Sandeepkumar Singh', 'Gurukul Roster'),
+('STU-1013', 'Bhavya', 'Pareshbhai', 'Bhavya Pareshbhai Poshiya', 'Gurukul Roster'),
+('STU-1014', 'Chaitanyasinh', 'Vijaysinh', 'Chaitanyasinh Vijaysinh Barad', 'Gurukul Roster'),
+('STU-1015', 'Daivik', 'Manojbhai', 'Daivik Manojbhai Patel', 'Gurukul Roster'),
+('STU-1016', 'Daksh', 'Anilbhai', 'Daksh Anilbhai Mangroliya', 'Gurukul Roster'),
+('STU-1017', 'Daksh', 'Deepak', 'Daksh Deepak Vasa', 'Gurukul Roster'),
+('STU-1018', 'Daksh', 'Dipakkumar', 'Daksh Dipakkumar Patel', 'Gurukul Roster'),
+('STU-1019', 'Darsh', 'Divyeshbhai', 'Darsh Divyeshbhai Ramani', 'Gurukul Roster'),
+('STU-1020', 'Darsh', 'Pradip', 'Darsh Pradip Ramjiyani', 'Gurukul Roster'),
+('STU-1021', 'Denis', 'Vinod', 'Denis Vinod Prajapati', 'Gurukul Roster'),
+('STU-1022', 'Dev', 'Ashishkumar', 'Dev AshishKumar Patel', 'Gurukul Roster'),
+('STU-1023', 'Dev', 'Sandipbhai', 'Dev Sandipbhai Chudasma', 'Gurukul Roster'),
+('STU-1024', 'Devansh', 'Hiteshbhai', 'Devansh Hiteshbhai Patel', 'Gurukul Roster'),
+('STU-1025', 'Dhairya', 'Alkeshkumar', 'Dhairya Alkeshkumar Patel', 'Gurukul Roster'),
+('STU-1026', 'Dhairya', 'Bhavesh G.', 'Dhairya Bhavesh Gadhiya', 'Gurukul Roster'),
+('STU-1027', 'Dhairya', 'Bhavesh P.', 'Dhairya Bhavesh Parsaniya', 'Gurukul Roster'),
+('STU-1028', 'Dhairya', 'Pareshbhai', 'Dhairya Pareshbhai Maiyani', 'Gurukul Roster'),
+('STU-1029', 'DhairyaSingh', 'Madanlal', 'DhairyaSingh Madanlal Yadav', 'Gurukul Roster'),
+('STU-1030', 'Dhanush', 'Krunal', 'Dhanush Krunal Vansdeviya', 'Gurukul Roster'),
+('STU-1031', 'Dharm', 'Hasmukhbhai', 'Dharm Hasmukhbhai Akoliya', 'Gurukul Roster'),
+('STU-1032', 'Dharv', 'Bharatbhai', 'Dharv Bharatbhai Jesadia', 'Gurukul Roster'),
+('STU-1033', 'Dhruv', 'Maheshbhai', 'Dhruv Maheshbhai Parmar', 'Gurukul Roster'),
+('STU-1034', 'Dhruv', 'Manojbhai', 'Dhruv Manojbhai Maniya', 'Gurukul Roster'),
+('STU-1035', 'Dhruvansh', 'Pradipbhai', 'Dhruvansh Pradipbhai Maniya', 'Gurukul Roster'),
+('STU-1036', 'Disharth', 'Mahendrabhai', 'Disharth Mahendrabhai Radadiya', 'Gurukul Roster'),
+('STU-1037', 'Gaurang', 'Bhavikkumar', 'Gaurang Bhavikkumar Surati', 'Gurukul Roster'),
+('STU-1038', 'Harsh', 'Akhabhai', 'Harsh Akhabhai Chandesar', 'Gurukul Roster'),
+('STU-1039', 'Harsh', 'Sudhir', 'Harsh Kumar Sudhir Kumar', 'Gurukul Roster'),
+('STU-1040', 'Het', 'Bharatbhai', 'Het Bharatbhai Bhanderi', 'Gurukul Roster'),
+('STU-1041', 'Het', 'Prashantbhai', 'Het Prashantbhai Dholariya', 'Gurukul Roster'),
+('STU-1042', 'Hetarth', 'Alpeshkumar', 'Hetarth Alpeshkumar Ahir', 'Gurukul Roster'),
+('STU-1043', 'Jaiwin', 'Miteshbhai', 'Jaiwin Miteshbhai Jotangiya', 'Gurukul Roster'),
+('STU-1044', 'Jalkumar', 'Satyambhai', 'Jalkumar Satyambhai Lakhani', 'Gurukul Roster'),
+('STU-1045', 'Jash', 'Jasminbhai', 'Jash Jasminbhai Lila', 'Gurukul Roster'),
+('STU-1046', 'Jay', 'Mineshkumar', 'Jay Mineshkumar Panchal', 'Gurukul Roster'),
+('STU-1047', 'Jayant', 'Birudev', 'Jayant Birudev Hajare', 'Gurukul Roster'),
+('STU-1048', 'Jaydev', 'Dhavalbhai', 'Jaydev Dhavalbhai Thumar', 'Gurukul Roster'),
+('STU-1049', 'Jeel', 'Maheshbhai', 'Jeel Maheshbhai Talpara', 'Gurukul Roster'),
+('STU-1050', 'Jemil', 'Jayeshbhai', 'Jemil Jayeshbhai Vagadiya', 'Gurukul Roster'),
+('STU-1051', 'Joy', 'Ashvinkumar', 'Joy Ashvinkumar Shroff', 'Gurukul Roster'),
+('STU-1052', 'Karm', 'Daxilbhai', 'Karm Daxilbhai Narola', 'Gurukul Roster'),
+('STU-1053', 'Karm', 'Vijaybhai', 'Karm Vijaybhai Viradiya', 'Gurukul Roster'),
+('STU-1054', 'Karma', 'Kalpeshbhai', 'Karma Kalpeshbhai Patel', 'Gurukul Roster'),
+('STU-1055', 'Kartik', 'Ashishkumar', 'Kartik Ashishkumar Jani', 'Gurukul Roster'),
+('STU-1056', 'Keval', 'Gautam', 'Keval Gautam Pajwani', 'Gurukul Roster'),
+('STU-1057', 'Keval', 'Keyur', 'Keval Keyur Jani', 'Gurukul Roster'),
+('STU-1058', 'Keyan', 'Nikhilkumar', 'Keyan Nikhilkumar Suthar', 'Gurukul Roster'),
+('STU-1059', 'Krutarth', 'Ashvinbhai', 'Krutarth Ashvinbhai Jivani', 'Gurukul Roster'),
+('STU-1060', 'Kush', 'Pintukumar', 'Kush Pintukumar Bhoraniya', 'Gurukul Roster'),
+('STU-1061', 'Kushal', 'Chintankumar', 'Kushal Chintankumar Patel', 'Gurukul Roster'),
+('STU-1062', 'Lavya', 'Pankajbhai', 'Lavya Pankajbhai Moradiya', 'Gurukul Roster'),
+('STU-1063', 'Manan', 'Nitinbhai', 'Manan Nitinbhai Shah', 'Gurukul Roster'),
+('STU-1064', 'Manav', 'Maldebhai', 'Manav Maldebhai Modhvadiya', 'Gurukul Roster'),
+('STU-1065', 'Manav', 'Nileshbhai', 'Manav Nileshbhai Bhoraniya', 'Gurukul Roster'),
+('STU-1066', 'Mankumar', 'Janakbhai', 'Mankumar Janakbhai Malsana', 'Gurukul Roster'),
+('STU-1067', 'Mantra', 'Dharmeshbhai', 'Mantra Dharmeshbhai Parmar', 'Gurukul Roster'),
+('STU-1068', 'Mantra', 'Mayurbhai', 'Mantra Mayurbhai Patel', 'Gurukul Roster'),
+('STU-1069', 'Maurya', 'Rakshitbhai', 'Maurya Rakshitbhai Patel', 'Gurukul Roster'),
+('STU-1070', 'Milin', 'Shaileshkumar', 'Milin Shaileshkumar Thakor', 'Gurukul Roster'),
+('STU-1071', 'Moksh', 'Anil', 'Moksh Anil Kumar Yadav', 'Gurukul Roster'),
+('STU-1072', 'Moksh', 'Jagdishkumar', 'Moksh Jagdishkumar Parmar', 'Gurukul Roster'),
+('STU-1073', 'Naimeekumar', 'Satishbhai', 'Naimeekumar Satishbhai Patel', 'Gurukul Roster'),
+('STU-1074', 'Naman', 'Dinesh', 'Naman Dinesh Daxina', 'Gurukul Roster'),
+('STU-1075', 'Navneel', 'Dinesh', 'Navneel Dinesh Sharma', 'Gurukul Roster'),
+('STU-1076', 'Nikshit', 'Rohankumar', 'Nikshit Rohankumar Patel', 'Gurukul Roster'),
+('STU-1077', 'Nirmal', 'Mukundbhai', 'Nirmal Mukundbhai Thakor', 'Gurukul Roster'),
+('STU-1078', 'Nisarg', 'Ripalbhai', 'Nisarg Ripalbhai Kabariya', 'Gurukul Roster'),
+('STU-1079', 'Nitya', 'Bharatkumar', 'Nitya Bharatkumar Karkar', 'Gurukul Roster'),
+('STU-1080', 'Nitya', 'Mitulbhai', 'Nitya Mitulbhai Desai', 'Gurukul Roster'),
+('STU-1081', 'Om', 'Ishwar', 'Om Ishwar Budheliya', 'Gurukul Roster'),
+('STU-1082', 'Om', 'Vimal', 'Om Vimal Chhatrola', 'Gurukul Roster'),
+('STU-1083', 'Panth', 'Alpeshbhai', 'Panth Alpeshbhai Maiyani', 'Gurukul Roster'),
+('STU-1084', 'Parth', 'Devashish', 'Parth Devashish Kundu', 'Gurukul Roster'),
+('STU-1085', 'Pranay', 'Sureshbhai', 'Pranay Sureshbhai Bhoi', 'Gurukul Roster'),
+('STU-1086', 'Pratham', 'Pranavbhai', 'Pratham Pranavbhai Bhatt', 'Gurukul Roster'),
+('STU-1087', 'Pratyush', 'Sandipbhai', 'Pratyush Sandipbhai Godhani', 'Gurukul Roster'),
+('STU-1088', 'Prince', 'Amitbhai', 'Prince Amitbhai Patel', 'Gurukul Roster'),
+('STU-1089', 'Priyansh', 'Bishalkumar', 'Priyansh Bishalkumar Patel', 'Gurukul Roster'),
+('STU-1090', 'Raghav', 'Pratik', 'Raghav Pratik Khatri', 'Gurukul Roster'),
+('STU-1091', 'Reyansh', 'Jentilal', 'Reyansh Jentilal Chavda', 'Gurukul Roster'),
+('STU-1092', 'Ronit', 'Kishor', 'Ronit Kishor Vasani', 'Gurukul Roster'),
+('STU-1093', 'Rudra', 'Chiragkumar', 'Rudra Chiragkumar Mehta', 'Gurukul Roster'),
+('STU-1094', 'Rudra', 'Gautambhai', 'Rudra Gautambhai Mangukiya', 'Gurukul Roster'),
+('STU-1095', 'Rudra', 'Hareshbhai', 'Rudra Hareshbhai Padsumbia', 'Gurukul Roster'),
+('STU-1096', 'Rudra', 'Hasmukhbhai', 'Rudra Hasmukhbhai Tundiya', 'Gurukul Roster'),
+('STU-1097', 'Rudra', 'Vijeshbhai', 'Rudra Vijeshbhai Patel', 'Gurukul Roster'),
+('STU-1098', 'Samarth', 'Jayprakash', 'Samarth Jayprakash Parmar', 'Gurukul Roster'),
+('STU-1099', 'Shaashwat', 'Sameer', 'Shaashwat Om Sameer Dixit', 'Gurukul Roster'),
+('STU-1100', 'Shiv', 'Sandipbhai', 'Shiv Sandipbhai Bhoi', 'Gurukul Roster'),
+('STU-1101', 'Shlok', 'Rasikbhai', 'Shlok Rasikbhai Mayani', 'Gurukul Roster'),
+('STU-1102', 'Shourya', 'Dharmeshbhai', 'Shourya Dharmeshbhai Vadi', 'Gurukul Roster'),
+('STU-1103', 'Shresth', 'Yogendrakumar', 'Shresth Yogendrakumar Singh', 'Gurukul Roster'),
+('STU-1104', 'Sneh', 'Mayurbhai', 'Sneh Mayurbhai Antala', 'Gurukul Roster'),
+('STU-1105', 'Soham', 'Dharmeshkumar', 'Soham Dharmeshkumar Santoki', 'Gurukul Roster'),
+('STU-1106', 'Soham', 'Paras', 'Soham Paras Pavasiya', 'Gurukul Roster'),
+('STU-1107', 'Soham', 'Prashant', 'Soham Prashant Chokrayat', 'Gurukul Roster'),
+('STU-1108', 'Swar', 'Kirti', 'Swar Kirti Pokar', 'Gurukul Roster'),
+('STU-1109', 'Tanay', 'Ketanbhai', 'Tanay Ketanbhai Patel', 'Gurukul Roster'),
+('STU-1110', 'Tanmay', 'Janardhan', 'Tanmay Janardhan Pandya', 'Gurukul Roster'),
+('STU-1111', 'Tanmay', 'Kalpeshbhai', 'Tanmay Kalpeshbhai Gohel', 'Gurukul Roster'),
+('STU-1112', 'Tirth', 'Dipakkumar', 'Tirth Dipakkumar Patel', 'Gurukul Roster'),
+('STU-1113', 'Tirth', 'Kamalbhai', 'Tirth Kamalbhai Shah', 'Gurukul Roster'),
+('STU-1114', 'Tirth', 'Ketan', 'Tirth Ketan Nasit', 'Gurukul Roster'),
+('STU-1115', 'Tirth', 'Sandeepbhai', 'Tirth Sandeepbhai Jesadiya', 'Gurukul Roster'),
+('STU-1116', 'Ujas', 'Rakesh', 'Ujas Rakesh Lakhani', 'Gurukul Roster'),
+('STU-1117', 'Vaibhav', 'Pratap', 'Vaibhav Pratap Singh Rawat', 'Gurukul Roster'),
+('STU-1118', 'Vaid', 'Kamleshbhai', 'Vaid Kamleshbhai Italiya', 'Gurukul Roster'),
+('STU-1119', 'Ved', 'Harshadbhai', 'Ved Harshadbhai Moradiya', 'Gurukul Roster'),
+('STU-1120', 'Vedant', 'Paresh', 'Vedant Paresh Sakdasariya', 'Gurukul Roster'),
+('STU-1121', 'Vedant', 'Prakashkumar', 'Vedant Prakashkumar Prajapati', 'Gurukul Roster'),
+('STU-1122', 'Veer', 'Dilipkumar', 'Veer Dilipkumar Jasoliya', 'Gurukul Roster'),
+('STU-1123', 'Yagnik', 'Sureshkumar', 'Yagnik Sureshkumar Thakar', 'Gurukul Roster'),
+('STU-1124', 'Yashpalsinh', 'Girivarsinh', 'Yashpalsinh Girivarsinh Gohil', 'Gurukul Roster')
+ON CONFLICT (id) DO UPDATE SET
+    first_name = EXCLUDED.first_name,
+    parent_name = EXCLUDED.parent_name,
+    full_name = EXCLUDED.full_name,
+    grade = EXCLUDED.grade;

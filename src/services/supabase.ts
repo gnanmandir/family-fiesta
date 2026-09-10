@@ -1,0 +1,274 @@
+import { FoodItem, Order, OrderStatus, Student } from '../types';
+
+const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '').replace(/\/+$/, '');
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+export const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_KEY);
+
+async function supabaseFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+  const headers = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=representation',
+    ...(options.headers || {}),
+  };
+
+  const res = await fetch(url, { ...options, headers });
+  if (!res.ok) {
+    let errorText = `Supabase Error (${res.status}): ${res.statusText}`;
+    try {
+      const errJson = await res.json();
+      if (errJson && errJson.message) errorText = errJson.message;
+    } catch (e) {}
+    throw new Error(errorText);
+  }
+
+  const text = await res.text();
+  return text ? JSON.parse(text) : (null as any);
+}
+
+export const supabaseService = {
+  // --- Students ---
+  getStudents: async (): Promise<Student[]> => {
+    const rows = await supabaseFetch<any[]>('students?select=*&order=first_name.asc');
+    return rows.map((r) => ({
+      id: r.id,
+      gmNo: r.gm_no,
+      firstName: r.first_name,
+      parentName: r.parent_name,
+      fullName: r.full_name,
+      grade: r.grade || 'Gurukul Roster',
+    }));
+  },
+
+  // --- Menu Items ---
+  getMenuItems: async (): Promise<FoodItem[]> => {
+    const rows = await supabaseFetch<any[]>('menu_items?select=*&order=id.asc');
+    return rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      category: r.category,
+      description: r.description || '',
+      price: Number(r.price),
+      image: r.image,
+      isVeg: r.is_veg !== undefined ? r.is_veg : true,
+      isChefSpecial: Boolean(r.is_chef_special),
+      isAvailable: r.is_available !== undefined ? r.is_available : true,
+    }));
+  },
+
+  saveMenuItem: async (item: Partial<FoodItem>): Promise<FoodItem> => {
+    const payload = {
+      id: item.id || `FOOD-${Math.floor(100 + Math.random() * 900)}`,
+      name: item.name,
+      category: item.category,
+      description: item.description || '',
+      price: item.price,
+      image: item.image,
+      is_veg: item.isVeg !== undefined ? item.isVeg : true,
+      is_chef_special: Boolean(item.isChefSpecial),
+      is_available: item.isAvailable !== undefined ? item.isAvailable : true,
+    };
+
+    const res = await supabaseFetch<any[]>('menu_items?on_conflict=id', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+      body: JSON.stringify(payload),
+    });
+
+    const r = res[0] || payload;
+    return {
+      id: r.id,
+      name: r.name,
+      category: r.category,
+      description: r.description,
+      price: Number(r.price),
+      image: r.image,
+      isVeg: r.is_veg,
+      isChefSpecial: r.is_chef_special,
+      isAvailable: r.is_available,
+    };
+  },
+
+  updateMenuItem: async (id: string, updates: Partial<FoodItem>): Promise<FoodItem> => {
+    const payload: any = {};
+    if (updates.name !== undefined) payload.name = updates.name;
+    if (updates.category !== undefined) payload.category = updates.category;
+    if (updates.description !== undefined) payload.description = updates.description;
+    if (updates.price !== undefined) payload.price = updates.price;
+    if (updates.image !== undefined) payload.image = updates.image;
+    if (updates.isVeg !== undefined) payload.is_veg = updates.isVeg;
+    if (updates.isChefSpecial !== undefined) payload.is_chef_special = updates.isChefSpecial;
+    if (updates.isAvailable !== undefined) payload.is_available = updates.isAvailable;
+
+    const res = await supabaseFetch<any[]>(`menu_items?id=eq.${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+
+    const r = res[0] || updates;
+    return {
+      id,
+      name: r.name,
+      category: r.category,
+      description: r.description,
+      price: Number(r.price),
+      image: r.image,
+      isVeg: r.is_veg,
+      isChefSpecial: r.is_chef_special,
+      isAvailable: r.is_available,
+    };
+  },
+
+  deleteMenuItem: async (id: string): Promise<void> => {
+    await supabaseFetch(`menu_items?id=eq.${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // --- Orders ---
+  getOrders: async (): Promise<Order[]> => {
+    const rows = await supabaseFetch<any[]>('orders?select=*&order=created_at.desc');
+    return rows.map((r) => ({
+      orderNumber: r.order_number,
+      studentId: r.student_id,
+      studentName: r.student_name,
+      parentName: r.parent_name || '',
+      fullName: r.full_name || '',
+      deviceId: r.device_id,
+      peopleCount: Number(r.people_count) || 1,
+      allowedBudget: Number(r.allowed_budget),
+      items: r.items || [],
+      totalAmount: Number(r.total_amount),
+      status: r.status as OrderStatus,
+      createdAt: r.created_at,
+      dateDisplay: r.date_display || '',
+      timeDisplay: r.time_display || '',
+    }));
+  },
+
+  getOrderByStudent: async (studentId: string): Promise<Order | null> => {
+    const rows = await supabaseFetch<any[]>(
+      `orders?student_id=eq.${encodeURIComponent(studentId)}&select=*&limit=1`
+    );
+    if (!rows || rows.length === 0) return null;
+    const r = rows[0];
+    return {
+      orderNumber: r.order_number,
+      studentId: r.student_id,
+      studentName: r.student_name,
+      parentName: r.parent_name || '',
+      fullName: r.full_name || '',
+      deviceId: r.device_id,
+      peopleCount: Number(r.people_count) || 1,
+      allowedBudget: Number(r.allowed_budget),
+      items: r.items || [],
+      totalAmount: Number(r.total_amount),
+      status: r.status as OrderStatus,
+      createdAt: r.created_at,
+      dateDisplay: r.date_display || '',
+      timeDisplay: r.time_display || '',
+    };
+  },
+
+  getOrderByDevice: async (deviceId: string): Promise<Order | null> => {
+    const rows = await supabaseFetch<any[]>(
+      `orders?device_id=eq.${encodeURIComponent(deviceId)}&select=*&order=created_at.desc&limit=1`
+    );
+    if (!rows || rows.length === 0) return null;
+    const r = rows[0];
+    return {
+      orderNumber: r.order_number,
+      studentId: r.student_id,
+      studentName: r.student_name,
+      parentName: r.parent_name || '',
+      fullName: r.full_name || '',
+      deviceId: r.device_id,
+      peopleCount: Number(r.people_count) || 1,
+      allowedBudget: Number(r.allowed_budget),
+      items: r.items || [],
+      totalAmount: Number(r.total_amount),
+      status: r.status as OrderStatus,
+      createdAt: r.created_at,
+      dateDisplay: r.date_display || '',
+      timeDisplay: r.time_display || '',
+    };
+  },
+
+  placeOrder: async (order: Order): Promise<Order> => {
+    const payload = {
+      order_number: order.orderNumber,
+      student_id: order.studentId,
+      student_name: order.studentName,
+      parent_name: order.parentName || '',
+      full_name: order.fullName || '',
+      device_id: order.deviceId,
+      people_count: order.peopleCount,
+      allowed_budget: order.allowedBudget,
+      items: order.items,
+      total_amount: order.totalAmount,
+      status: order.status || 'Pending',
+      created_at: order.createdAt || new Date().toISOString(),
+      date_display: order.dateDisplay || '',
+      time_display: order.timeDisplay || '',
+    };
+
+    await supabaseFetch('orders', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    // Save device lock
+    if (order.deviceId) {
+      await supabaseFetch('device_locks?on_conflict=device_id', {
+        method: 'POST',
+        headers: { 'Prefer': 'resolution=merge-duplicates' },
+        body: JSON.stringify({
+          device_id: order.deviceId,
+          student_id: order.studentId,
+          student_name: order.studentName,
+          order_number: order.orderNumber,
+          order_date: order.createdAt,
+        }),
+      }).catch(() => {});
+    }
+
+    return order;
+  },
+
+  updateOrderStatus: async (orderNumber: string, status: OrderStatus): Promise<void> => {
+    await supabaseFetch(`orders?order_number=eq.${encodeURIComponent(orderNumber)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+  },
+
+  deleteOrder: async (orderNumber: string): Promise<void> => {
+    await supabaseFetch(`orders?order_number=eq.${encodeURIComponent(orderNumber)}`, {
+      method: 'DELETE',
+    });
+  },
+
+  deleteCompletedOrders: async (): Promise<void> => {
+    await supabaseFetch('orders?status=eq.Completed', {
+      method: 'DELETE',
+    });
+  },
+
+  deleteAllOrders: async (): Promise<void> => {
+    await supabaseFetch('orders?order_number=neq.__NONE__', {
+      method: 'DELETE',
+    });
+    await supabaseFetch('device_locks?device_id=neq.__NONE__', {
+      method: 'DELETE',
+    }).catch(() => {});
+  },
+
+  clearDeviceLock: async (deviceId: string): Promise<void> => {
+    await supabaseFetch(`device_locks?device_id=eq.${encodeURIComponent(deviceId)}`, {
+      method: 'DELETE',
+    }).catch(() => {});
+  },
+};

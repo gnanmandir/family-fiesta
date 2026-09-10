@@ -1,0 +1,3 @@
+[install]
+tls = false
+rejectUnauthorized = false

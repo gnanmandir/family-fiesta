@@ -1,0 +1,286 @@
+import React, { useState } from 'react';
+import { Order, Student, FoodItem, OrderStatus } from '../../types';
+import { Logo } from '../Logo';
+import {
+  LayoutDashboard,
+  ShoppingBag,
+  Users,
+  UtensilsCrossed,
+  RotateCcw,
+  IndianRupee,
+  TrendingUp,
+  Award,
+  ArrowLeft,
+  Trash2,
+  Lock,
+  LogOut,
+} from 'lucide-react';
+import { AnalyticsCharts } from './AnalyticsCharts';
+import { OrderTable } from './OrderTable';
+import { StudentManager } from './StudentManager';
+import { FoodManager } from './FoodManager';
+
+interface AdminDashboardProps {
+  orders: Order[];
+  students: Student[];
+  menuItems: FoodItem[];
+  onUpdateOrderStatus: (orderNumber: string, status: OrderStatus) => void;
+  onDeleteOrder: (orderNumber: string) => void;
+  onDeleteCompletedOrders?: () => void;
+  onSaveMenuItems: (items: FoodItem[]) => void;
+  onResetDeviceLock: () => void;
+  onClearAllOrders: () => void;
+  onExitAdmin: () => void;
+  onLogoutAdmin: () => void;
+}
+
+export const AdminDashboard: React.FC<AdminDashboardProps> = ({
+  orders,
+  students,
+  menuItems,
+  onUpdateOrderStatus,
+  onDeleteOrder,
+  onDeleteCompletedOrders,
+  onSaveMenuItems,
+  onResetDeviceLock,
+  onClearAllOrders,
+  onExitAdmin,
+  onLogoutAdmin,
+}) => {
+  const [activeTab, setActiveTab] = useState<
+    'overview' | 'orders' | 'students' | 'food' | 'settings'
+  >('overview');
+
+  const totalOrders = orders.length;
+  const totalRevenue = orders.reduce((sum, o) => sum + o.totalAmount, 0);
+  const avgOrderBill = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+
+  const itemCounts: Record<string, number> = {};
+  orders.forEach((o) => {
+    o.items.forEach((it) => {
+      itemCounts[it.name] = (itemCounts[it.name] || 0) + it.quantity;
+    });
+  });
+
+  let mostOrderedItem = 'None Yet';
+  let highestQty = 0;
+  Object.entries(itemCounts).forEach(([name, qty]) => {
+    if (qty > highestQty) {
+      highestQty = qty;
+      mostOrderedItem = name;
+    }
+  });
+
+  const orderedStudentIds = new Set(orders.map((o) => o.studentId));
+  const totalStudents = students.length;
+  const studentsOrdered = orderedStudentIds.size;
+  const studentsRemaining = totalStudents - studentsOrdered;
+
+  return (
+    <div className="min-h-screen bg-[#FAF9F5] text-stone-900 pb-20">
+      
+      {/* Top Admin Navigation Header */}
+      <div className="sticky top-0 z-40 bg-white border-b border-stone-200 px-4 sm:px-6 lg:px-10 py-3.5 shadow-xs">
+        <div className="max-w-[1600px] w-full mx-auto flex items-center justify-between">
+          <div className="flex items-center space-x-3.5">
+            <button
+              type="button"
+              onClick={onExitAdmin}
+              className="p-2.5 rounded-xl bg-stone-100 border border-stone-200 text-stone-700 hover:text-stone-900 hover:bg-stone-200 cursor-pointer transition-colors"
+              title="Return to Main Portal"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div className="flex items-center space-x-2.5">
+              <Logo size="sm" />
+              <div>
+                <h1 className="text-lg sm:text-xl font-bold text-stone-900 tracking-tight">Family Fiesta Admin</h1>
+                <p className="text-[10px] text-orange-700 font-semibold uppercase tracking-wider">
+                  Stall Operations & Reports
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-3">
+            <button
+              type="button"
+              onClick={onLogoutAdmin}
+              className="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-200 font-semibold text-xs tracking-wide flex items-center space-x-1.5 active:scale-95 transition-all cursor-pointer"
+              title="Log Out of Admin Panel"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Log Out</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-[1600px] w-full mx-auto p-4 sm:px-6 lg:px-10 py-6 lg:py-8 space-y-6">
+        
+        {/* Navigation Tabs Bar */}
+        <div className="flex items-center space-x-1.5 overflow-x-auto bg-white p-1.5 rounded-xl border border-stone-200 shadow-xs custom-scrollbar">
+          {[
+            { id: 'overview', label: 'Analytics & Charts', icon: <LayoutDashboard className="w-4 h-4" /> },
+            { id: 'orders', label: `Live Orders (${totalOrders})`, icon: <ShoppingBag className="w-4 h-4" /> },
+            { id: 'students', label: `Students (${studentsOrdered}/${totalStudents})`, icon: <Users className="w-4 h-4" /> },
+            { id: 'food', label: `Menu Catalog (${menuItems.length})`, icon: <UtensilsCrossed className="w-4 h-4" /> },
+            { id: 'settings', label: 'System Controls', icon: <RotateCcw className="w-4 h-4" /> },
+          ].map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`px-3.5 py-2 rounded-lg font-semibold text-xs whitespace-nowrap transition-all duration-150 flex items-center space-x-2 cursor-pointer ${
+                  isActive
+                    ? 'bg-stone-900 text-white shadow-xs'
+                    : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+                }`}
+              >
+                {tab.icon}
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Tab 1: Overview & KPI Grid */}
+        {activeTab === 'overview' && (
+          <div className="space-y-6">
+            
+            {/* KPI Cards Row */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              
+              <div className="p-5 rounded-xl bg-white border border-stone-200 shadow-xs space-y-1">
+                <div className="flex items-center justify-between text-stone-500 font-medium text-xs">
+                  <span>Gross Revenue</span>
+                  <IndianRupee className="w-4 h-4 text-orange-700" />
+                </div>
+                <div className="text-2xl sm:text-3xl font-bold text-stone-900 font-mono">₹{totalRevenue}</div>
+                <div className="text-[10px] text-stone-400">Total processed</div>
+              </div>
+
+              <div className="p-5 rounded-xl bg-white border border-stone-200 shadow-xs space-y-1">
+                <div className="flex items-center justify-between text-stone-500 font-medium text-xs">
+                  <span>Total Orders</span>
+                  <ShoppingBag className="w-4 h-4 text-orange-700" />
+                </div>
+                <div className="text-2xl sm:text-3xl font-bold text-stone-900 font-mono">{totalOrders}</div>
+                <div className="text-[10px] text-stone-400">Logged in queue</div>
+              </div>
+
+              <div className="p-5 rounded-xl bg-white border border-stone-200 shadow-xs space-y-1">
+                <div className="flex items-center justify-between text-stone-500 font-medium text-xs">
+                  <span>Average Ticket</span>
+                  <TrendingUp className="w-4 h-4 text-orange-700" />
+                </div>
+                <div className="text-2xl sm:text-3xl font-bold text-stone-900 font-mono">₹{avgOrderBill}</div>
+                <div className="text-[10px] text-stone-400">Per student order</div>
+              </div>
+
+              <div className="p-5 rounded-xl bg-white border border-stone-200 shadow-xs space-y-1">
+                <div className="flex items-center justify-between text-stone-500 font-medium text-xs">
+                  <span>Top Bestseller</span>
+                  <Award className="w-4 h-4 text-orange-700" />
+                </div>
+                <div className="text-base sm:text-lg font-bold text-stone-900 truncate" title={mostOrderedItem}>
+                  {mostOrderedItem}
+                </div>
+                <div className="text-[10px] text-orange-700 font-medium">{highestQty} portions ordered</div>
+              </div>
+
+            </div>
+
+            {/* Recharts Analytics Section */}
+            <div className="p-6 rounded-2xl bg-white border border-stone-200 shadow-xs">
+              <AnalyticsCharts orders={orders} />
+            </div>
+
+          </div>
+        )}
+
+        {/* Tab 2: Orders Table */}
+        {activeTab === 'orders' && (
+          <div className="rounded-2xl bg-white border border-stone-200 p-6 shadow-xs">
+            <OrderTable
+              orders={orders}
+              onUpdateStatus={onUpdateOrderStatus}
+            />
+          </div>
+        )}
+
+        {/* Tab 3: Student Directory */}
+        {activeTab === 'students' && (
+          <div className="rounded-2xl bg-white border border-stone-200 p-6 shadow-xs">
+            <StudentManager
+              students={students}
+              orders={orders}
+            />
+          </div>
+        )}
+
+        {/* Tab 4: Food Management */}
+        {activeTab === 'food' && (
+          <div className="rounded-2xl bg-white border border-stone-200 p-6 shadow-xs">
+            <FoodManager menuItems={menuItems} onSaveMenuItems={onSaveMenuItems} />
+          </div>
+        )}
+
+        {/* Tab 5: System Controls */}
+        {activeTab === 'settings' && (
+          <div className="p-6 sm:p-8 rounded-2xl bg-white border border-stone-200 space-y-6 max-w-2xl mx-auto shadow-xs text-stone-900">
+            <h3 className="text-base font-bold text-stone-900 border-b border-stone-200 pb-3">
+              System Controls & Device Reset
+            </h3>
+
+            <div className="space-y-4 text-xs">
+              
+              {/* Reset Device Lock */}
+              <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-stone-900 text-sm">Clear Device Lock</h4>
+                  <p className="text-stone-500 mt-0.5">Clears local device order lock for placing test orders.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onResetDeviceLock();
+                    alert('Device lock cleared successfully.');
+                  }}
+                  className="px-4 py-2 rounded-lg bg-stone-900 hover:bg-stone-800 text-white font-semibold whitespace-nowrap ml-3 cursor-pointer transition-colors shadow-xs"
+                >
+                  Clear Lock
+                </button>
+              </div>
+
+              {/* Clear All Orders */}
+              <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-amber-950 text-sm">Wipe All Orders</h4>
+                  <p className="text-amber-800 mt-0.5">Permanently resets the order register for a clean stall setup.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (confirm('Are you sure you want to delete ALL orders? This action is irreversible.')) {
+                      onClearAllOrders();
+                      alert('All orders wiped successfully.');
+                    }
+                  }}
+                  className="px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 text-white font-semibold whitespace-nowrap ml-3 cursor-pointer transition-colors shadow-xs"
+                >
+                  Wipe Orders
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+      </div>
+
+    </div>
+  );
+};
