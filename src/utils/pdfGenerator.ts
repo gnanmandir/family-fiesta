@@ -14,12 +14,16 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   img.src = familyFiestaLogo;
   await new Promise((resolve) => {
     img.onload = resolve;
+    img.onerror = resolve; // Resolve anyway to avoid hanging the receipt download
   });
 
   // Header Logo (Centered, no background)
-  const imgWidth = 60; 
-  const imgHeight = (img.height * imgWidth) / img.width;
-  doc.addImage(img, 'JPEG', 105 - (imgWidth / 2), 10, imgWidth, imgHeight);
+  let imgHeight = 0;
+  if (img.width > 0) {
+    const imgWidth = 60; 
+    imgHeight = (img.height * imgWidth) / img.width;
+    doc.addImage(img, 'JPEG', 105 - (imgWidth / 2), 10, imgWidth, imgHeight);
+  }
 
   // Order Summary Box
   const summaryBoxY = 15 + imgHeight; // dynamically position below the logo

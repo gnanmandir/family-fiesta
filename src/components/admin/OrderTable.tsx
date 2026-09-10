@@ -123,13 +123,21 @@ Thank you for ordering from Family Fiesta!
       return;
     }
 
+    // Get all unique food items across all orders
+    const allFoodItems = new Set<string>();
+    orders.forEach((o) => {
+      o.items.forEach((i) => {
+        allFoodItems.add(i.name);
+      });
+    });
+    const foodItemsArray = Array.from(allFoodItems).sort();
+
     // Sheet 1: Master Orders Registry
     const ordersData = orders.map((o, idx) => {
-      const itemsList = o.items.map((i) => `${i.quantity}x ${i.name} (₹${i.total})`).join(', ');
       const budgetStatus = o.totalAmount <= o.allowedBudget ? 'Within Budget' : 'Exceeded';
       const gmNo = getOrderGmNo(o, students);
 
-      return {
+      const row: any = {
         'S.No': idx + 1,
         'GM No.': gmNo !== 999999 ? gmNo : '',
         'Student Name': o.fullName || o.studentName,
@@ -137,35 +145,51 @@ Thank you for ordering from Family Fiesta!
         'Allowed Budget (INR)': o.allowedBudget,
         'Order Total (INR)': o.totalAmount,
         'Budget Status': budgetStatus,
-        'Food Items Ordered': itemsList,
-        'Order Date': o.dateDisplay,
-        'Order Time': o.timeDisplay,
-        'Status': o.status,
-        'Device ID': o.deviceId,
       };
+
+      // Add dedicated column for each food item with its quantity
+      foodItemsArray.forEach((foodName) => {
+        const item = o.items.find((i) => i.name === foodName);
+        row[foodName] = item ? item.quantity : 0;
+      });
+
+      // Add trailing columns
+      row['Order Date'] = o.dateDisplay;
+      row['Order Time'] = o.timeDisplay;
+      row['Status'] = o.status;
+      row['Device ID'] = o.deviceId;
+
+      return row;
     });
 
     const wb = XLSX.utils.book_new();
     const wsOrders = XLSX.utils.json_to_sheet(ordersData);
 
     // Set professional column widths for Excel
-    wsOrders['!cols'] = [
+    const cols = [
       { wch: 6 },  // S.No
-      { wch: 16 }, // Order Token #
-      { wch: 20 }, // Student First Name
-      { wch: 22 }, // Parent Name
-      { wch: 24 }, // Full Name
-      { wch: 12 }, // Student ID
+      { wch: 12 }, // GM No.
+      { wch: 24 }, // Student Name
       { wch: 13 }, // People Count
       { wch: 18 }, // Allowed Budget
       { wch: 16 }, // Order Total
       { wch: 14 }, // Budget Status
-      { wch: 50 }, // Food Items Ordered
+    ];
+
+    // Add width for each food item column
+    foodItemsArray.forEach((name) => {
+      cols.push({ wch: Math.max(name.length, 10) });
+    });
+
+    // Add width for trailing columns
+    cols.push(
       { wch: 14 }, // Order Date
       { wch: 12 }, // Order Time
       { wch: 12 }, // Status
-      { wch: 22 }, // Device ID
-    ];
+      { wch: 22 }  // Device ID
+    );
+
+    wsOrders['!cols'] = cols;
 
     XLSX.utils.book_append_sheet(wb, wsOrders, 'All Orders');
 
