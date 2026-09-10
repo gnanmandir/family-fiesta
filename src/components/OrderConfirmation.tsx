@@ -35,10 +35,10 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onR
               Official Digital Receipt
             </div>
             <div className="text-xl sm:text-3xl font-black text-slate-900 font-mono tracking-tight mt-0.5">
-              #{currentOrder.orderNumber}
+              GM #{INITIAL_STUDENTS.find((s) => s.id === currentOrder.studentId || s.fullName === currentOrder.fullName)?.gmNo || currentOrder.studentId}
             </div>
             <div className="text-[10px] sm:text-xs text-slate-500 mt-1 font-medium">
-              Present this token at the food counter
+              Present this receipt at the food counter
             </div>
           </div>
         </div>

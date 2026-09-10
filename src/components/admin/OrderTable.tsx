@@ -80,10 +80,11 @@ export const OrderTable: React.FC<OrderTableProps> = ({
   // Download single receipt as text file
   const handleDownloadSingleReceipt = (o: Order) => {
     const cleanStudentName = o.studentName.replace(/\s*\(.*\)/, '').trim();
+    const gmNo = getOrderGmNo(o, students);
     const receiptText = `=========================================
   FAMILY FIESTA - RECEIPT
 =========================================
-Order Token  : #${o.orderNumber}
+GM Number    : ${gmNo !== 999999 ? gmNo : '-'}
 Date & Time  : ${o.dateDisplay || ''} ${o.timeDisplay}
 Status       : ${o.status}
 
@@ -91,7 +92,6 @@ Status       : ${o.status}
 Student Name : ${cleanStudentName}
 Parent Name  : ${o.parentName}
 Full Name    : ${o.fullName}
-Student ID   : ${o.studentId}
 Group Size   : ${o.peopleCount} Person(s)
 Budget Limit : ₹${o.allowedBudget}
 
@@ -109,7 +109,7 @@ Thank you for ordering from Family Fiesta!
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Family_Fiesta_Receipt_Order_${o.orderNumber}.txt`;
+    a.download = `Family_Fiesta_Receipt_${cleanStudentName.replace(/\s+/g, '_')}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -127,15 +127,12 @@ Thank you for ordering from Family Fiesta!
     const ordersData = orders.map((o, idx) => {
       const itemsList = o.items.map((i) => `${i.quantity}x ${i.name} (₹${i.total})`).join(', ');
       const budgetStatus = o.totalAmount <= o.allowedBudget ? 'Within Budget' : 'Exceeded';
-      const cleanStudentFirst = o.studentName.replace(/\s*\(.*\)/, '').trim();
+      const gmNo = getOrderGmNo(o, students);
 
       return {
         'S.No': idx + 1,
-        'Order Token #': o.orderNumber,
-        'Student First Name': cleanStudentFirst,
-        'Parent Name': o.parentName || '',
-        'Full Name': o.fullName || o.studentName,
-        'Student ID': o.studentId,
+        'GM No.': gmNo !== 999999 ? gmNo : '',
+        'Student Name': o.fullName || o.studentName,
         'People Count': o.peopleCount,
         'Allowed Budget (INR)': o.allowedBudget,
         'Order Total (INR)': o.totalAmount,
@@ -273,7 +270,7 @@ Thank you for ordering from Family Fiesta!
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by student name, GM No, token #..."
+            placeholder="Search by student name or GM No..."
             className="w-full pl-10 pr-4 py-2 bg-stone-50 border border-stone-200 rounded-lg text-stone-900 placeholder-stone-400 text-xs focus:outline-none focus:border-indigo-600 focus:bg-white transition-all"
           />
         </div>
@@ -285,7 +282,6 @@ Thank you for ordering from Family Fiesta!
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-stone-50 border-b border-stone-200 text-stone-600 font-semibold uppercase tracking-wider text-[11px]">
-                <th className="p-3.5 whitespace-nowrap">Order #</th>
                 <th className="p-3.5 whitespace-nowrap">GM No.</th>
                 <th className="p-3.5 whitespace-nowrap">Student Name</th>
                 <th className="p-3.5 whitespace-nowrap text-center">Group</th>
@@ -309,9 +305,6 @@ Thank you for ordering from Family Fiesta!
 
                   return (
                     <tr key={order.orderNumber} className="hover:bg-stone-50/80 transition-colors">
-                      <td className="p-3.5 font-mono font-bold text-indigo-600 whitespace-nowrap">
-                        #{order.orderNumber}
-                      </td>
                       <td className="p-3.5 whitespace-nowrap">
                         <span className="font-mono font-bold text-stone-900 bg-stone-100 border border-stone-200 px-2 py-0.5 rounded text-xs">
                           {gmNo !== 999999 ? gmNo : '-'}
@@ -361,7 +354,7 @@ Thank you for ordering from Family Fiesta!
                 })
               ) : (
                 <tr>
-                  <td colSpan={9} className="p-8 text-center text-stone-500 font-medium">
+                  <td colSpan={8} className="p-8 text-center text-stone-500 font-medium">
                     No order records found matching your query.
                   </td>
                 </tr>
@@ -385,9 +378,11 @@ Thank you for ordering from Family Fiesta!
 
             <div className="border-b border-stone-100 pb-3">
               <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold uppercase tracking-wider">
-                Order Receipt Token
+                Order Receipt
               </span>
-              <h3 className="text-xl font-bold text-stone-900 mt-1 font-mono">Order #{selectedOrderForReceipt.orderNumber}</h3>
+              <h3 className="text-xl font-bold text-stone-900 mt-1">
+                {selectedOrderForReceipt.fullName || selectedOrderForReceipt.studentName}
+              </h3>
               <p className="text-xs text-stone-500">
                 Placed on {selectedOrderForReceipt.dateDisplay || ''} at {selectedOrderForReceipt.timeDisplay}
               </p>

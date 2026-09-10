@@ -32,7 +32,7 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   doc.setTextColor(30, 16, 60);
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  doc.text(`Order Token : #${order.orderNumber}`, 22, 55 + dy);
+  doc.text(`GM Number   : ${gmNumber}`, 22, 55 + dy);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
@@ -110,5 +110,5 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   doc.setTextColor(120, 120, 120);
   doc.text('Thank you for ordering with Family Fiesta!', 105, 280, { align: 'center' });
 
-  doc.save(`Family_Fiesta_Coupons_Receipt_${order.orderNumber}.pdf`);
+  doc.save(`Family_Fiesta_Receipt_GM_${gmNumber}_${cleanStudentName.replace(/\s+/g, '_')}.pdf`);
 };
