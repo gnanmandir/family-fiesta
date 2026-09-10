@@ -1,6 +1,8 @@
 import { FoodItem, Order, OrderStatus, Student } from '../types';
 
-const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '').replace(/\/+$/, '');
+const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '')
+  .replace(/\/+$/, '')
+  .replace(/\/rest\/v1$/, '');
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 export const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_KEY);

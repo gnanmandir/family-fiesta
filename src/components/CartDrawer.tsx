@@ -12,7 +12,7 @@ interface CartDrawerProps {
   onRemoveItem: (foodId: string) => void;
   selectedStudent: Student;
   peopleCount: number;
-  onPlaceOrder: () => void;
+  onPlaceOrder: () => Promise<void> | void;
 }
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({
@@ -26,6 +26,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   onPlaceOrder,
 }) => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
 
@@ -36,19 +37,24 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const remainingBudget = allowedBudget - currentTotal;
   const totalItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const handleCheckout = () => {
-    if (cart.length === 0 || isExceeded) return;
-    setShowConfirmModal(false);
+  const handleCheckout = async () => {
+    if (cart.length === 0 || isExceeded || isSubmitting) return;
+    setIsSubmitting(true);
     try {
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-      });
-    } catch (e) {
-      // ignore
+      await onPlaceOrder();
+      setShowConfirmModal(false);
+      try {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+        });
+      } catch (e) {}
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
     }
-    onPlaceOrder();
   };
 
   return (
@@ -229,10 +235,15 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 <button
                   type="button"
                   onClick={handleCheckout}
-                  className="w-full py-3 sm:py-3.5 px-6 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm sm:text-base shadow-lg shadow-blue-500/30 active:scale-[0.98] transition-all flex items-center justify-center space-x-2 cursor-pointer"
+                  disabled={isSubmitting}
+                  className="w-full py-3 sm:py-3.5 px-6 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm sm:text-base shadow-lg shadow-blue-500/30 active:scale-[0.98] transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  <CheckCircle2 className="w-5 h-5 stroke-[2]" />
-                  <span>Submit Order</span>
+                  {isSubmitting ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="w-5 h-5 stroke-[2]" />
+                  )}
+                  <span>{isSubmitting ? 'Submitting...' : 'Submit Order'}</span>
                 </button>
 
                 <button
