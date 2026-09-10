@@ -16,71 +16,67 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
     img.onload = resolve;
   });
 
-  // Header Banner
-  doc.setFillColor(30, 16, 60); // Dark Purple
-  doc.rect(0, 0, 210, 38, 'F');
-
-  const imgWidth = 45; 
+  // Header Logo (Centered, no background)
+  const imgWidth = 60; 
   const imgHeight = (img.height * imgWidth) / img.width;
-  doc.addImage(img, 'JPEG', 105 - (imgWidth / 2), 5, imgWidth, imgHeight);
-
-  doc.setTextColor(220, 210, 255);
-  doc.setFontSize(11);
-  doc.text('OFFICIAL ORDER RECEIPT & FOOD COUPONS', 105, 32, { align: 'center' });
+  doc.addImage(img, 'JPEG', 105 - (imgWidth / 2), 10, imgWidth, imgHeight);
 
   // Order Summary Box
+  const summaryBoxY = 15 + imgHeight; // dynamically position below the logo
   doc.setDrawColor(180, 150, 240);
   doc.setLineWidth(0.5);
-  doc.roundedRect(15, 45, 180, 32, 3, 3);
+  doc.roundedRect(15, summaryBoxY, 180, 32, 3, 3);
+
+  const dy = summaryBoxY - 45;
 
   doc.setTextColor(30, 16, 60);
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  doc.text(`Order Token : #${order.orderNumber}`, 22, 55);
+  doc.text(`Order Token : #${order.orderNumber}`, 22, 55 + dy);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   doc.setTextColor(50, 50, 50);
-  doc.text(`Date & Time : ${order.dateDisplay || ''} ${order.timeDisplay}`, 22, 63);
-  doc.text(`Guests : ${order.peopleCount}`, 140, 63);
-  doc.text(`Budget : Rs. ${order.allowedBudget}`, 22, 71);
+  doc.text(`Date & Time : ${order.dateDisplay || ''} ${order.timeDisplay}`, 22, 63 + dy);
+  doc.text(`Guests : ${order.peopleCount}`, 140, 63 + dy);
+  doc.text(`Budget : Rs. ${order.allowedBudget}`, 22, 71 + dy);
 
   // Student & Parent Details
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(12);
   doc.setTextColor(30, 16, 60);
-  doc.text('STUDENT & PARENT DETAILS', 15, 88);
+  doc.text('STUDENT & PARENT DETAILS', 15, 88 + dy);
 
   doc.setLineWidth(0.3);
   doc.setDrawColor(200, 200, 220);
-  doc.line(15, 91, 195, 91);
+  doc.line(15, 91 + dy, 195, 91 + dy);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   doc.setTextColor(40, 40, 40);
-  doc.text(`Student Name : ${cleanStudentName}`, 20, 99);
-  doc.text(`GM Number    : ${gmNumber}`, 120, 99);
-  doc.text(`Parent Name  : ${order.parentName}`, 20, 107);
+  doc.text(`Student Name : ${cleanStudentName}`, 20, 99 + dy);
+  doc.text(`GM Number    : ${gmNumber}`, 120, 99 + dy);
+  doc.text(`Parent Name  : ${order.parentName}`, 20, 107 + dy);
 
   // Ordered Items
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(12);
   doc.setTextColor(30, 16, 60);
-  doc.text('ORDERED ITEMS', 15, 122);
-  doc.line(15, 125, 195, 125);
+  doc.text('ORDERED ITEMS', 15, 122 + dy);
+  doc.line(15, 125 + dy, 195, 125 + dy);
 
   // Table Header
   doc.setFillColor(240, 235, 255);
-  doc.rect(15, 129, 180, 8, 'F');
+  doc.rect(15, 129 + dy, 180, 8, 'F');
   doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(30, 16, 60);
-  doc.text('Item Description', 20, 135);
-  doc.text('Qty', 125, 135, { align: 'center' });
-  doc.text('Price', 155, 135, { align: 'right' });
-  doc.text('Total', 190, 135, { align: 'right' });
+  doc.text('Item Description', 20, 135 + dy);
+  doc.text('Qty', 125, 135 + dy, { align: 'center' });
+  doc.text('Price', 155, 135 + dy, { align: 'right' });
+  doc.text('Total', 190, 135 + dy, { align: 'right' });
 
-  let y = 143;
+  let y = 143 + dy;
   order.items.forEach((item, index) => {
     if (index % 2 === 1) {
       doc.setFillColor(250, 250, 253);
