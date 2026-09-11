@@ -94,6 +94,7 @@ export const tursoService = {
       parentName: r.parent_name,
       fullName: r.full_name,
       grade: r.grade || 'Gurukul Roster',
+      birthDate: r.birth_date,
     }));
   },
 

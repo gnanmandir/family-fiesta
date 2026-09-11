@@ -42,6 +42,7 @@ export const supabaseService = {
       parentName: r.parent_name,
       fullName: r.full_name,
       grade: r.grade || 'Gurukul Roster',
+      birthDate: r.birth_date,
     }));
   },
 
@@ -53,6 +54,7 @@ export const supabaseService = {
       parent_name: student.parentName,
       full_name: student.fullName,
       grade: student.grade,
+      birth_date: student.birthDate,
     };
     await supabaseFetch('students?on_conflict=id', {
       method: 'POST',

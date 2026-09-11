@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS students (
     parent_name TEXT NOT NULL,
     full_name TEXT NOT NULL,
     grade TEXT DEFAULT 'Gurukul Roster',
+    birth_date TEXT,
     created_at TEXT DEFAULT (datetime('now'))
 );
 

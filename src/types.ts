@@ -5,8 +5,10 @@ export interface Student {
   gmNo: number; // e.g. 1
   firstName: string; // e.g. "Darsh"
   parentName: string; // e.g. "Pradip Ramjiyani"
+  lastName?: string; // Optional if existing data lacks it
   fullName: string; // e.g. "Darsh Pradip Ramjiyani"
   grade: string; // e.g. "Std 10"
+  birthDate?: string; // Format DDMMYYYY e.g. 30042011
 }
 
 export interface FoodItem {

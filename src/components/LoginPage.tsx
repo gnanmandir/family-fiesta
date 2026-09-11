@@ -138,12 +138,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     });
 
     if (matchedStudent) {
-      // GM NO as Password check (e.g. GM NO 1 -> password is "1")
-      const expectedPassword = String(matchedStudent.gmNo);
+      // Birth Date as Password check (e.g. 30/04/2011)
+      const expectedPassword = matchedStudent.birthDate || String(matchedStudent.gmNo);
       if (cleanPwd !== expectedPassword) {
         setIsLoading(false);
-        // Do NOT disclose the GM No in error message!
-        setError('Incorrect password. Please enter your valid GM No.');
+        // Do NOT disclose the birth date in error message!
+        setError('Incorrect password. Please enter your valid Birth Date (DD/MM/YYYY).');
         return;
       }
 
@@ -265,7 +265,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   setPassword(e.target.value);
                   if (error) setError(null);
                 }}
-                placeholder="GM No."
+                placeholder="DD/MM/YYYY"
                 className="w-full pl-3.5 pr-10 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-colors"
                 autoComplete="new-password"
                 data-lpignore="true"

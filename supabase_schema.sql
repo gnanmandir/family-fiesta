@@ -8,9 +8,10 @@ CREATE TABLE IF NOT EXISTS public.students (
     id TEXT PRIMARY KEY,
     first_name TEXT NOT NULL,
     parent_name TEXT NOT NULL,
-    full_name TEXT NOT NULL,
-    grade TEXT DEFAULT 'Gurukul Roster',
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    full_name VARCHAR(255) NOT NULL,
+    grade VARCHAR(100) DEFAULT 'Gurukul Roster',
+    birth_date VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
 );
 
 CREATE TABLE IF NOT EXISTS public.menu_items (
