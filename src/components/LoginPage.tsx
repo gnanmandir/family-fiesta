@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Student } from '../types';
-import familyFiestaLogo from '../assets/images/family_fiesta_logo_1787459637243.jpg';
+import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
 import { Eye, EyeOff, AlertCircle, User, Info } from 'lucide-react';
 
 interface LoginPageProps {

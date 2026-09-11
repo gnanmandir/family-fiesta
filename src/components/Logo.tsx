@@ -1,5 +1,5 @@
 import React from 'react';
-import familyFiestaLogo from '../assets/images/family_fiesta_logo_1787459637243.jpg';
+import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';

@@ -2,7 +2,7 @@ import jsPDF from 'jspdf';
 import { Order } from '../types';
 
 import { INITIAL_STUDENTS } from '../data/students';
-import familyFiestaLogo from '../assets/images/family_fiesta_logo_1787459637243.jpg';
+import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
 
 export const generateAndDownloadPDFReceipt = async (order: Order) => {
   const doc = new jsPDF();
