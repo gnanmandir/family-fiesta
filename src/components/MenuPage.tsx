@@ -155,14 +155,14 @@ export const MenuPage: React.FC<MenuPageProps> = ({
                     <div className="p-3.5 flex flex-col flex-1 justify-between">
                       <div>
                         <div className="flex justify-between items-start">
-                          <h3 className="text-sm font-bold text-slate-900 line-clamp-1 group-hover:text-blue-600 transition-colors pr-2">
+                          <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors pr-2">
                             {food.name}
                           </h3>
                         </div>
                         <p className="text-[9px] font-bold text-blue-600 uppercase tracking-wider mt-0.5 mb-1.5">
                           {food.category}
                         </p>
-                        <p className="text-xs text-slate-500 line-clamp-2 leading-snug">
+                        <p className="text-xs text-slate-500 leading-snug">
                           {food.description}
                         </p>
                       </div>

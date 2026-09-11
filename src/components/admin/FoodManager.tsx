@@ -198,13 +198,11 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
             />
 
             <div className="flex-1 flex flex-col justify-between min-w-0">
-              <div>
-                <div className="flex items-start justify-between">
-                  <h4 className="text-sm font-bold text-stone-900 truncate">{item.name}</h4>
-                  <span className="text-sm font-bold text-stone-900 ml-2 font-mono">₹{item.price}</span>
-                </div>
-                <p className="text-[11px] text-stone-500 line-clamp-2 mt-0.5">{item.description}</p>
+              <div className="flex justify-between items-start">
+                <h4 className="text-sm font-bold text-stone-900">{item.name}</h4>
+                <span className="text-sm font-bold text-stone-900 ml-2 font-mono">₹{item.price}</span>
               </div>
+              <p className="text-[11px] text-stone-500 mt-0.5">{item.description}</p>
 
               <div className="flex items-center justify-between pt-2 border-t border-stone-100 mt-2">
                 <button
