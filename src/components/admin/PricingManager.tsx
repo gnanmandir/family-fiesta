@@ -3,7 +3,7 @@ import { IndianRupee, Save, Plus, Trash2, Users } from 'lucide-react';
 import { api } from '../../services/api';
 
 export const PricingManager: React.FC = () => {
-  const [tiers, setTiers] = useState<number[]>([]);
+  const [tiers, setTiers] = useState<(number | '')[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -28,10 +28,16 @@ export const PricingManager: React.FC = () => {
       alert("You must have at least one guest tier.");
       return;
     }
+    const hasEmpty = tiers.some((t) => t === '' || t === null || t === undefined || isNaN(Number(t)));
+    if (hasEmpty) {
+      alert("All guest budget fields must have a valid amount. Empty fields cannot be saved.");
+      return;
+    }
+    const numericTiers = tiers.map((t) => Number(t));
     setIsSaving(true);
     try {
-      await api.setGuestTiers(tiers);
-      localStorage.setItem('app_guest_tiers', JSON.stringify(tiers));
+      await api.setGuestTiers(numericTiers);
+      localStorage.setItem('app_guest_tiers', JSON.stringify(numericTiers));
       alert("Guest tiers and pricing updated successfully!");
     } catch (e) {
       alert("Failed to update guest tiers.");
@@ -42,12 +48,17 @@ export const PricingManager: React.FC = () => {
 
   const updateTier = (index: number, val: string) => {
     const newTiers = [...tiers];
-    newTiers[index] = parseInt(val, 10) || 0;
+    if (val.trim() === '') {
+      newTiers[index] = '';
+    } else {
+      const parsed = parseInt(val, 10);
+      newTiers[index] = isNaN(parsed) ? '' : parsed;
+    }
     setTiers(newTiers);
   };
 
   const addTier = () => {
-    setTiers([...tiers, 100]);
+    setTiers([...tiers, '']);
   };
 
   const removeTier = (index: number) => {
@@ -121,8 +132,9 @@ export const PricingManager: React.FC = () => {
                   <input
                     type="number"
                     min="0"
-                    value={amount}
+                    value={amount === '' ? '' : amount}
                     onChange={(e) => updateTier(idx, e.target.value)}
+                    placeholder="Enter amount..."
                     className="block w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-semibold focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all"
                   />
                 </div>
