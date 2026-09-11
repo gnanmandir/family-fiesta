@@ -8,9 +8,14 @@ import gnanMandirStamp from '../assets/images/gnan_mandir_stamp.jpg';
 import { formatNameDisplay } from './nameFormatter';
 
 export const generateAndDownloadPDFReceipt = async (order: Order) => {
-  const doc = new jsPDF();
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4',
+  });
+
   const student = INITIAL_STUDENTS.find((s) => s.id === order.studentId || s.fullName === order.fullName);
-  const cleanStudentName = formatNameDisplay(order.studentName);
+  const cleanStudentName = formatNameDisplay(order.studentName || order.fullName || '');
   const gmNumber = student ? String(student.gmNo) : 'N/A';
   const grade = student ? student.grade : 'Gurukul Roster';
 
@@ -28,121 +33,192 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
     loadImage(gnanMandirStamp),
   ]);
 
-  // Deep Purple: 88, 28, 135
-  // Vibrant Orange: 234, 88, 12
+  // Executive Page Borders
+  doc.setDrawColor(88, 28, 135);
+  doc.setLineWidth(0.6);
+  doc.rect(10, 10, 190, 277);
 
-  // 1. Logo
-  let imgHeight = 0;
+  doc.setDrawColor(234, 88, 12);
+  doc.setLineWidth(0.2);
+  doc.rect(12, 12, 186, 273);
+
+  // 1. Centered Festival Logo
+  let logoY = 16;
+  let logoHeight = 0;
   if (logoImg.width > 0) {
-    const imgWidth = 50; 
-    imgHeight = (logoImg.height * imgWidth) / logoImg.width;
-    doc.addImage(logoImg, 'JPEG', 105 - (imgWidth / 2), 10, imgWidth, imgHeight);
+    const logoWidth = 48;
+    logoHeight = (logoImg.height * logoWidth) / logoImg.width;
+    doc.addImage(logoImg, 'JPEG', 105 - (logoWidth / 2), logoY, logoWidth, logoHeight);
   }
 
-  // 2. Banner
-  let y = 15 + imgHeight;
+  // 2. Official Header Banner
+  let y = logoY + logoHeight + 4;
   doc.setFillColor(88, 28, 135);
-  doc.rect(15, y, 180, 12, 'F');
-  
+  doc.roundedRect(18, y, 174, 10, 2, 2, 'F');
+
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
-  doc.text('OFFICIAL FOOD COUPONS', 105, y + 8, { align: 'center' });
+  doc.setFontSize(12);
+  doc.text('OFFICIAL FOOD COUPONS', 105, y + 6.8, { align: 'center' });
 
-  y += 20;
+  // 3. Two-Column Structured Details Card (no line overlaps)
+  y += 15;
+  const cardHeight = 36;
+  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(18, y, 174, cardHeight, 2.5, 2.5, 'FD');
 
-  // 3. Two Column Details Box
-  // Left: Student Info
+  // Vertical Separator between columns
+  doc.setDrawColor(226, 232, 240);
+  doc.line(105, y + 4, 105, y + cardHeight - 4);
+
+  // Left: Student Details
   doc.setTextColor(88, 28, 135);
-  doc.setFontSize(10);
-  doc.text('STUDENT DETAILS', 20, y);
-  
-  doc.setTextColor(40, 40, 40);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`Name: ${cleanStudentName}`, 20, y + 7);
-  doc.text(`GM No: ${gmNumber}`, 20, y + 13);
-  doc.text(`Grade: ${grade}`, 20, y + 19);
-  doc.text(`Guests: ${order.peopleCount} Person(s)`, 20, y + 25);
-
-  // Right: Order Info
+  doc.setFontSize(9);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(88, 28, 135);
-  doc.text('ORDER DETAILS', 120, y);
-  
-  doc.setTextColor(40, 40, 40);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`Date: ${order.dateDisplay || ''}`, 120, y + 7);
-  doc.text(`Time: ${order.timeDisplay || ''}`, 120, y + 13);
-  
-  // Line Separator
-  y += 25;
-  doc.setDrawColor(200, 200, 220);
-  doc.setLineWidth(0.5);
-  doc.line(15, y, 195, y);
-  y += 10;
+  doc.text('STUDENT INFORMATION', 24, y + 7);
 
-  // 4. Ordered Items Table Header
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100, 116, 139);
+  doc.text('Student Name:', 24, y + 14);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(15, 23, 42);
+  doc.text(cleanStudentName, 52, y + 14);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100, 116, 139);
+  doc.text('GM Number:', 24, y + 21);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(15, 23, 42);
+  doc.text(gmNumber, 52, y + 21);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100, 116, 139);
+  doc.text('Standard:', 24, y + 28);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(15, 23, 42);
+  doc.text(grade, 52, y + 28);
+
+  // Right: Order Details
+  doc.setTextColor(88, 28, 135);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text('EVENT DETAILS', 112, y + 7);
+
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100, 116, 139);
+  doc.text('Attendees:', 112, y + 14);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(15, 23, 42);
+  doc.text(`${order.peopleCount} Person(s)`, 140, y + 14);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100, 116, 139);
+  doc.text('Order Date:', 112, y + 21);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(15, 23, 42);
+  doc.text(order.dateDisplay || '', 140, y + 21);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100, 116, 139);
+  doc.text('Order Time:', 112, y + 28);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(15, 23, 42);
+  doc.text(order.timeDisplay || '', 140, y + 28);
+
+  // 4. Ordered Items Table
+  y += cardHeight + 6;
+
+  // Table Header
   doc.setFillColor(88, 28, 135);
-  doc.rect(15, y, 180, 10, 'F');
+  doc.roundedRect(18, y, 174, 9, 1.5, 1.5, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.text('Item Description', 20, y + 7);
-  doc.text('Price', 120, y + 7, { align: 'right' });
-  doc.text('Qty', 150, y + 7, { align: 'center' });
-  doc.text('Total', 190, y + 7, { align: 'right' });
+  doc.setFontSize(8.5);
+  doc.text('ITEM DESCRIPTION', 24, y + 6);
+  doc.text('PRICE', 120, y + 6, { align: 'right' });
+  doc.text('QTY', 145, y + 6, { align: 'center' });
+  doc.text('TOTAL', 186, y + 6, { align: 'right' });
 
-  y += 10;
+  y += 9;
 
-  // 5. Table Rows
+  // Table Rows
   order.items.forEach((item, index) => {
+    const rowHeight = 8.5;
     if (index % 2 === 0) {
       doc.setFillColor(250, 245, 255);
-      doc.rect(15, y, 180, 8, 'F');
+      doc.rect(18, y, 174, rowHeight, 'F');
     }
-    
-    doc.setTextColor(40, 40, 40);
-    doc.setFont('helvetica', 'normal');
-    doc.text(item.name, 20, y + 5.5);
-    doc.text(`Rs. ${item.price}`, 120, y + 5.5, { align: 'right' });
-    doc.text(`${item.quantity}`, 150, y + 5.5, { align: 'center' });
-    doc.text(`Rs. ${item.total}`, 190, y + 5.5, { align: 'right' });
-    y += 8;
 
-    if (y > 230) {
+    doc.setTextColor(30, 41, 59);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(item.name, 24, y + 5.5);
+    doc.text(`Rs. ${item.price}`, 120, y + 5.5, { align: 'right' });
+    doc.text(`${item.quantity}`, 145, y + 5.5, { align: 'center' });
+    doc.text(`Rs. ${item.total}`, 186, y + 5.5, { align: 'right' });
+    y += rowHeight;
+
+    if (y > 210) {
       doc.addPage();
       y = 20;
     }
   });
 
-  // 6. Total Summary
-  y += 5;
-  doc.setFillColor(255, 240, 230);
-  doc.rect(110, y, 85, 12, 'F');
-  
+  // 5. Total Summary Box
+  y += 4;
+  doc.setFillColor(255, 241, 230);
+  doc.setDrawColor(254, 215, 170);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(105, y, 87, 12, 2, 2, 'FD');
+
   doc.setTextColor(88, 28, 135);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(12);
-  doc.text('TOTAL:', 115, y + 8);
-  
-  doc.setTextColor(234, 88, 12);
-  doc.text(`Rs. ${order.totalAmount}`, 190, y + 8, { align: 'right' });
+  doc.setFontSize(11);
+  doc.text('TOTAL:', 112, y + 8);
 
-  // 7. Footer / Official Stamp
-  const stampY = 245;
+  doc.setTextColor(234, 88, 12);
+  doc.setFontSize(13);
+  doc.text(`Rs. ${order.totalAmount}`, 186, y + 8, { align: 'right' });
+
+  // 6. Verification & Instructions Box (Anchored Elegantly in the Lower Section)
+  const footerBoxY = Math.max(y + 16, 210);
+  const footerBoxHeight = 58;
+
+  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(18, footerBoxY, 174, footerBoxHeight, 2.5, 2.5, 'FD');
+
+  // Left Notice & Instructions
+  doc.setTextColor(88, 28, 135);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.text('OFFICIAL VERIFICATION & TERMS', 24, footerBoxY + 8);
+
+  doc.setTextColor(71, 85, 105);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.text('• Please present this digital or printed voucher at the food stall counters.', 24, footerBoxY + 16);
+  doc.text('• Valid only for the items specified above during Family Fiesta 2026.', 24, footerBoxY + 23);
+  doc.text('• Non-transferable and cannot be exchanged or redeemed for cash.', 24, footerBoxY + 30);
+  doc.text('• System generated official digital coupon issued by Gnan Mandir.', 24, footerBoxY + 37);
+
+  doc.setTextColor(148, 163, 184);
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'italic');
+  doc.text('May you enjoy a blessed, spiritually uplifting festival feast!', 24, footerBoxY + 47);
+
+  // Right Stamp Embedded inside the Verification Box
   if (stampImg.width > 0) {
     const stampSize = 42;
-    doc.addImage(stampImg, 'JPEG', 145, stampY, stampSize, stampSize);
+    const stampX = 144;
+    const stampY = footerBoxY + 8;
+    doc.addImage(stampImg, 'JPEG', stampX, stampY, stampSize, stampSize);
   }
-  
-  // Disclaimer Texts (Bottom Left)
-  doc.setTextColor(100, 100, 100);
-  doc.setFont('helvetica', 'italic');
-  doc.setFontSize(9);
-  doc.text('• Please present this receipt at the food counter.', 15, stampY - 5);
-  doc.text('• Not valid for cash exchange.', 15, stampY);
-  doc.text('• System generated official digital token.', 15, stampY + 5);
 
   doc.save(`Family_Fiesta_Receipt_GM_${gmNumber}.pdf`);
 };
