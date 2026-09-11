@@ -45,6 +45,23 @@ export const supabaseService = {
     }));
   },
 
+  saveStudent: async (student: Student): Promise<Student> => {
+    const payload = {
+      id: student.id,
+      gm_no: student.gmNo,
+      first_name: student.firstName,
+      parent_name: student.parentName,
+      full_name: student.fullName,
+      grade: student.grade,
+    };
+    await supabaseFetch('students?on_conflict=id', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify(payload),
+    });
+    return student;
+  },
+
   // --- Menu Items ---
   getMenuItems: async (): Promise<FoodItem[]> => {
     const rows = await supabaseFetch<any[]>('menu_items?select=*&order=id.asc');
@@ -332,6 +349,37 @@ export const supabaseService = {
       method: 'POST',
       headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
       body: JSON.stringify({ key: 'orders_open', value: String(isOpen) }),
+    });
+  },
+
+  getAdminCredentials: async (): Promise<{username: string, password: string}> => {
+    try {
+      const rows = await supabaseFetch<any[]>('app_settings?key=in.(admin_username,admin_password)&select=*');
+      if (rows && rows.length > 0) {
+        let username = 'dada';
+        let password = 'niruma0212';
+        rows.forEach(r => {
+          if (r.key === 'admin_username') username = r.value;
+          if (r.key === 'admin_password') password = r.value;
+        });
+        return { username, password };
+      }
+    } catch (e) {
+      // ignore
+    }
+    return { username: 'dada', password: 'niruma0212' };
+  },
+
+  setAdminCredentials: async (username: string, password: string): Promise<void> => {
+    await supabaseFetch('app_settings?on_conflict=key', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify({ key: 'admin_username', value: username }),
+    });
+    await supabaseFetch('app_settings?on_conflict=key', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify({ key: 'admin_password', value: password }),
     });
   },
 };

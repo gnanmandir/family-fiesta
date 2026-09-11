@@ -45,6 +45,25 @@ export function getCachedStudents(): Student[] {
   return INITIAL_STUDENTS;
 }
 
+export async function saveStudent(student: Student): Promise<Student> {
+  const saved = await api.saveStudent(student);
+  const existing = getCachedStudents();
+  const index = existing.findIndex(s => s.id === saved.id);
+  
+  let updated;
+  if (index >= 0) {
+    updated = [...existing];
+    updated[index] = saved;
+  } else {
+    updated = [...existing, saved];
+  }
+  
+  // Sort alphabetically by first name
+  updated.sort((a, b) => a.firstName.localeCompare(b.firstName));
+  localStorage.setItem(KEYS.STUDENTS, JSON.stringify(updated));
+  return saved;
+}
+
 export async function fetchMenuItems(): Promise<FoodItem[]> {
   try {
     const data = await api.getMenuItems();

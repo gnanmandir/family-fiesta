@@ -28,6 +28,23 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
     setError(false);
     
     try {
+      let adminUser = 'dada';
+      let adminPwd = 'niruma0212';
+      try {
+        const { api } = await import('../../services/api');
+        const creds = await api.getAdminCredentials();
+        adminUser = creds.username;
+        adminPwd = creds.password;
+      } catch (e) {}
+
+      if (cleanUser === adminUser && cleanPwd === adminPwd) {
+        localStorage.setItem('admin_token', 'session_' + Date.now());
+        setError(false);
+        setPassword('');
+        onLoginSuccess();
+        return;
+      }
+
       const apiUrl = (import.meta.env.VITE_API_URL || '/api') + '/admin/login';
       const res = await fetch(apiUrl, {
         method: 'POST',
@@ -41,23 +58,11 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
         setError(false);
         setPassword('');
         onLoginSuccess();
-      } else if (cleanUser === 'dada' && cleanPwd === 'dada58') {
-        localStorage.setItem('admin_token', 'session_' + Date.now());
-        setError(false);
-        setPassword('');
-        onLoginSuccess();
       } else {
         setError(true);
       }
     } catch (err) {
-      if (cleanUser === 'dada' && cleanPwd === 'dada58') {
-        localStorage.setItem('admin_token', 'session_' + Date.now());
-        setError(false);
-        setPassword('');
-        onLoginSuccess();
-      } else {
-        setError(true);
-      }
+      setError(true);
     } finally {
       setIsLoading(false);
     }

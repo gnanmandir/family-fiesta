@@ -11,6 +11,7 @@ interface StudentManagerProps {
 export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'All' | 'Ordered' | 'Remaining'>('All');
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
   // Map student orders
   const studentOrdersMap = new Map<string, Order>();
@@ -59,15 +60,24 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
 
       {/* Filter & Search Bar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-stone-200 shadow-xs">
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search student, GM No, grade..."
-            className="w-full pl-9 pr-3 py-2 bg-stone-50 border border-stone-200 rounded-lg text-stone-900 placeholder-stone-400 text-xs focus:outline-none focus:border-indigo-600 focus:bg-white transition-all"
-          />
+        <div className="flex w-full sm:w-auto items-center gap-2">
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search student, GM No, grade..."
+              className="w-full pl-9 pr-3 py-2 bg-stone-50 border border-stone-200 rounded-lg text-stone-900 placeholder-stone-400 text-xs focus:outline-none focus:border-indigo-600 focus:bg-white transition-all"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setEditingStudent({ id: '', fullName: '', firstName: '', lastName: '', parentName: '', gmNo: 0, grade: '' } as any)}
+            className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm whitespace-nowrap transition-colors"
+          >
+            + Add Student
+          </button>
         </div>
 
         <div className="flex items-center space-x-1.5">
@@ -99,6 +109,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
                 <th className="p-3.5">Standard</th>
                 <th className="p-3.5">Order Status</th>
                 <th className="p-3.5 text-right">Order Total</th>
+                <th className="p-3.5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100 text-stone-700">
@@ -133,12 +144,21 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
                       <td className="p-3.5 text-right font-bold text-stone-900 whitespace-nowrap font-mono">
                         {existingOrder ? `₹${existingOrder.totalAmount}` : '-'}
                       </td>
+                      <td className="p-3.5 text-right whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => setEditingStudent(student)}
+                          className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold rounded-lg transition-colors"
+                        >
+                          Edit
+                        </button>
+                      </td>
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-stone-500 font-medium">
+                  <td colSpan={6} className="p-8 text-center text-stone-500 font-medium">
                     No students match your query.
                   </td>
                 </tr>
@@ -147,6 +167,66 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
           </table>
         </div>
       </div>
+
+      {/* Quick Add/Edit Student Modal */}
+      {editingStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+            <h3 className="text-lg font-bold text-slate-900 mb-4">
+              {editingStudent.id ? 'Edit Student' : 'Add New Student'}
+            </h3>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                const fullName = formData.get('fullName') as string;
+                const gmNo = Number(formData.get('gmNo'));
+                const grade = formData.get('grade') as string;
+                
+                const firstName = fullName.split(' ')[0] || fullName;
+                const parentName = formData.get('parentName') as string || '';
+                
+                const newStudent: Student = {
+                  ...editingStudent,
+                  id: editingStudent.id || `ST-${Math.random().toString(36).substr(2, 9)}`,
+                  fullName,
+                  firstName,
+                  parentName,
+                  gmNo,
+                  grade,
+                };
+                
+                try {
+                  const { saveStudent } = await import('../../services/storage');
+                  await saveStudent(newStudent);
+                  alert('Student saved successfully! Refresh page if list doesn\'t update immediately.');
+                  setEditingStudent(null);
+                } catch(err) {
+                  alert('Error saving student.');
+                }
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Student Full Name (Username)</label>
+                <input type="text" name="fullName" required defaultValue={editingStudent.fullName} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">GM No. (Password)</label>
+                <input type="number" name="gmNo" required defaultValue={editingStudent.gmNo || ''} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Grade / Standard</label>
+                <input type="text" name="grade" defaultValue={editingStudent.grade || 'Gurukul Roster'} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm" />
+              </div>
+              <div className="flex justify-end space-x-2 pt-4">
+                <button type="button" onClick={() => setEditingStudent(null)} className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+                <button type="submit" className="px-4 py-2 text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-sm">Save Student</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );

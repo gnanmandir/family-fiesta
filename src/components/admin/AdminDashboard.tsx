@@ -331,6 +331,43 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
 
             </div>
+
+            <div className="mt-8 space-y-3">
+              <h3 className="text-sm font-bold text-slate-900 tracking-tight uppercase">Admin Login Credentials</h3>
+              <div className="h-px w-full bg-slate-200 my-2"></div>
+              
+              <div className="p-4 rounded-xl bg-white border border-stone-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div>
+                  <h4 className="font-bold text-slate-900 text-sm">Update Admin Username & Password</h4>
+                  <p className="text-slate-500 mt-0.5 text-xs">Change the credentials used to access this admin panel.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const newUsername = prompt("Enter NEW Admin Username:");
+                    if (!newUsername) return;
+                    const newPassword = prompt("Enter NEW Admin Password:");
+                    if (!newPassword) return;
+                    
+                    if (confirm(`Change admin login to Username: "${newUsername}" / Password: "${newPassword}"?`)) {
+                      handleProtectedAction(async () => {
+                        try {
+                          const { api } = await import('../../services/api');
+                          await api.setAdminCredentials(newUsername, newPassword);
+                          alert("Admin credentials updated successfully! You will use these to log in next time.");
+                        } catch(e) {
+                          alert("Failed to update credentials.");
+                        }
+                      }, 'Enter CURRENT system control password to confirm change:');
+                    }
+                  }}
+                  className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold whitespace-nowrap cursor-pointer transition-colors shadow-xs w-full sm:w-auto"
+                >
+                  Change Login
+                </button>
+              </div>
+            </div>
+
           </div>
         )}
 

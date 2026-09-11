@@ -34,18 +34,47 @@ export const api = {
       try {
         return await tursoService.getStudents();
       } catch (e) {
-        console.warn('[Turso] Failed to fetch students, trying fallback:', e);
+        console.error('Turso getStudents error:', e);
       }
     }
     if (isSupabaseConfigured) {
-      try {
-        return await supabaseService.getStudents();
-      } catch (e) {
-        console.warn('[Supabase] Failed to fetch students, trying fallback:', e);
-      }
+      return await supabaseService.getStudents();
     }
-    const res = await fetchJson<{ success: boolean; data: Student[] }>(`${API_BASE}/students`);
-    return res.data;
+    try {
+      const res = await fetchJson<{ success: boolean; data: Student[] }>(`${API_BASE}/students`);
+      return res.data || [];
+    } catch (e) {
+      // Fallback
+      if (isTursoConfigured) {
+        const all = await tursoService.getStudents();
+        return all;
+      }
+      if (isSupabaseConfigured) {
+        const all = await supabaseService.getStudents();
+        return all;
+      }
+      throw e;
+    }
+  },
+
+  saveStudent: async (student: Student): Promise<Student> => {
+    if (isSupabaseConfigured) {
+      return await supabaseService.saveStudent(student);
+    }
+    return student; // fallback
+  },
+
+  getAdminCredentials: async () => {
+    if (isSupabaseConfigured) {
+      return await supabaseService.getAdminCredentials();
+    }
+    return { username: 'dada', password: 'niruma0212' };
+  },
+
+  setAdminCredentials: async (username: string, password: string) => {
+    if (isSupabaseConfigured) {
+      await supabaseService.setAdminCredentials(username, password);
+    }
   },
 
   getStudentById: async (id: string): Promise<Student> => {
