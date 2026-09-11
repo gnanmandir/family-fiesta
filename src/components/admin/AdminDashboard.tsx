@@ -56,9 +56,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     'overview' | 'orders' | 'students' | 'food' | 'settings'
   >('overview');
 
-  const handleProtectedAction = (action: () => void, message: string = "Enter admin password to proceed:") => {
+  const handleProtectedAction = (action: () => void, message: string = "Enter system control password to proceed:") => {
     const pwd = prompt(message);
-    if (pwd === 'dada58') {
+    if (pwd === 'niruma0212') {
       action();
     } else if (pwd !== null) {
       alert('Incorrect password.');
@@ -117,32 +117,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
 
           <div className="flex items-center space-x-3">
-            {/* Master Ordering Toggle */}
-            {onToggleOrdering && (
-              <button
-                type="button"
-                onClick={() => {
-                  const newState = !ordersOpen;
-                  const msg = newState
-                    ? 'Re-open ordering? Students will be able to place new orders again.'
-                    : 'Close ordering? Students will only be able to view/download existing receipts.';
-                  if (confirm(msg)) {
-                    handleProtectedAction(() => onToggleOrdering(newState), 'Enter admin password to toggle ordering:');
-                  }
-                }}
-                className={`px-3.5 py-2 rounded-xl font-semibold text-xs tracking-wide flex items-center space-x-1.5 active:scale-95 transition-all cursor-pointer border ${
-                  ordersOpen
-                    ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
-                    : 'bg-red-50 hover:bg-red-100 text-red-700 border-red-200'
-                }`}
-                title={ordersOpen ? 'Orders are OPEN — click to close' : 'Orders are CLOSED — click to re-open'}
-              >
-                <Power className="w-4 h-4" />
-                <span>{ordersOpen ? 'Orders: Open' : 'Orders: Closed'}</span>
-                <span className={`w-2 h-2 rounded-full ${ordersOpen ? 'bg-emerald-500' : 'bg-red-500'}`} />
-              </button>
-            )}
-
             <button
               type="button"
               onClick={onLogoutAdmin}
