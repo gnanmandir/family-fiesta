@@ -59,16 +59,17 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   doc.setTextColor(88, 28, 135);
   doc.text('ORDER DETAILS', 120, y);
   
-  doc.setTextColor(234, 88, 12);
-  doc.setFontSize(16);
-  doc.text(`TOKEN: ${order.orderNumber.toUpperCase()}`, 120, y + 8);
-  
   doc.setTextColor(40, 40, 40);
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.text(`Date: ${order.dateDisplay || ''}`, 120, y + 18);
-  doc.text(`Time: ${order.timeDisplay || ''}`, 120, y + 24);
-
+  doc.text(`Date: ${order.dateDisplay || ''}`, 120, y + 7);
+  doc.text(`Time: ${order.timeDisplay || ''}`, 120, y + 13);
+  
+  // Big visual text instead of token
+  doc.setTextColor(234, 88, 12);
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('MEAL AUTHORIZED', 120, y + 23);
   // Line Separator
   y += 35;
   doc.setDrawColor(200, 200, 220);
