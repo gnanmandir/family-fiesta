@@ -317,12 +317,35 @@ export const supabaseService = {
   },
 
   deleteAllOrders: async (): Promise<void> => {
-    await supabaseFetch('orders?order_number=neq.__NONE__', {
-      method: 'DELETE',
-    });
-    await supabaseFetch('device_locks?device_id=neq.__NONE__', {
-      method: 'DELETE',
-    }).catch(() => {});
+    // 1. Fetch all orders to delete individually (most reliable against PostgREST filters)
+    try {
+      const existing = await supabaseFetch<any[]>('orders?select=order_number');
+      if (existing && existing.length > 0) {
+        await Promise.all(
+          existing.map((o) =>
+            supabaseFetch(`orders?order_number=eq.${encodeURIComponent(o.order_number)}`, {
+              method: 'DELETE',
+            }).catch((err) => console.warn('Individual order delete failed:', err))
+          )
+        );
+      }
+    } catch (e) {
+      console.warn('Failed to fetch orders for individual deletion:', e);
+    }
+
+    // 2. Also attempt bulk delete
+    try {
+      await supabaseFetch('orders?order_number=not.is.null', {
+        method: 'DELETE',
+      });
+    } catch (e) {}
+
+    // 3. Delete all device locks
+    try {
+      await supabaseFetch('device_locks?device_id=not.is.null', {
+        method: 'DELETE',
+      });
+    } catch (e) {}
   },
 
   clearDeviceLock: async (deviceId: string): Promise<void> => {

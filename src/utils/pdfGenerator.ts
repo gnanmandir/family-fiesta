@@ -3,6 +3,7 @@ import { Order } from '../types';
 
 import { INITIAL_STUDENTS } from '../data/students';
 import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
+import gnanMandirStamp from '../assets/images/gnan_mandir_stamp.jpg';
 
 import { formatNameDisplay } from './nameFormatter';
 
@@ -13,22 +14,29 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   const gmNumber = student ? String(student.gmNo) : 'N/A';
   const grade = student ? student.grade : 'Gurukul Roster';
 
-  const img = new Image();
-  img.src = familyFiestaLogo;
-  await new Promise((resolve) => {
-    img.onload = resolve;
-    img.onerror = resolve; // Resolve anyway to avoid hanging
-  });
+  const loadImage = (src: string): Promise<HTMLImageElement> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(img);
+    });
+  };
+
+  const [logoImg, stampImg] = await Promise.all([
+    loadImage(familyFiestaLogo),
+    loadImage(gnanMandirStamp),
+  ]);
 
   // Deep Purple: 88, 28, 135
   // Vibrant Orange: 234, 88, 12
 
   // 1. Logo
   let imgHeight = 0;
-  if (img.width > 0) {
+  if (logoImg.width > 0) {
     const imgWidth = 50; 
-    imgHeight = (img.height * imgWidth) / img.width;
-    doc.addImage(img, 'JPEG', 105 - (imgWidth / 2), 10, imgWidth, imgHeight);
+    imgHeight = (logoImg.height * imgWidth) / logoImg.width;
+    doc.addImage(logoImg, 'JPEG', 105 - (imgWidth / 2), 10, imgWidth, imgHeight);
   }
 
   // 2. Banner
@@ -121,25 +129,12 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   doc.setTextColor(234, 88, 12);
   doc.text(`Rs. ${order.totalAmount}`, 190, y + 8, { align: 'right' });
 
-  // 7. Footer / Stamp
-  const stampY = 270;
-  
-  // Outer circle
-  doc.setDrawColor(234, 88, 12);
-  doc.setLineWidth(1);
-  doc.circle(165, stampY, 18, 'S');
-  
-  // Inner circle
-  doc.setLineWidth(0.5);
-  doc.circle(165, stampY, 16, 'S');
-
-  // Stamp Text
-  doc.setTextColor(234, 88, 12);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.text('GNAN MANDIR', 165, stampY - 3, { align: 'center' });
-  doc.text('AUTHORIZED', 165, stampY + 2, { align: 'center' });
-  doc.text('PAID', 165, stampY + 7, { align: 'center' });
+  // 7. Footer / Official Stamp
+  const stampY = 245;
+  if (stampImg.width > 0) {
+    const stampSize = 42;
+    doc.addImage(stampImg, 'JPEG', 145, stampY, stampSize, stampSize);
+  }
   
   // Disclaimer Texts (Bottom Left)
   doc.setTextColor(100, 100, 100);

@@ -730,10 +730,22 @@ export default function App() {
   };
 
   const handleClearAllOrders = async () => {
-    await deleteAllOrders();
-    setOrders([]);
-    setActiveOrder(null);
-    setCurrentView('home');
+    try {
+      await deleteAllOrders();
+      setOrders([]);
+      setActiveOrder(null);
+      localStorage.removeItem('active_order_number');
+      localStorage.removeItem('active_student_id');
+      localStorage.removeItem('app_device_order');
+      // Keep admin in admin view
+      if (isAdminLoggedIn) {
+        setCurrentView('admin');
+      } else {
+        setCurrentView('home');
+      }
+    } catch (e) {
+      console.error('Error clearing orders:', e);
+    }
   };
 
   const handleToggleOrdering = async (isOpen: boolean) => {

@@ -252,129 +252,181 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {/* Tab 5: System Controls */}
         {activeTab === 'settings' && (
-          <div className="p-6 sm:p-8 rounded-2xl bg-white border border-stone-200 space-y-6 max-w-2xl mx-auto shadow-xs text-stone-900">
-            <h3 className="text-base font-bold text-stone-900 border-b border-stone-200 pb-3">
-              System Controls & Device Reset
-            </h3>
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center">
+                <RotateCcw className="w-7 h-7 mr-3 text-indigo-600" />
+                System Controls & Operations
+              </h2>
+              <p className="text-slate-500 mt-2 text-sm max-w-2xl">
+                Emergency stall controls, device lock resets, database registers, and admin credentials.
+              </p>
+            </div>
 
-            <div className="space-y-4 text-xs">
-              
-              {/* Master Ordering Switch */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Card 1: Master Ordering Switch */}
               {onToggleOrdering && (
-                <div className={`p-4 rounded-xl flex items-center justify-between ${ordersOpen ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`}>
+                <div className={`p-6 rounded-2xl border transition-all shadow-xs flex flex-col justify-between ${
+                  ordersOpen ? 'bg-white border-emerald-200' : 'bg-white border-red-200'
+                }`}>
                   <div>
-                    <h4 className={`font-bold text-sm ${ordersOpen ? 'text-emerald-900' : 'text-red-900'}`}>
-                      Master Ordering Switch
-                    </h4>
-                    <p className={`mt-0.5 ${ordersOpen ? 'text-emerald-700' : 'text-red-700'}`}>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-2">
+                        <Power className={`w-5 h-5 ${ordersOpen ? 'text-emerald-600' : 'text-red-600'}`} />
+                        <h4 className="font-bold text-slate-900 text-base">Master Ordering Switch</h4>
+                      </div>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                        ordersOpen ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {ordersOpen ? 'OPEN' : 'CLOSED'}
+                      </span>
+                    </div>
+                    <p className="text-slate-600 text-xs leading-relaxed">
                       {ordersOpen
-                        ? 'Orders are currently OPEN. Students can place & edit orders.'
-                        : 'Orders are CLOSED. Students can only view & download their existing receipts.'}
+                        ? 'Ordering is active. Students can choose attendees, build orders, and submit new coupons.'
+                        : 'Ordering is halted. Students can view submitted receipts but cannot modify or submit new orders.'}
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const newState = !ordersOpen;
-                      const msg = newState
-                        ? 'Re-open ordering? Students will be able to place new orders again.'
-                        : 'Close ordering? Students will only be able to view/download existing receipts.';
-                      if (confirm(msg)) {
-                        handleProtectedAction(() => onToggleOrdering(newState), 'Enter admin password to toggle ordering:');
-                      }
-                    }}
-                    className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap ml-3 cursor-pointer transition-colors shadow-xs flex items-center space-x-1.5 ${
-                      ordersOpen
-                        ? 'bg-red-600 hover:bg-red-700 text-white'
-                        : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                    }`}
-                  >
-                    <Power className="w-4 h-4" />
-                    <span>{ordersOpen ? 'Close Orders' : 'Open Orders'}</span>
-                  </button>
+                  <div className="mt-5 pt-4 border-t border-slate-100 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newState = !ordersOpen;
+                        const msg = newState
+                          ? 'Re-open ordering? Students will be able to place new orders again.'
+                          : 'Close ordering? Students will only be able to view/download existing receipts.';
+                        if (confirm(msg)) {
+                          handleProtectedAction(() => onToggleOrdering(newState), 'Enter system password (niruma0212) to toggle ordering:');
+                        }
+                      }}
+                      className={`px-5 py-2.5 rounded-xl font-bold text-xs whitespace-nowrap cursor-pointer transition-all shadow-sm flex items-center space-x-2 ${
+                        ordersOpen
+                          ? 'bg-red-600 hover:bg-red-700 text-white'
+                          : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                      }`}
+                    >
+                      <Power className="w-4 h-4" />
+                      <span>{ordersOpen ? 'Close Ordering' : 'Open Ordering'}</span>
+                    </button>
+                  </div>
                 </div>
               )}
 
-              {/* Reset Device Lock */}
-              <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 flex items-center justify-between">
+              {/* Card 2: Reset Device Lock */}
+              <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
                 <div>
-                  <h4 className="font-bold text-stone-900 text-sm">Clear Device Lock</h4>
-                  <p className="text-stone-500 mt-0.5">Clears local device order lock for placing test orders.</p>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-2">
+                      <Lock className="w-5 h-5 text-indigo-600" />
+                      <h4 className="font-bold text-slate-900 text-base">Device Lock Reset</h4>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
+                      Testing Utility
+                    </span>
+                  </div>
+                  <p className="text-slate-600 text-xs leading-relaxed">
+                    Clear the local browser device lock allowing this tablet or computer to place repeat test orders under different student IDs.
+                  </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleProtectedAction(() => {
-                      onResetDeviceLock();
-                      alert('Device lock cleared successfully.');
-                    }, 'Enter admin password to clear device lock:');
-                  }}
-                  className="px-4 py-2 rounded-lg bg-stone-900 hover:bg-stone-800 text-white font-semibold whitespace-nowrap ml-3 cursor-pointer transition-colors shadow-xs"
-                >
-                  Clear Lock
-                </button>
-              </div>
-
-              {/* Clear All Orders */}
-              <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between">
-                <div>
-                  <h4 className="font-bold text-amber-950 text-sm">Wipe All Orders</h4>
-                  <p className="text-amber-800 mt-0.5">Permanently resets the order register for a clean stall setup.</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (confirm('Are you sure you want to delete ALL orders? This action is irreversible.')) {
+                <div className="mt-5 pt-4 border-t border-slate-100 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
                       handleProtectedAction(() => {
-                        onClearAllOrders();
-                        alert('All orders wiped successfully.');
-                      }, 'Enter admin password to confirm WIPE ALL ORDERS:');
-                    }
-                  }}
-                  className="px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 text-white font-semibold whitespace-nowrap ml-3 cursor-pointer transition-colors shadow-xs"
-                >
-                  Wipe Orders
-                </button>
-              </div>
-
-            </div>
-
-            <div className="mt-8 space-y-3">
-              <h3 className="text-sm font-bold text-slate-900 tracking-tight uppercase">Admin Login Credentials</h3>
-              <div className="h-px w-full bg-slate-200 my-2"></div>
-              
-              <div className="p-4 rounded-xl bg-white border border-stone-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div>
-                  <h4 className="font-bold text-slate-900 text-sm">Update Admin Username & Password</h4>
-                  <p className="text-slate-500 mt-0.5 text-xs">Change the credentials used to access this admin panel.</p>
+                        onResetDeviceLock();
+                        alert('Device lock cleared successfully.');
+                      }, 'Enter system password (niruma0212) to clear lock:');
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs whitespace-nowrap cursor-pointer transition-all shadow-sm"
+                  >
+                    Clear Device Lock
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const newUsername = prompt("Enter NEW Admin Username:");
-                    if (!newUsername) return;
-                    const newPassword = prompt("Enter NEW Admin Password:");
-                    if (!newPassword) return;
-                    
-                    if (confirm(`Change admin login to Username: "${newUsername}" / Password: "${newPassword}"?`)) {
-                      handleProtectedAction(async () => {
-                        try {
-                          const { api } = await import('../../services/api');
-                          await api.setAdminCredentials(newUsername, newPassword);
-                          alert("Admin credentials updated successfully! You will use these to log in next time.");
-                        } catch(e) {
-                          alert("Failed to update credentials.");
-                        }
-                      }, 'Enter CURRENT system control password to confirm change:');
-                    }
-                  }}
-                  className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold whitespace-nowrap cursor-pointer transition-colors shadow-xs w-full sm:w-auto"
-                >
-                  Change Login
-                </button>
+              </div>
+
+              {/* Card 3: Clear / Wipe All Orders */}
+              <div className="p-6 rounded-2xl bg-white border border-red-200 shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-2">
+                      <Trash2 className="w-5 h-5 text-red-600" />
+                      <h4 className="font-bold text-slate-900 text-base">Wipe Order Register</h4>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800">
+                      High Impact
+                    </span>
+                  </div>
+                  <p className="text-slate-600 text-xs leading-relaxed">
+                    Permanently wipe all submitted food orders and reset the token sequence. Ideal for fresh festival stall day initialization.
+                  </p>
+                </div>
+                <div className="mt-5 pt-4 border-t border-slate-100 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm('CRITICAL WARNING: Are you sure you want to permanently DELETE ALL ORDERS? This cannot be undone.')) {
+                        handleProtectedAction(async () => {
+                          try {
+                            await onClearAllOrders();
+                            alert('All orders wiped successfully!');
+                          } catch (err) {
+                            alert('Encountered an issue wiping orders: ' + err);
+                          }
+                        }, 'Enter system password (niruma0212) to confirm WIPE:');
+                      }
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs whitespace-nowrap cursor-pointer transition-all shadow-sm flex items-center space-x-1.5"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Wipe All Orders</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Card 4: Admin Login Credentials */}
+              <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-2">
+                      <Users className="w-5 h-5 text-indigo-600" />
+                      <h4 className="font-bold text-slate-900 text-base">Admin Credentials</h4>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700">
+                      Security
+                    </span>
+                  </div>
+                  <p className="text-slate-600 text-xs leading-relaxed">
+                    Update the main admin username and password used to sign into this administrative operations portal.
+                  </p>
+                </div>
+                <div className="mt-5 pt-4 border-t border-slate-100 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const newUsername = prompt("Enter NEW Admin Username:");
+                      if (!newUsername) return;
+                      const newPassword = prompt("Enter NEW Admin Password:");
+                      if (!newPassword) return;
+                      
+                      if (confirm(`Change admin login to Username: "${newUsername}" / Password: "${newPassword}"?`)) {
+                        handleProtectedAction(async () => {
+                          try {
+                            const { api } = await import('../../services/api');
+                            await api.setAdminCredentials(newUsername, newPassword);
+                            alert("Admin credentials updated successfully! You will use these to log in next time.");
+                          } catch(e) {
+                            alert("Failed to update credentials.");
+                          }
+                        }, 'Enter system password (niruma0212) to confirm change:');
+                      }
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs whitespace-nowrap cursor-pointer transition-all shadow-sm"
+                  >
+                    Update Credentials
+                  </button>
+                </div>
               </div>
             </div>
-
           </div>
         )}
 
