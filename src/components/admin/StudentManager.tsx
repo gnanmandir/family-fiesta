@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Student, Order } from '../../types';
-import { Search, CheckCircle2, Clock } from 'lucide-react';
-import { getStudentDisplayName } from '../../data/students';
+import { Search, CheckCircle2, Clock, Calendar } from 'lucide-react';
+import { INITIAL_STUDENTS, getStudentDisplayName } from '../../data/students';
 import { formatNameDisplay } from '../../utils/nameFormatter';
 
 interface StudentManagerProps {
@@ -34,11 +34,26 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
     studentOrdersMap.set(o.studentId, o);
   });
 
-  const totalStudents = students.length;
+  // Enrich students with authoritative birth dates from INITIAL_STUDENTS
+  const enrichedStudents = useMemo(() => {
+    const normalize = (val: string) => (val || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    return students.map((s) => {
+      const init = INITIAL_STUDENTS.find(
+        (i) => normalize(i.fullName) === normalize(s.fullName) || i.id === s.id
+      );
+      return {
+        ...s,
+        birthDate: s.birthDate || init?.birthDate || '',
+        gmNo: s.gmNo || init?.gmNo || 0,
+      };
+    });
+  }, [students]);
+
+  const totalStudents = enrichedStudents.length;
   const orderedCount = Array.from(studentOrdersMap.keys()).length;
   const remainingCount = totalStudents - orderedCount;
 
-  const filteredStudents = students.filter((s) => {
+  const filteredStudents = enrichedStudents.filter((s) => {
     const hasOrdered = studentOrdersMap.has(s.id);
     if (filter === 'Ordered' && !hasOrdered) return false;
     if (filter === 'Remaining' && hasOrdered) return false;
@@ -46,6 +61,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
     const query = searchQuery.toLowerCase().trim();
     return (
       s.fullName.toLowerCase().includes(query) ||
+      (s.birthDate && s.birthDate.toLowerCase().includes(query)) ||
       String(s.gmNo) === query ||
       `gm ${s.gmNo}`.includes(query) ||
       s.grade.toLowerCase().includes(query)
@@ -82,14 +98,14 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search student, GM No, grade..."
+              placeholder="Search student, birth date, standard..."
               className="w-full pl-9 pr-3 py-2 bg-stone-50 border border-stone-200 rounded-lg text-stone-900 placeholder-stone-400 text-xs focus:outline-none focus:border-indigo-600 focus:bg-white transition-all"
             />
           </div>
           <button
             type="button"
             onClick={() => {
-              setEditingStudent({ id: '', fullName: '', firstName: '', lastName: '', parentName: '', gmNo: 0, grade: 'Std 5' } as any);
+              setEditingStudent({ id: '', fullName: '', firstName: '', lastName: '', parentName: '', birthDate: '', gmNo: 0, grade: 'Std 5' } as any);
               setSelectedGrade('Std 5');
             }}
             className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm whitespace-nowrap transition-colors"
@@ -122,8 +138,8 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="bg-stone-50 border-b border-stone-200 text-stone-600 font-semibold uppercase tracking-wider text-[11px]">
-                <th className="p-3.5">GM NO.</th>
                 <th className="p-3.5">Student Name</th>
+                <th className="p-3.5">Birth Date (Password)</th>
                 <th className="p-3.5">Standard</th>
                 <th className="p-3.5">Order Status</th>
                 <th className="p-3.5 text-right">Order Total</th>
@@ -137,11 +153,11 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
 
                   return (
                     <tr key={student.id} className="hover:bg-stone-50/80 transition-colors">
-                      <td className="p-3.5 font-mono text-stone-500 font-bold whitespace-nowrap">
-                        GM #{student.gmNo}
-                      </td>
                       <td className="p-3.5 font-bold text-stone-900 whitespace-nowrap">
                         {formatNameDisplay(student.fullName)}
+                      </td>
+                      <td className="p-3.5 font-mono text-indigo-600 font-bold whitespace-nowrap">
+                        {student.birthDate || 'Not set'}
                       </td>
                       <td className="p-3.5 text-stone-500 whitespace-nowrap font-medium">
                         {student.grade}
@@ -201,7 +217,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
                 const fullName = formData.get('fullName') as string;
-                const gmNo = Number(formData.get('gmNo'));
+                const birthDate = (formData.get('birthDate') as string || '').trim();
                 const grade = formData.get('grade') as string;
                 
                 const firstName = fullName.split(' ')[0] || fullName;
@@ -213,7 +229,8 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
                   fullName,
                   firstName,
                   parentName,
-                  gmNo,
+                  birthDate,
+                  gmNo: editingStudent.gmNo || 0,
                   grade,
                 };
                 
@@ -233,8 +250,37 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
                 <input type="text" name="fullName" required defaultValue={editingStudent.fullName} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm" />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">GM No. (Password)</label>
-                <input type="number" name="gmNo" required defaultValue={editingStudent.gmNo || ''} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm" />
+                <label className="block text-xs font-bold text-slate-700 mb-1">Birth Date (Password - DD/MM/YYYY)</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    name="birthDate"
+                    required
+                    placeholder="DD/MM/YYYY"
+                    defaultValue={editingStudent.birthDate || ''}
+                    className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-sm font-medium"
+                  />
+                  <div
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-indigo-600 cursor-pointer flex items-center justify-center"
+                    title="Select from calendar"
+                  >
+                    <Calendar className="w-4 h-4 pointer-events-none" />
+                    <input
+                      type="date"
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                      max={new Date().toISOString().split('T')[0]}
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const [y, m, d] = e.target.value.split('-');
+                          const inputEl = e.currentTarget.parentElement?.previousElementSibling as HTMLInputElement;
+                          if (inputEl && y && m && d) {
+                            inputEl.value = `${d}/${m}/${y}`;
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">Grade / Standard</label>
