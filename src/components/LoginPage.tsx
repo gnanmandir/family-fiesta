@@ -3,7 +3,7 @@ import { Student, Order } from '../types';
 import { INITIAL_STUDENTS } from '../data/students';
 import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
 import { formatNameDisplay } from '../utils/nameFormatter';
-import { Eye, EyeOff, AlertCircle, User, Info } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, User, Info, Calendar } from 'lucide-react';
 
 interface LoginPageProps {
   students: Student[];
@@ -353,23 +353,49 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   if (error) setError(null);
                 }}
                 placeholder="DD/MM/YYYY"
-                className="w-full pl-3.5 pr-10 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-colors"
+                className="w-full pl-3.5 pr-20 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-colors"
                 autoComplete="new-password"
                 data-lpignore="true"
                 required
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
-                title={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
-              </button>
+              <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center space-x-1">
+                {/* Calendar picker button */}
+                <div
+                  className="relative p-1 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-100 transition-colors cursor-pointer flex items-center justify-center group"
+                  title="Select birthdate from calendar"
+                >
+                  <Calendar className="w-4 h-4 pointer-events-none group-hover:text-indigo-600" />
+                  <input
+                    type="date"
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    title="Select birthdate from calendar"
+                    max={new Date().toISOString().split('T')[0]}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        const [y, m, d] = e.target.value.split('-');
+                        if (y && m && d) {
+                          setPassword(`${d}/${m}/${y}`);
+                          if (error) setError(null);
+                        }
+                      }
+                    }}
+                  />
+                </div>
+
+                {/* Eye toggle button */}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors focus:outline-none cursor-pointer flex items-center justify-center"
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 
