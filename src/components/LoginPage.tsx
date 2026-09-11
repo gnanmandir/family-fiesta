@@ -191,50 +191,32 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       const effectiveBirthDate = (matchedStudent.birthDate || initBackup?.birthDate || '').trim();
       const effectiveGmNo = matchedStudent.gmNo || initBackup?.gmNo || 0;
 
-      // Resilient password validation
+      // Strict slash-only password validation (requires slash format e.g. 05/06/2004)
       const inputClean = cleanPwd.replace(/\s+/g, '');
-      const inputDigits = cleanPwd.replace(/[^0-9]/g, '');
-      const birthDigits = effectiveBirthDate.replace(/[^0-9]/g, '');
-
       let isPasswordCorrect = false;
 
-      // A. Direct string match (e.g. "05/06/2004")
-      if (effectiveBirthDate && inputClean.toLowerCase() === effectiveBirthDate.toLowerCase()) {
-        isPasswordCorrect = true;
-      }
-
-      // B. Numeric digits match (e.g. "05062004" vs "05/06/2004")
-      if (!isPasswordCorrect && inputDigits && birthDigits && inputDigits === birthDigits) {
-        isPasswordCorrect = true;
-      }
-
-      // C. Variations with/without leading zeros, hyphens, dots
-      if (!isPasswordCorrect && effectiveBirthDate) {
-        const parts = effectiveBirthDate.split(/[/.-]/);
-        if (parts.length === 3) {
-          const d = parseInt(parts[0], 10);
-          const m = parseInt(parts[1], 10);
-          const y = parts[2];
-          const variations = [
-            `${parts[0]}/${parts[1]}/${y}`,
-            `${parts[0]}-${parts[1]}-${y}`,
-            `${parts[0]}.${parts[1]}.${y}`,
-            `${parts[0]}${parts[1]}${y}`,
-            `${d}/${m}/${y}`,
-            `${d}-${m}-${y}`,
-            `${d}.${m}.${y}`,
-            `${d}${m}${y}`,
-          ];
-          if (variations.some((v) => v === inputClean || v.replace(/[^0-9]/g, '') === inputDigits)) {
-            isPasswordCorrect = true;
-          }
-        }
-      }
-
-      // D. Fallback to GM No. (e.g. 63, 64)
-      if (!isPasswordCorrect && effectiveGmNo) {
-        if (inputClean === String(effectiveGmNo) || inputDigits === String(effectiveGmNo)) {
+      // Must strictly contain slash
+      if (inputClean.includes('/') && effectiveBirthDate) {
+        // Direct exact match (e.g. "05/06/2004")
+        if (inputClean.toLowerCase() === effectiveBirthDate.toLowerCase()) {
           isPasswordCorrect = true;
+        } else {
+          // In case single digit day/month entered with slashes: e.g. "5/6/2004" matching "05/06/2004"
+          const parts = effectiveBirthDate.split('/');
+          const inputParts = inputClean.split('/');
+          if (parts.length === 3 && inputParts.length === 3) {
+            const expD = parseInt(parts[0], 10);
+            const expM = parseInt(parts[1], 10);
+            const expY = parseInt(parts[2], 10);
+
+            const inD = parseInt(inputParts[0], 10);
+            const inM = parseInt(inputParts[1], 10);
+            const inY = parseInt(inputParts[2], 10);
+
+            if (expD === inD && expM === inM && expY === inY) {
+              isPasswordCorrect = true;
+            }
+          }
         }
       }
 
