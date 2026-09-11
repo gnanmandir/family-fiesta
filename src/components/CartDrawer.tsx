@@ -3,6 +3,7 @@ import { CartItem, Student } from '../types';
 import { X, Trash2, Plus, Minus, ShoppingBag, ShieldCheck, AlertTriangle, ArrowRight, CheckCircle2, HelpCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { calculateAllowedBudget } from '../utils/budget';
+import { formatNameDisplay } from '../utils/nameFormatter';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -213,7 +214,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               <div className="p-3 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left space-y-2 text-xs sm:text-sm">
                 <div className="flex justify-between items-center text-slate-500">
                   <span>Student:</span>
-                  <span className="text-slate-900 font-bold">{selectedStudent.firstName} ({selectedStudent.parentName})</span>
+                  <span className="text-slate-900 font-bold">{formatNameDisplay(selectedStudent.fullName || `${selectedStudent.firstName} ${selectedStudent.parentName}`)}</span>
                 </div>
                 <div className="flex justify-between items-center text-slate-500">
                   <span>Guests:</span>

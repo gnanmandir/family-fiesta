@@ -3,6 +3,8 @@ import { Order } from '../types';
 import { CheckCircle2, Ticket, Edit3, Download, Lock } from 'lucide-react';
 import { generateAndDownloadPDFReceipt } from '../utils/pdfGenerator';
 import { INITIAL_STUDENTS } from '../data/students';
+import { formatNameDisplay } from '../utils/nameFormatter';
+
 interface OrderConfirmationProps {
   order: Order;
   onRefreshOrder?: (updated: Order) => void;
@@ -59,7 +61,7 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onR
         <div className="grid grid-cols-2 gap-1.5 bg-slate-50 p-2 sm:p-2.5 rounded-xl border border-slate-100 mt-2">
           <div>
             <span className="text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold block">Student</span>
-            <span className="text-slate-800 font-bold text-xs">{currentOrder.studentName}</span>
+            <span className="text-slate-800 font-bold text-xs">{formatNameDisplay(currentOrder.studentName)}</span>
           </div>
           <div>
             <span className="text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold block">GM Number</span>
