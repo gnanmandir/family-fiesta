@@ -359,8 +359,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         openProtectedAction(
                           newState ? 'Open Ordering System' : 'Close Ordering System',
                           newState
-                            ? 'Enter system password (niruma0212) to re-open ordering for students.'
-                            : 'Enter system password (niruma0212) to halt ordering. Students will only be able to view and download existing receipts.',
+                            ? 'Enter system password to re-open ordering for students.'
+                            : 'Enter system password to halt ordering. Students will only be able to view and download existing receipts.',
                           () => onToggleOrdering(newState),
                           !newState,
                           newState ? 'Open Ordering' : 'Close Ordering'
@@ -401,7 +401,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     onClick={() => {
                       openProtectedAction(
                         'Clear Local Device Lock',
-                        'Enter system password (niruma0212) to clear the local testing lock on this device.',
+                        'Enter system password to clear the local testing lock on this device.',
                         () => {
                           onResetDeviceLock();
                           alert('Device lock cleared successfully.');
@@ -439,7 +439,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     onClick={() => {
                       openProtectedAction(
                         'Permanently Wipe All Orders',
-                        'CRITICAL WARNING: This action will permanently erase all order records and cannot be undone. Enter system password (niruma0212) to proceed.',
+                        'CRITICAL WARNING: This action will permanently erase all order records and cannot be undone. Enter system password to proceed.',
                         async () => {
                           await onClearAllOrders();
                           alert('All orders wiped successfully!');
@@ -536,7 +536,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       setSystemPassword(e.target.value);
                       if (systemPasswordError) setSystemPasswordError('');
                     }}
-                    placeholder="Enter password (niruma0212)..."
+                    placeholder="Enter system password..."
                     autoFocus
                     required
                     className={`w-full pl-3 pr-10 py-2.5 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all ${
@@ -617,7 +617,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   return;
                 }
                 if (credSysPass !== 'niruma0212') {
-                  setCredError('Incorrect system password (niruma0212). Confirmation required.');
+                  setCredError('Incorrect system password. Confirmation required.');
                   return;
                 }
                 setIsSavingCreds(true);
@@ -670,7 +670,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   type="password"
                   value={credSysPass}
                   onChange={(e) => setCredSysPass(e.target.value)}
-                  placeholder="Enter niruma0212 to confirm..."
+                  placeholder="Enter system password to confirm..."
                   required
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-900"
                 />
