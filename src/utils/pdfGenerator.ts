@@ -67,13 +67,8 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   doc.text(`Date: ${order.dateDisplay || ''}`, 120, y + 7);
   doc.text(`Time: ${order.timeDisplay || ''}`, 120, y + 13);
   
-  // Big visual text instead of token
-  doc.setTextColor(234, 88, 12);
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text('MEAL AUTHORIZED', 120, y + 23);
   // Line Separator
-  y += 35;
+  y += 25;
   doc.setDrawColor(200, 200, 220);
   doc.setLineWidth(0.5);
   doc.line(15, y, 195, y);
@@ -121,7 +116,7 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   doc.setTextColor(88, 28, 135);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(12);
-  doc.text('AUTHORIZED TOTAL:', 115, y + 8);
+  doc.text('TOTAL:', 115, y + 8);
   
   doc.setTextColor(234, 88, 12);
   doc.text(`Rs. ${order.totalAmount}`, 190, y + 8, { align: 'right' });
