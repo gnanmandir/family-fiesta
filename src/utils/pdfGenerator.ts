@@ -3,7 +3,7 @@ import { Order } from '../types';
 
 import { INITIAL_STUDENTS } from '../data/students';
 import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
-import gnanMandirStamp from '../assets/images/gnan_mandir_stamp.jpg';
+import gnanMandirStamp from '../assets/images/gnan_mandir_stamp.png';
 
 import { formatNameDisplay } from './nameFormatter';
 
@@ -214,10 +214,11 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
 
   // Right Stamp Embedded inside the Verification Box
   if (stampImg.width > 0) {
-    const stampSize = 42;
-    const stampX = 144;
-    const stampY = footerBoxY + 8;
-    doc.addImage(stampImg, 'JPEG', stampX, stampY, stampSize, stampSize);
+    const stampWidth = 48;
+    const stampHeight = (stampImg.height * stampWidth) / stampImg.width;
+    const stampX = 140;
+    const stampY = footerBoxY + (footerBoxHeight - stampHeight) / 2;
+    doc.addImage(stampImg, 'PNG', stampX, stampY, stampWidth, stampHeight);
   }
 
   doc.save(`Family_Fiesta_Receipt_GM_${gmNumber}.pdf`);

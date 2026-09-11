@@ -4,6 +4,7 @@ import { Order, OrderStatus, Student } from '../../types';
 import { generateAndDownloadPDFReceipt } from '../../utils/pdfGenerator';
 import { INITIAL_STUDENTS } from '../../data/students';
 import { formatNameDisplay } from '../../utils/nameFormatter';
+import gnanMandirStamp from '../../assets/images/gnan_mandir_stamp.png';
 import {
   Search,
   Filter,
@@ -463,6 +464,19 @@ Thank you for ordering from Family Fiesta!
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Official Gnan Mandir Stamp Verification */}
+              <div className="flex items-center justify-between border-t border-stone-100 pt-3">
+                <div className="text-[10px] text-stone-400">
+                  <span className="font-semibold text-stone-700 block">Official Voucher</span>
+                  <span>Issued by Gnan Mandir</span>
+                </div>
+                <img
+                  src={gnanMandirStamp}
+                  alt="Gnan Mandir Stamp"
+                  className="h-8 sm:h-9 w-auto object-contain"
+                />
               </div>
             </div>
 

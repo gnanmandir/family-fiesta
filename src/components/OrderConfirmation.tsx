@@ -4,6 +4,7 @@ import { CheckCircle2, Ticket, Edit3, Download, Lock } from 'lucide-react';
 import { generateAndDownloadPDFReceipt } from '../utils/pdfGenerator';
 import { INITIAL_STUDENTS } from '../data/students';
 import { formatNameDisplay } from '../utils/nameFormatter';
+import gnanMandirStamp from '../assets/images/gnan_mandir_stamp.png';
 
 interface OrderConfirmationProps {
   order: Order;
@@ -91,9 +92,22 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onR
         </div>
 
         {/* Total */}
-        <div className="border-t border-slate-100 pt-2 flex justify-between items-center mb-3">
+        <div className="border-t border-slate-100 pt-2 flex justify-between items-center mb-2">
           <span className="text-slate-500 uppercase text-[9px] sm:text-[10px] tracking-wider font-bold">Total Amount</span>
           <span className="text-lg sm:text-xl text-indigo-600 font-mono font-bold">₹{currentOrder.totalAmount}</span>
+        </div>
+
+        {/* Official Gnan Mandir Stamp Voucher Verification */}
+        <div className="border-t border-slate-100 pt-2 flex items-center justify-between mb-3">
+          <div className="text-[10px] text-slate-400">
+            <span className="font-bold text-slate-700 block">Official Voucher</span>
+            <span>Issued by Gnan Mandir</span>
+          </div>
+          <img
+            src={gnanMandirStamp}
+            alt="Gnan Mandir Stamp"
+            className="h-8 sm:h-9 w-auto object-contain"
+          />
         </div>
 
         {/* Action Buttons */}
