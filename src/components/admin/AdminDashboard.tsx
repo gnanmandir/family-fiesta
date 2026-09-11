@@ -20,6 +20,7 @@ import { AnalyticsCharts } from './AnalyticsCharts';
 import { OrderTable } from './OrderTable';
 import { StudentManager } from './StudentManager';
 import { FoodManager } from './FoodManager';
+import { PricingManager } from './PricingManager';
 
 interface AdminDashboardProps {
   orders: Order[];
@@ -53,7 +54,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onToggleOrdering,
 }) => {
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'orders' | 'students' | 'food' | 'settings'
+    'overview' | 'orders' | 'students' | 'food' | 'settings' | 'pricing'
   >('overview');
 
   const handleProtectedAction = (action: () => void, message: string = "Enter system control password to proceed:") => {
@@ -139,6 +140,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             { id: 'orders', label: `Live Orders (${totalOrders})`, icon: <ShoppingBag className="w-4 h-4" /> },
             { id: 'students', label: `Students (${studentsOrdered}/${totalStudents})`, icon: <Users className="w-4 h-4" /> },
             { id: 'food', label: `Menu Catalog (${menuItems.length})`, icon: <UtensilsCrossed className="w-4 h-4" /> },
+            { id: 'pricing', label: 'Pricing & Tiers', icon: <IndianRupee className="w-4 h-4" /> },
             { id: 'settings', label: 'System Controls', icon: <RotateCcw className="w-4 h-4" /> },
           ].map((tab) => {
             const isActive = activeTab === tab.id;
@@ -243,6 +245,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         )}
 
+        {/* Tab: Pricing Manager */}
+        {activeTab === 'pricing' && (
+          <PricingManager />
+        )}
+
         {/* Tab 5: System Controls */}
         {activeTab === 'settings' && (
           <div className="p-6 sm:p-8 rounded-2xl bg-white border border-stone-200 space-y-6 max-w-2xl mx-auto shadow-xs text-stone-900">
@@ -330,54 +337,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </button>
               </div>
 
-            </div>
-
-            <div className="mt-8 space-y-3">
-              <h3 className="text-sm font-bold text-slate-900 tracking-tight uppercase">Guest & Pricing Configuration</h3>
-              <div className="h-px w-full bg-slate-200 my-2"></div>
-              
-              <div className="p-4 rounded-xl bg-white border border-stone-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div>
-                  <h4 className="font-bold text-slate-900 text-sm">Update Guests & Tier Pricing</h4>
-                  <p className="text-slate-500 mt-0.5 text-xs">Set the max number of guests and the incremental budget for each guest.</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    handleProtectedAction(async () => {
-                      const { api } = await import('../../services/api');
-                      const currentTiers = await api.getGuestTiers();
-                      const currentStr = currentTiers.join(', ');
-                      
-                      const input = prompt(
-                        `Enter comma-separated incremental prices for each guest.\nThe number of prices you enter determines the MAX GUESTS allowed.\n\nCurrent configuration: ${currentStr}\n(e.g., "220, 220, 160, 70" means max 4 guests)`,
-                        currentStr
-                      );
-                      
-                      if (!input) return;
-                      
-                      const newTiers = input.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
-                      if (newTiers.length === 0) {
-                        alert("Invalid format. Please enter numbers separated by commas.");
-                        return;
-                      }
-                      
-                      if (confirm(`Set Max Guests to ${newTiers.length} and Tiers to [${newTiers.join(', ')}]?`)) {
-                        try {
-                          await api.setGuestTiers(newTiers);
-                          localStorage.setItem('app_guest_tiers', JSON.stringify(newTiers));
-                          alert("Guest tiers updated successfully! Changes apply immediately.");
-                        } catch(e) {
-                          alert("Failed to update guest tiers.");
-                        }
-                      }
-                    }, 'Enter admin password to configure pricing:');
-                  }}
-                  className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold whitespace-nowrap cursor-pointer transition-colors shadow-xs w-full sm:w-auto"
-                >
-                  Configure Tiers
-                </button>
-              </div>
             </div>
 
             <div className="mt-8 space-y-3">
