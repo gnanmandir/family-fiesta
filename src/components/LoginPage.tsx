@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Student } from '../types';
+import { Student, Order } from '../types';
 import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
+import { formatNameDisplay } from '../utils/nameFormatter';
 import { Eye, EyeOff, AlertCircle, User, Info } from 'lucide-react';
 
 interface LoginPageProps {
@@ -236,7 +237,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                         <User className="w-3.5 h-3.5" />
                       </div>
                       <span className="text-sm font-medium text-slate-700 group-hover:text-indigo-600">
-                        {s.fullName}
+                        {formatNameDisplay(s.fullName)}
                       </span>
                     </div>
                     <span className="text-[10px] text-indigo-600 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded font-medium">

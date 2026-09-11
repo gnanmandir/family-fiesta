@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Student, Order } from '../../types';
 import { Search, CheckCircle2, Clock } from 'lucide-react';
 import { getStudentDisplayName } from '../../data/students';
+import { formatNameDisplay } from '../../utils/nameFormatter';
 
 interface StudentManagerProps {
   students: Student[];
@@ -123,7 +124,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
                         GM #{student.gmNo}
                       </td>
                       <td className="p-3.5 font-bold text-stone-900 whitespace-nowrap">
-                        {student.fullName}
+                        {formatNameDisplay(student.fullName)}
                       </td>
                       <td className="p-3.5 text-stone-500 whitespace-nowrap font-medium">
                         {student.grade}

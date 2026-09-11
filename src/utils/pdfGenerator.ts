@@ -4,10 +4,12 @@ import { Order } from '../types';
 import { INITIAL_STUDENTS } from '../data/students';
 import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
 
+import { formatNameDisplay } from './nameFormatter';
+
 export const generateAndDownloadPDFReceipt = async (order: Order) => {
   const doc = new jsPDF();
-  const cleanStudentName = order.studentName.replace(/\s*\(.*\)/, '').trim();
   const student = INITIAL_STUDENTS.find((s) => s.id === order.studentId || s.fullName === order.fullName);
+  const cleanStudentName = formatNameDisplay(order.studentName);
   const gmNumber = student ? String(student.gmNo) : 'N/A';
   const grade = student ? student.grade : 'Gurukul Roster';
 

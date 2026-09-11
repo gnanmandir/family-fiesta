@@ -1,6 +1,7 @@
 import React from 'react';
 import { Student } from '../types';
 import { Check, Users, User, ArrowRight, ShieldCheck, Sparkles, Lock } from 'lucide-react';
+import { formatNameDisplay } from '../utils/nameFormatter';
 
 import { 
   calculateAllowedBudget, 
@@ -64,7 +65,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           <div className="inline-flex items-center space-x-2 px-4 py-2 bg-white border border-slate-200 rounded-full shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)]">
             <User className="w-4 h-4 text-orange-500 stroke-[2.5]" />
             <span className="text-sm font-medium text-slate-400">Student:</span>
-            <span className="text-sm font-bold text-slate-700">{selectedStudent.fullName}</span>
+            <span className="text-sm font-bold text-slate-700">{formatNameDisplay(selectedStudent.fullName)}</span>
           </div>
         </div>
       )}
