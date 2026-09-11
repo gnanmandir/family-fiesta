@@ -214,9 +214,9 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
 
   // Right Stamp Embedded inside the Verification Box
   if (stampImg.width > 0) {
-    const stampWidth = 48;
+    const stampWidth = 62;
     const stampHeight = (stampImg.height * stampWidth) / stampImg.width;
-    const stampX = 140;
+    const stampX = 126;
     const stampY = footerBoxY + (footerBoxHeight - stampHeight) / 2;
     doc.addImage(stampImg, 'PNG', stampX, stampY, stampWidth, stampHeight);
   }
