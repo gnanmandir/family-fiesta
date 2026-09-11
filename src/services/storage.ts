@@ -28,8 +28,15 @@ export async function fetchStudents(): Promise<Student[]> {
   try {
     const data = await api.getStudents();
     if (data && data.length > 0) {
-      localStorage.setItem(KEYS.STUDENTS, JSON.stringify(data));
-      return data;
+      const merged = data.map(s => {
+        const initial = INITIAL_STUDENTS.find(i => i.id === s.id);
+        return {
+          ...s,
+          birthDate: s.birthDate || initial?.birthDate
+        };
+      });
+      localStorage.setItem(KEYS.STUDENTS, JSON.stringify(merged));
+      return merged;
     }
   } catch (e) {
     console.warn('API error fetching students, using fallback:', e);
@@ -40,7 +47,16 @@ export async function fetchStudents(): Promise<Student[]> {
 export function getCachedStudents(): Student[] {
   try {
     const raw = localStorage.getItem(KEYS.STUDENTS);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return parsed.map((s: Student) => {
+        const initial = INITIAL_STUDENTS.find(i => i.id === s.id);
+        return {
+          ...s,
+          birthDate: s.birthDate || initial?.birthDate
+        };
+      });
+    }
   } catch (e) {}
   return INITIAL_STUDENTS;
 }
