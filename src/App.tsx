@@ -726,7 +726,10 @@ export default function App() {
   const handleResetDeviceLock = async () => {
     await clearDeviceLock();
     setActiveOrder(null);
-    setCurrentView('home');
+    localStorage.setItem('admin_token', 'admin_session_' + Date.now());
+    localStorage.setItem('app_current_view', 'admin');
+    setIsAdminLoggedIn(true);
+    setCurrentView('admin');
   };
 
   const handleClearAllOrders = async () => {
@@ -735,14 +738,12 @@ export default function App() {
       setOrders([]);
       setActiveOrder(null);
       localStorage.removeItem('active_order_number');
-      localStorage.removeItem('active_student_id');
       localStorage.removeItem('app_device_order');
-      // Keep admin in admin view
-      if (isAdminLoggedIn) {
-        setCurrentView('admin');
-      } else {
-        setCurrentView('home');
-      }
+      // Ensure admin remains firmly on admin dashboard
+      localStorage.setItem('admin_token', 'admin_session_' + Date.now());
+      localStorage.setItem('app_current_view', 'admin');
+      setIsAdminLoggedIn(true);
+      setCurrentView('admin');
     } catch (e) {
       console.error('Error clearing orders:', e);
     }
