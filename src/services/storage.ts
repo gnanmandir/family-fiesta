@@ -6,10 +6,12 @@ import { api } from './api';
 const KEYS = {
   ORDERS: 'jusso_orders_v6',
   MENU: 'jusso_menu_v6',
-  STUDENTS: 'flame_co_students_v7',
+  STUDENTS: 'flame_co_students_v9',
   DEVICE_ID: 'jusso_device_id_v2',
   DEVICE_ORDER: 'jusso_device_order_v6',
 };
+
+const normalizeName = (val: string) => (val || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
 export function getOrCreateDeviceId(): string {
   try {
@@ -28,13 +30,30 @@ export async function fetchStudents(): Promise<Student[]> {
   try {
     const data = await api.getStudents();
     if (data && data.length > 0) {
-      const merged = data.map(s => {
-        const initial = INITIAL_STUDENTS.find(i => i.id === s.id);
-        return {
-          ...s,
-          birthDate: s.birthDate || initial?.birthDate
-        };
+      const map = new Map<string, Student>();
+      INITIAL_STUDENTS.forEach((init) => {
+        map.set(normalizeName(init.fullName), { ...init });
       });
+
+      data.forEach((s) => {
+        const key = normalizeName(s.fullName);
+        const existing = map.get(key);
+        if (existing) {
+          map.set(key, {
+            ...existing,
+            ...s,
+            id: existing.id,
+            birthDate: s.birthDate || existing.birthDate,
+            gmNo: s.gmNo || existing.gmNo,
+            fullName: existing.fullName,
+            grade: s.grade || existing.grade,
+          });
+        } else {
+          map.set(s.id || key, { ...s });
+        }
+      });
+
+      const merged = Array.from(map.values());
       localStorage.setItem(KEYS.STUDENTS, JSON.stringify(merged));
       return merged;
     }
@@ -49,13 +68,18 @@ export function getCachedStudents(): Student[] {
     const raw = localStorage.getItem(KEYS.STUDENTS);
     if (raw) {
       const parsed = JSON.parse(raw);
-      return parsed.map((s: Student) => {
-        const initial = INITIAL_STUDENTS.find(i => i.id === s.id);
-        return {
-          ...s,
-          birthDate: s.birthDate || initial?.birthDate
-        };
-      });
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map((s: Student) => {
+          const initial = INITIAL_STUDENTS.find(
+            (i) => normalizeName(i.fullName) === normalizeName(s.fullName) || i.id === s.id
+          );
+          return {
+            ...s,
+            birthDate: s.birthDate || initial?.birthDate,
+            gmNo: s.gmNo || initial?.gmNo,
+          };
+        });
+      }
     }
   } catch (e) {}
   return INITIAL_STUDENTS;

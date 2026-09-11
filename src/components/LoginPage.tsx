@@ -1,5 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Student, Order } from '../types';
+import { INITIAL_STUDENTS } from '../data/students';
 import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
 import { formatNameDisplay } from '../utils/nameFormatter';
 import { Eye, EyeOff, AlertCircle, User, Info } from 'lucide-react';
@@ -25,6 +26,43 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
   const passwordInputRef = useRef<HTMLInputElement>(null);
 
+  // Helper to normalize names for resilient comparison
+  const normalize = (val: string) => (val || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  // Master student list combining INITIAL_STUDENTS with any dynamic students from props
+  const allStudents = useMemo(() => {
+    const map = new Map<string, Student>();
+    
+    // Seed with authoritative list (has all 124 students with exact birth dates)
+    INITIAL_STUDENTS.forEach((s) => {
+      map.set(normalize(s.fullName), { ...s });
+    });
+
+    // Merge any students passed via props
+    if (Array.isArray(students) && students.length > 0) {
+      students.forEach((s) => {
+        const key = normalize(s.fullName);
+        const existing = map.get(key);
+        if (existing) {
+          map.set(key, {
+            ...s,
+            id: existing.id,
+            birthDate: s.birthDate || existing.birthDate,
+            gmNo: s.gmNo || existing.gmNo,
+            fullName: existing.fullName,
+            grade: s.grade || existing.grade,
+            parentName: s.parentName || existing.parentName,
+            firstName: s.firstName || existing.firstName,
+          });
+        } else {
+          map.set(s.id || key, { ...s });
+        }
+      });
+    }
+
+    return Array.from(map.values());
+  }, [students]);
+
   // Prevent browser password manager from dumping saved admin credentials into student login
   useEffect(() => {
     const purgeAutofilledAdmin = () => {
@@ -44,12 +82,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     };
   }, []);
 
-  // Filter student name suggestions (NEVER discloses GM No.)
+  // Filter student name suggestions (NEVER discloses GM No. or Birthdate)
   const matchingStudents = identifier.trim().length >= 1
-    ? students.filter((s) => {
+    ? allStudents.filter((s) => {
         const q = identifier.toLowerCase().trim();
-        return s.fullName.toLowerCase().includes(q) || s.firstName.toLowerCase().includes(q);
-      }).slice(0, 6)
+        const qNorm = normalize(identifier);
+        return (
+          s.fullName.toLowerCase().includes(q) ||
+          s.firstName.toLowerCase().includes(q) ||
+          normalize(s.fullName).includes(qNorm)
+        );
+      }).slice(0, 8)
     : [];
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -57,6 +100,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     setError(null);
     setShowNameSuggestions(false);
     const cleanId = identifier.trim().toLowerCase();
+    const cleanIdNorm = normalize(identifier);
     const cleanPwd = password.trim();
 
     if (!cleanId) {
@@ -110,46 +154,107 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         onAdminLogin();
         return;
       }
-    } else if (isAdminUser || isAdminPassword) {
-       // If one matches but not the other, and it's not a student, fail it.
-       // We'll let it fall through to student check just in case, but if they explicitly typed "dada" we shouldn't let them in without password.
     }
 
-    // 2. Check Student Login
-    const matchedStudent = students.find((s) => {
+    // 3. Check Student Login
+    const matchedStudent = allStudents.find((s) => {
       const sId = s.id.toLowerCase();
       const sFull = s.fullName.toLowerCase();
       const sFirst = s.firstName.toLowerCase();
-      const sGm = String(s.gmNo);
+      const sNorm = normalize(s.fullName);
+      const sGm = String(s.gmNo || '');
 
       return (
         sId === cleanId ||
         sFull === cleanId ||
+        sNorm === cleanIdNorm ||
         sFirst === cleanId ||
-        sGm === cleanId ||
-        `gm ${sGm}` === cleanId ||
-        `gm-${sGm}` === cleanId ||
-        `gm${sGm}` === cleanId ||
-        `#${sGm}` === cleanId
+        (sGm && (
+          sGm === cleanId ||
+          `gm ${sGm}` === cleanId ||
+          `gm-${sGm}` === cleanId ||
+          `gm${sGm}` === cleanId ||
+          `#${sGm}` === cleanId
+        ))
       );
-    }) || students.find((s) => {
-      const sFull = s.fullName.toLowerCase();
-      return sFull.startsWith(cleanId) || sFull.includes(cleanId);
+    }) || allStudents.find((s) => {
+      const sNorm = normalize(s.fullName);
+      return sNorm.includes(cleanIdNorm) || cleanIdNorm.includes(sNorm);
     });
 
     if (matchedStudent) {
-      // Birth Date as Password check (e.g. 30/04/2011)
-      const expectedPassword = matchedStudent.birthDate || String(matchedStudent.gmNo);
-      if (cleanPwd !== expectedPassword) {
+      // Find backup in INITIAL_STUDENTS
+      const initBackup = INITIAL_STUDENTS.find(
+        (i) => normalize(i.fullName) === normalize(matchedStudent.fullName)
+      );
+
+      const effectiveBirthDate = (matchedStudent.birthDate || initBackup?.birthDate || '').trim();
+      const effectiveGmNo = matchedStudent.gmNo || initBackup?.gmNo || 0;
+
+      // Resilient password validation
+      const inputClean = cleanPwd.replace(/\s+/g, '');
+      const inputDigits = cleanPwd.replace(/[^0-9]/g, '');
+      const birthDigits = effectiveBirthDate.replace(/[^0-9]/g, '');
+
+      let isPasswordCorrect = false;
+
+      // A. Direct string match (e.g. "05/06/2004")
+      if (effectiveBirthDate && inputClean.toLowerCase() === effectiveBirthDate.toLowerCase()) {
+        isPasswordCorrect = true;
+      }
+
+      // B. Numeric digits match (e.g. "05062004" vs "05/06/2004")
+      if (!isPasswordCorrect && inputDigits && birthDigits && inputDigits === birthDigits) {
+        isPasswordCorrect = true;
+      }
+
+      // C. Variations with/without leading zeros, hyphens, dots
+      if (!isPasswordCorrect && effectiveBirthDate) {
+        const parts = effectiveBirthDate.split(/[/.-]/);
+        if (parts.length === 3) {
+          const d = parseInt(parts[0], 10);
+          const m = parseInt(parts[1], 10);
+          const y = parts[2];
+          const variations = [
+            `${parts[0]}/${parts[1]}/${y}`,
+            `${parts[0]}-${parts[1]}-${y}`,
+            `${parts[0]}.${parts[1]}.${y}`,
+            `${parts[0]}${parts[1]}${y}`,
+            `${d}/${m}/${y}`,
+            `${d}-${m}-${y}`,
+            `${d}.${m}.${y}`,
+            `${d}${m}${y}`,
+          ];
+          if (variations.some((v) => v === inputClean || v.replace(/[^0-9]/g, '') === inputDigits)) {
+            isPasswordCorrect = true;
+          }
+        }
+      }
+
+      // D. Fallback to GM No. (e.g. 63, 64)
+      if (!isPasswordCorrect && effectiveGmNo) {
+        if (inputClean === String(effectiveGmNo) || inputDigits === String(effectiveGmNo)) {
+          isPasswordCorrect = true;
+        }
+      }
+
+      if (!isPasswordCorrect) {
         setIsLoading(false);
-        // Do NOT disclose the birth date in error message!
         setError('Incorrect password. Please enter your valid Birth Date (DD/MM/YYYY).');
         return;
       }
 
-      localStorage.setItem('active_student_id', matchedStudent.id);
+      // Successfully authenticated!
+      const finalStudent: Student = {
+        ...matchedStudent,
+        birthDate: effectiveBirthDate,
+        gmNo: effectiveGmNo,
+        fullName: initBackup?.fullName || matchedStudent.fullName,
+      };
+
+      localStorage.setItem('active_student_id', finalStudent.id);
       setIsLoading(false);
-      onStudentLogin(matchedStudent);
+      onStudentLogin(finalStudent);
     } else {
       setIsLoading(false);
       setError('Student not found. Please search and select your name from the suggestions.');
