@@ -110,6 +110,8 @@ export const tursoService = {
       isVeg: r.is_veg === '1' || r.is_veg === 1,
       isChefSpecial: r.is_chef_special === '1' || r.is_chef_special === 1,
       isAvailable: r.is_available === '1' || r.is_available === 1,
+      portionValue: r.portion_value ? Number(r.portion_value) : undefined,
+      portionUnit: (r.portion_unit as any) || undefined,
     }));
   },
 
@@ -118,21 +120,43 @@ export const tursoService = {
     const isVeg = item.isVeg !== undefined ? (item.isVeg ? 1 : 0) : 1;
     const isChef = item.isChefSpecial ? 1 : 0;
     const isAvail = item.isAvailable !== undefined ? (item.isAvailable ? 1 : 0) : 1;
+    const portionVal = item.portionValue !== undefined && item.portionValue !== null ? Number(item.portionValue) : null;
+    const portionUn = item.portionUnit || null;
 
-    await tursoQuery(
-      `INSERT INTO menu_items (id, name, category, description, price, image, is_veg, is_chef_special, is_available)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT (id) DO UPDATE SET
-         name = excluded.name,
-         category = excluded.category,
-         description = excluded.description,
-         price = excluded.price,
-         image = excluded.image,
-         is_veg = excluded.is_veg,
-         is_chef_special = excluded.is_chef_special,
-         is_available = excluded.is_available`,
-      [id, item.name, item.category, item.description || '', item.price, item.image, isVeg, isChef, isAvail]
-    );
+    try {
+      await tursoQuery(
+        `INSERT INTO menu_items (id, name, category, description, price, image, is_veg, is_chef_special, is_available, portion_value, portion_unit)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT (id) DO UPDATE SET
+           name = excluded.name,
+           category = excluded.category,
+           description = excluded.description,
+           price = excluded.price,
+           image = excluded.image,
+           is_veg = excluded.is_veg,
+           is_chef_special = excluded.is_chef_special,
+           is_available = excluded.is_available,
+           portion_value = excluded.portion_value,
+           portion_unit = excluded.portion_unit`,
+        [id, item.name, item.category, item.description || '', item.price, item.image, isVeg, isChef, isAvail, portionVal, portionUn]
+      );
+    } catch (e) {
+      // Fallback if table doesn't have portion columns yet
+      await tursoQuery(
+        `INSERT INTO menu_items (id, name, category, description, price, image, is_veg, is_chef_special, is_available)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT (id) DO UPDATE SET
+           name = excluded.name,
+           category = excluded.category,
+           description = excluded.description,
+           price = excluded.price,
+           image = excluded.image,
+           is_veg = excluded.is_veg,
+           is_chef_special = excluded.is_chef_special,
+           is_available = excluded.is_available`,
+        [id, item.name, item.category, item.description || '', item.price, item.image, isVeg, isChef, isAvail]
+      );
+    }
 
     return {
       id,
@@ -144,6 +168,8 @@ export const tursoService = {
       isVeg: Boolean(isVeg),
       isChefSpecial: Boolean(isChef),
       isAvailable: Boolean(isAvail),
+      portionValue: item.portionValue,
+      portionUnit: item.portionUnit,
     };
   },
 

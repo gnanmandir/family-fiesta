@@ -80,7 +80,19 @@ export async function fetchMenuItems(): Promise<FoodItem[]> {
 export function getCachedMenuItems(): FoodItem[] {
   try {
     const raw = localStorage.getItem(KEYS.MENU);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const items: FoodItem[] = JSON.parse(raw);
+      // Auto-backfill portionValue & portionUnit from INITIAL_MENU if missing
+      return items.map((it) => {
+        if (!it.portionValue) {
+          const match = INITIAL_MENU.find((m) => m.id === it.id || m.name.trim().toLowerCase() === it.name.trim().toLowerCase());
+          if (match && match.portionValue) {
+            return { ...it, portionValue: match.portionValue, portionUnit: match.portionUnit };
+          }
+        }
+        return it;
+      });
+    }
   } catch (e) {}
   return INITIAL_MENU;
 }

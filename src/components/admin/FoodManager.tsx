@@ -18,6 +18,8 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState<number>(100);
+  const [portionValue, setPortionValue] = useState<number | ''>('');
+  const [portionUnit, setPortionUnit] = useState<'ml' | 'g'>('g');
   const [image, setImage] = useState('');
   const [isChefSpecial, setIsChefSpecial] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -28,6 +30,8 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
     setName('');
     setDescription('');
     setPrice(120);
+    setPortionValue('');
+    setPortionUnit('g');
     setImage('');
     setIsChefSpecial(false);
     setIsAddingOrEditing(true);
@@ -38,6 +42,8 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
     setName(item.name);
     setDescription(item.description);
     setPrice(item.price);
+    setPortionValue(item.portionValue !== undefined && item.portionValue !== null ? item.portionValue : '');
+    setPortionUnit(item.portionUnit || 'g');
     setImage(item.image);
     setIsChefSpecial(!!item.isChefSpecial);
     setIsAddingOrEditing(true);
@@ -125,6 +131,12 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
       'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';
     const finalImage = image.trim() || editingItem?.image || defaultPlaceholder;
 
+    const pVal =
+      portionValue !== '' && !isNaN(Number(portionValue)) && Number(portionValue) > 0
+        ? Number(portionValue)
+        : undefined;
+    const pUnit = pVal ? portionUnit : undefined;
+
     if (editingItem) {
       // Update
       const updated = menuItems.map((item) =>
@@ -137,6 +149,8 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
               price: Number(price),
               image: finalImage,
               isChefSpecial,
+              portionValue: pVal,
+              portionUnit: pUnit,
             }
           : item
       );
@@ -153,6 +167,8 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
         isVeg: true,
         isChefSpecial,
         isAvailable: true,
+        portionValue: pVal,
+        portionUnit: pUnit,
       };
       onSaveMenuItems([...menuItems, newItem]);
     }
@@ -199,8 +215,15 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
 
             <div className="flex-1 flex flex-col justify-between min-w-0">
               <div className="flex justify-between items-start">
-                <h4 className="text-sm font-bold text-stone-900">{item.name}</h4>
-                <span className="text-sm font-bold text-stone-900 ml-2 font-mono">₹{item.price}</span>
+                <div className="flex items-center gap-1.5 flex-wrap min-w-0 pr-2">
+                  <h4 className="text-sm font-bold text-stone-900">{item.name}</h4>
+                  {item.portionValue && item.portionUnit && (
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/70 font-mono">
+                      {item.portionValue} {item.portionUnit}
+                    </span>
+                  )}
+                </div>
+                <span className="text-sm font-bold text-stone-900 ml-2 font-mono shrink-0">₹{item.price}</span>
               </div>
               <p className="text-[11px] text-stone-500 mt-0.5">{item.description}</p>
 
@@ -278,6 +301,66 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
                   onChange={(e) => setPrice(Number(e.target.value))}
                   className="w-full p-2.5 bg-stone-50 border border-stone-200 rounded-lg text-stone-900 focus:outline-none focus:border-indigo-600 focus:bg-white transition-all font-mono"
                 />
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-stone-700 font-semibold">Portion / Serving Size</label>
+                  {portionValue !== '' && (
+                    <button
+                      type="button"
+                      onClick={() => setPortionValue('')}
+                      className="text-[10px] text-stone-400 hover:text-red-600 transition-colors cursor-pointer font-medium"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="number"
+                      min={1}
+                      placeholder="Enter quantity (e.g. 250)"
+                      value={portionValue}
+                      onChange={(e) => setPortionValue(e.target.value === '' ? '' : Number(e.target.value))}
+                      className="w-full p-2.5 bg-stone-50 border border-stone-200 rounded-lg text-stone-900 focus:outline-none focus:border-indigo-600 focus:bg-white transition-all font-mono text-xs pr-10"
+                    />
+                    {portionValue !== '' && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-400 pointer-events-none">
+                        {portionUnit}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center bg-stone-100 p-1 rounded-lg border border-stone-200 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setPortionUnit('g')}
+                      className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                        portionUnit === 'g'
+                          ? 'bg-indigo-600 text-white shadow-xs'
+                          : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/60'
+                      }`}
+                    >
+                      g (Grams)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPortionUnit('ml')}
+                      className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                        portionUnit === 'ml'
+                          ? 'bg-indigo-600 text-white shadow-xs'
+                          : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/60'
+                      }`}
+                    >
+                      ml (Milliliters)
+                    </button>
+                  </div>
+                </div>
+                <p className="text-[10px] text-stone-400 mt-1">
+                  Select <strong>g</strong> (grams for snacks/food) or <strong>ml</strong> (milliliters for beverages).
+                </p>
               </div>
 
               <div>

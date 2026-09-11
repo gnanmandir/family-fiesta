@@ -19,6 +19,8 @@ export interface FoodItem {
   isVeg: boolean;
   isChefSpecial?: boolean;
   isAvailable: boolean;
+  portionValue?: number;
+  portionUnit?: 'ml' | 'g';
 }
 
 export interface CartItem {
@@ -32,6 +34,7 @@ export interface OrderItem {
   price: number;
   quantity: number;
   total: number;
+  portion?: string;
 }
 
 export interface Order {

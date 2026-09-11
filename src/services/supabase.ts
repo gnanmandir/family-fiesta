@@ -75,11 +75,13 @@ export const supabaseService = {
       isVeg: r.is_veg !== undefined ? r.is_veg : true,
       isChefSpecial: Boolean(r.is_chef_special),
       isAvailable: r.is_available !== undefined ? r.is_available : true,
+      portionValue: r.portion_value ? Number(r.portion_value) : undefined,
+      portionUnit: (r.portion_unit as any) || undefined,
     }));
   },
 
   saveMenuItem: async (item: Partial<FoodItem>): Promise<FoodItem> => {
-    const payload = {
+    const basePayload: any = {
       id: item.id || `FOOD-${Math.floor(100 + Math.random() * 900)}`,
       name: item.name,
       category: item.category,
@@ -91,13 +93,30 @@ export const supabaseService = {
       is_available: item.isAvailable !== undefined ? item.isAvailable : true,
     };
 
-    const res = await supabaseFetch<any[]>('menu_items?on_conflict=id', {
-      method: 'POST',
-      headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
-      body: JSON.stringify(payload),
-    });
+    const extendedPayload = {
+      ...basePayload,
+      ...(item.portionValue !== undefined ? { portion_value: item.portionValue } : {}),
+      ...(item.portionUnit ? { portion_unit: item.portionUnit } : {}),
+    };
 
-    const r = res[0] || payload;
+    let r: any;
+    try {
+      const res = await supabaseFetch<any[]>('menu_items?on_conflict=id', {
+        method: 'POST',
+        headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+        body: JSON.stringify(extendedPayload),
+      });
+      r = res[0] || extendedPayload;
+    } catch (e) {
+      // Fallback without portion columns if remote DB schema doesn't have them yet
+      const res = await supabaseFetch<any[]>('menu_items?on_conflict=id', {
+        method: 'POST',
+        headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+        body: JSON.stringify(basePayload),
+      });
+      r = res[0] || basePayload;
+    }
+
     return {
       id: r.id,
       name: r.name,
@@ -108,6 +127,8 @@ export const supabaseService = {
       isVeg: r.is_veg,
       isChefSpecial: r.is_chef_special,
       isAvailable: r.is_available,
+      portionValue: item.portionValue,
+      portionUnit: item.portionUnit,
     };
   },
 

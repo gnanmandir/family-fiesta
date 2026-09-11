@@ -12,6 +12,8 @@ export const INITIAL_MENU: FoodItem[] = [
     isVeg: true,
     isChefSpecial: true,
     isAvailable: true,
+    portionValue: 180,
+    portionUnit: 'g',
   },
   {
     id: 'FOOD-102',
@@ -23,6 +25,8 @@ export const INITIAL_MENU: FoodItem[] = [
     isVeg: true,
     isChefSpecial: true,
     isAvailable: true,
+    portionValue: 150,
+    portionUnit: 'g',
   },
   {
     id: 'FOOD-103',
@@ -34,6 +38,8 @@ export const INITIAL_MENU: FoodItem[] = [
     isVeg: true,
     isChefSpecial: true,
     isAvailable: true,
+    portionValue: 250,
+    portionUnit: 'g',
   },
   {
     id: 'FOOD-104',
@@ -45,6 +51,8 @@ export const INITIAL_MENU: FoodItem[] = [
     isVeg: true,
     isChefSpecial: false,
     isAvailable: true,
+    portionValue: 250,
+    portionUnit: 'ml',
   },
   {
     id: 'FOOD-105',
@@ -56,6 +64,8 @@ export const INITIAL_MENU: FoodItem[] = [
     isVeg: true,
     isChefSpecial: false,
     isAvailable: true,
+    portionValue: 120,
+    portionUnit: 'g',
   },
   {
     id: 'FOOD-106',
@@ -67,5 +77,7 @@ export const INITIAL_MENU: FoodItem[] = [
     isVeg: true,
     isChefSpecial: false,
     isAvailable: true,
+    portionValue: 200,
+    portionUnit: 'g',
   },
 ];

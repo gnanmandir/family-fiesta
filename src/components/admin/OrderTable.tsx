@@ -451,8 +451,13 @@ Thank you for ordering from Family Fiesta!
                 <div className="space-y-1.5 pr-1">
                   {selectedOrderForReceipt.items.map((it) => (
                     <div key={it.id} className="flex justify-between text-xs py-1.5 px-3 rounded-lg bg-stone-50 border border-stone-200 text-stone-800">
-                      <span>
+                      <span className="flex items-center gap-1.5 flex-wrap">
                         <strong className="text-stone-900 font-bold">{it.quantity}×</strong> {it.name}
+                        {it.portion && (
+                          <span className="text-[10px] text-stone-500 font-mono bg-white px-1 py-0.5 rounded border border-stone-200">
+                            ({it.portion})
+                          </span>
+                        )}
                       </span>
                       <span className="font-bold text-stone-900 font-mono">₹{it.total}</span>
                     </div>

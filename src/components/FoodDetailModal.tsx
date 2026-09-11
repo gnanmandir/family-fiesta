@@ -69,9 +69,16 @@ export const FoodDetailModal: React.FC<FoodDetailModalProps> = ({
           
           <div>
             <div className="flex items-start justify-between">
-              <h2 className="text-xl font-bold text-slate-900 leading-tight tracking-tight">
-                {food.name}
-              </h2>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-xl font-bold text-slate-900 leading-tight tracking-tight">
+                  {food.name}
+                </h2>
+                {food.portionValue && food.portionUnit && (
+                  <span className="px-2 py-0.5 rounded-md text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/70 font-mono">
+                    {food.portionValue} {food.portionUnit}
+                  </span>
+                )}
+              </div>
               <span className="text-xl font-bold text-slate-900 ml-3 flex-shrink-0 font-mono">
                 ₹{food.price}
               </span>

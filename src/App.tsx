@@ -518,6 +518,7 @@ export default function App() {
       price: c.food.price,
       quantity: c.quantity,
       total: c.food.price * c.quantity,
+      portion: c.food.portionValue && c.food.portionUnit ? `${c.food.portionValue} ${c.food.portionUnit}` : undefined,
     }));
 
     const totalAmount = orderItems.reduce((sum, i) => sum + i.total, 0);
