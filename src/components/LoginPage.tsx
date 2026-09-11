@@ -67,7 +67,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
     // 1. Fetch dynamic admin credentials
     let adminUsername = 'dada';
-    let adminPassword = 'niruma0212';
+    let adminPassword = 'dada58';
     try {
       const { api } = await import('../services/api');
       const creds = await api.getAdminCredentials();

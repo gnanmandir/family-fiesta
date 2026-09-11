@@ -68,7 +68,7 @@ export const api = {
     if (isSupabaseConfigured) {
       return await supabaseService.getAdminCredentials();
     }
-    return { username: 'dada', password: 'niruma0212' };
+    return { username: 'dada', password: 'dada58' };
   },
 
   setAdminCredentials: async (username: string, password: string) => {

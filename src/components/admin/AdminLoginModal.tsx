@@ -29,7 +29,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
     
     try {
       let adminUser = 'dada';
-      let adminPwd = 'niruma0212';
+      let adminPwd = 'dada58';
       try {
         const { api } = await import('../../services/api');
         const creds = await api.getAdminCredentials();

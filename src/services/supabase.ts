@@ -357,7 +357,7 @@ export const supabaseService = {
       const rows = await supabaseFetch<any[]>('app_settings?key=in.(admin_username,admin_password)&select=*');
       if (rows && rows.length > 0) {
         let username = 'dada';
-        let password = 'niruma0212';
+        let password = 'dada58';
         rows.forEach(r => {
           if (r.key === 'admin_username') username = r.value;
           if (r.key === 'admin_password') password = r.value;
@@ -367,7 +367,7 @@ export const supabaseService = {
     } catch (e) {
       // ignore
     }
-    return { username: 'dada', password: 'niruma0212' };
+    return { username: 'dada', password: 'dada58' };
   },
 
   setAdminCredentials: async (username: string, password: string): Promise<void> => {
