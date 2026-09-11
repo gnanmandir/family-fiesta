@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx';
 import { Order, OrderStatus, Student } from '../../types';
 import { generateAndDownloadPDFReceipt } from '../../utils/pdfGenerator';
 import { INITIAL_STUDENTS } from '../../data/students';
+import { formatNameDisplay } from '../../utils/nameFormatter';
 import {
   Search,
   Filter,
@@ -386,80 +387,85 @@ Thank you for ordering from Family Fiesta!
 
       {/* Comprehensive Order Detail Sheet Modal */}
       {selectedOrderForReceipt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/40 backdrop-blur-xs">
-          <div className="printable-receipt w-full max-w-lg bg-white border border-stone-200 rounded-2xl p-6 shadow-2xl space-y-4 relative animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-stone-900/50 backdrop-blur-xs overflow-y-auto">
+          <div className="printable-receipt w-full max-w-lg max-h-[90vh] flex flex-col bg-white border border-stone-200 rounded-2xl shadow-2xl relative animate-in fade-in zoom-in-95 duration-150 overflow-hidden my-auto">
             <button
               type="button"
               onClick={() => setSelectedOrderForReceipt(null)}
-              className="no-print absolute top-4 right-4 p-2 rounded-lg bg-stone-100 text-stone-600 hover:bg-stone-200 hover:text-stone-900 cursor-pointer transition-all"
+              className="no-print absolute top-3.5 right-3.5 p-2 rounded-lg bg-stone-100 text-stone-600 hover:bg-stone-200 hover:text-stone-900 cursor-pointer transition-all z-10"
             >
               <X className="w-4 h-4" />
             </button>
 
-            <div className="border-b border-stone-100 pb-3">
+            {/* Fixed Header */}
+            <div className="p-5 sm:p-6 border-b border-stone-100 shrink-0">
               <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold uppercase tracking-wider">
                 Order Receipt
               </span>
-              <h3 className="text-xl font-bold text-stone-900 mt-1">
-                {selectedOrderForReceipt.fullName || selectedOrderForReceipt.studentName}
+              <h3 className="text-lg sm:text-xl font-bold text-stone-900 mt-1 pr-8">
+                {formatNameDisplay(selectedOrderForReceipt.fullName || selectedOrderForReceipt.studentName)}
               </h3>
               <p className="text-xs text-stone-500">
                 Placed on {selectedOrderForReceipt.dateDisplay || ''} at {selectedOrderForReceipt.timeDisplay}
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5 text-xs bg-stone-50 p-3.5 rounded-xl border border-stone-200">
-              <div>
-                <span className="text-stone-400 text-[10px] block uppercase font-bold">Student First Name</span>
-                <span className="font-bold text-stone-900 text-sm">{selectedOrderForReceipt.studentName.replace(/\s*\(.*\)/, '')}</span>
+            {/* Scrollable Body */}
+            <div className="p-5 sm:p-6 overflow-y-auto space-y-4 flex-1 custom-scrollbar">
+              <div className="grid grid-cols-2 gap-2.5 text-xs bg-stone-50 p-3.5 rounded-xl border border-stone-200">
+                <div>
+                  <span className="text-stone-400 text-[10px] block uppercase font-bold">Student First Name</span>
+                  <span className="font-bold text-stone-900 text-sm">{formatNameDisplay(selectedOrderForReceipt.studentName).split(' ')[0] || selectedOrderForReceipt.studentName}</span>
+                </div>
+                <div>
+                  <span className="text-stone-400 text-[10px] block uppercase font-bold">Parent Name</span>
+                  <span className="font-bold text-stone-900 text-sm">{selectedOrderForReceipt.parentName}</span>
+                </div>
+                <div className="col-span-2 pt-1 border-t border-stone-200/60">
+                  <span className="text-stone-400 text-[10px] block uppercase font-bold">Full Registered Name</span>
+                  <span className="font-semibold text-stone-900">{formatNameDisplay(selectedOrderForReceipt.fullName || selectedOrderForReceipt.studentName)}</span>
+                </div>
+                <div>
+                  <span className="text-stone-400 text-[10px] block uppercase font-bold">GM No.</span>
+                  <span className="font-semibold text-stone-900 font-mono">
+                    {getOrderGmNo(selectedOrderForReceipt, students) !== 999999 ? getOrderGmNo(selectedOrderForReceipt, students) : selectedOrderForReceipt.studentId}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-stone-400 text-[10px] block uppercase font-bold">Guests</span>
+                  <span className="font-semibold text-stone-900">{selectedOrderForReceipt.peopleCount}</span>
+                </div>
+                <div>
+                  <span className="text-stone-400 text-[10px] block uppercase font-bold">Budget</span>
+                  <span className="font-semibold text-stone-900 font-mono">₹{selectedOrderForReceipt.allowedBudget}</span>
+                </div>
+                <div className="col-span-2 pt-1 border-t border-stone-200/60 font-mono text-[10px] text-stone-400">
+                  Device ID: {selectedOrderForReceipt.deviceId}
+                </div>
               </div>
-              <div>
-                <span className="text-stone-400 text-[10px] block uppercase font-bold">Parent Name</span>
-                <span className="font-bold text-stone-900 text-sm">{selectedOrderForReceipt.parentName}</span>
-              </div>
-              <div className="col-span-2 pt-1 border-t border-stone-200/60">
-                <span className="text-stone-400 text-[10px] block uppercase font-bold">Full Registered Name</span>
-                <span className="font-semibold text-stone-900">{selectedOrderForReceipt.fullName}</span>
-              </div>
-              <div>
-                <span className="text-stone-400 text-[10px] block uppercase font-bold">GM No.</span>
-                <span className="font-semibold text-stone-900 font-mono">
-                  {getOrderGmNo(selectedOrderForReceipt, students) !== 999999 ? getOrderGmNo(selectedOrderForReceipt, students) : selectedOrderForReceipt.studentId}
-                </span>
-              </div>
-              <div>
-                <span className="text-stone-400 text-[10px] block uppercase font-bold">Guests</span>
-                <span className="font-semibold text-stone-900">{selectedOrderForReceipt.peopleCount}</span>
-              </div>
-              <div>
-                <span className="text-stone-400 text-[10px] block uppercase font-bold">Budget</span>
-                <span className="font-semibold text-stone-900 font-mono">₹{selectedOrderForReceipt.allowedBudget}</span>
-              </div>
-              <div className="col-span-2 pt-1 border-t border-stone-200/60 font-mono text-[10px] text-stone-400">
-                Device ID: {selectedOrderForReceipt.deviceId}
+
+              <div className="border-t border-stone-100 pt-3 space-y-2">
+                <div className="text-xs font-bold text-stone-700 uppercase tracking-wider">
+                  Line Items & Quantities
+                </div>
+                <div className="space-y-1.5 pr-1">
+                  {selectedOrderForReceipt.items.map((it) => (
+                    <div key={it.id} className="flex justify-between text-xs py-1.5 px-3 rounded-lg bg-stone-50 border border-stone-200 text-stone-800">
+                      <span>
+                        <strong className="text-stone-900 font-bold">{it.quantity}×</strong> {it.name}
+                      </span>
+                      <span className="font-bold text-stone-900 font-mono">₹{it.total}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="border-t border-stone-100 pt-3 space-y-2">
-              <div className="text-xs font-bold text-stone-700 uppercase tracking-wider">
-                Line Items & Quantities
-              </div>
-              <div className="space-y-1.5 max-h-48 overflow-y-auto custom-scrollbar pr-1">
-                {selectedOrderForReceipt.items.map((it) => (
-                  <div key={it.id} className="flex justify-between text-xs py-1.5 px-3 rounded-lg bg-stone-50 border border-stone-200 text-stone-800">
-                    <span>
-                      <strong className="text-stone-900 font-bold">{it.quantity}×</strong> {it.name}
-                    </span>
-                    <span className="font-bold text-stone-900 font-mono">₹{it.total}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="border-t border-stone-100 pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            {/* Fixed Footer with Total & Actions */}
+            <div className="p-4 sm:p-5 border-t border-stone-100 bg-stone-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
               <div>
-                <span className="text-stone-400 text-xs block font-medium">Total Bill</span>
-                <span className="text-indigo-600 font-bold text-2xl font-mono">₹{selectedOrderForReceipt.totalAmount}</span>
+                <span className="text-stone-400 text-[10px] block font-bold uppercase tracking-wider">Total Bill</span>
+                <span className="text-indigo-600 font-bold text-xl sm:text-2xl font-mono">₹{selectedOrderForReceipt.totalAmount}</span>
               </div>
               <div className="no-print flex items-center space-x-2 flex-wrap gap-y-2">
                 <button
@@ -474,7 +480,7 @@ Thank you for ordering from Family Fiesta!
                 <button
                   type="button"
                   onClick={() => handleDownloadSingleReceipt(selectedOrderForReceipt)}
-                  className="px-3 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 border border-stone-200 text-stone-700 text-xs font-semibold flex items-center space-x-1 cursor-pointer"
+                  className="px-3 py-2 rounded-xl bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 text-xs font-semibold flex items-center space-x-1 cursor-pointer transition-colors"
                   title="Save order receipt as text file"
                 >
                   <Download className="w-3.5 h-3.5" />
@@ -483,12 +489,13 @@ Thank you for ordering from Family Fiesta!
                 <button
                   type="button"
                   onClick={() => setSelectedOrderForReceipt(null)}
-                  className="px-3 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 border border-stone-200 text-stone-700 text-xs font-semibold cursor-pointer"
+                  className="px-3 py-2 rounded-xl bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 text-xs font-semibold cursor-pointer transition-colors"
                 >
                   Close
                 </button>
               </div>
             </div>
+
           </div>
         </div>
       )}
