@@ -9,10 +9,24 @@ interface StudentManagerProps {
   orders: Order[];
 }
 
+const PRESET_GRADES = [
+  'Std 5',
+  'Std 6',
+  'Std 7',
+  'Std 8',
+  'Std 9',
+  'Std 10',
+  'Std 11',
+  'Std 12',
+  'Diploma',
+  'College',
+];
+
 export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'All' | 'Ordered' | 'Remaining'>('All');
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [selectedGrade, setSelectedGrade] = useState<string>('Std 5');
 
   // Map student orders
   const studentOrdersMap = new Map<string, Order>();
@@ -74,7 +88,10 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
           </div>
           <button
             type="button"
-            onClick={() => setEditingStudent({ id: '', fullName: '', firstName: '', lastName: '', parentName: '', gmNo: 0, grade: '' } as any)}
+            onClick={() => {
+              setEditingStudent({ id: '', fullName: '', firstName: '', lastName: '', parentName: '', gmNo: 0, grade: 'Std 5' } as any);
+              setSelectedGrade('Std 5');
+            }}
             className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm whitespace-nowrap transition-colors"
           >
             + Add Student
@@ -148,7 +165,10 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
                       <td className="p-3.5 text-right whitespace-nowrap">
                         <button
                           type="button"
-                          onClick={() => setEditingStudent(student)}
+                          onClick={() => {
+                            setEditingStudent(student);
+                            setSelectedGrade(student.grade || 'Std 5');
+                          }}
                           className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold rounded-lg transition-colors"
                         >
                           Edit
@@ -217,8 +237,38 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
                 <input type="number" name="gmNo" required defaultValue={editingStudent.gmNo || ''} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm" />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Grade / Standard</label>
-                <input type="text" name="grade" defaultValue={editingStudent.grade || 'Gurukul Roster'} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm" />
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Grade / Standard</label>
+                
+                {/* Pre-defined Standard Buttons */}
+                <div className="flex flex-wrap gap-1.5 mb-2.5">
+                  {PRESET_GRADES.map((g) => {
+                    const isSelected = selectedGrade === g;
+                    return (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => setSelectedGrade(g)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-indigo-600 border-indigo-600 text-white shadow-xs'
+                            : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300'
+                        }`}
+                      >
+                        {g}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <input
+                  type="text"
+                  name="grade"
+                  value={selectedGrade}
+                  onChange={(e) => setSelectedGrade(e.target.value)}
+                  placeholder="Select standard above or type custom..."
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
+                  required
+                />
               </div>
               <div className="flex justify-end space-x-2 pt-4">
                 <button type="button" onClick={() => setEditingStudent(null)} className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
