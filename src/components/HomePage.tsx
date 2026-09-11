@@ -4,9 +4,8 @@ import { Check, Users, User, ArrowRight, ShieldCheck, Sparkles, Lock } from 'luc
 
 import { 
   calculateAllowedBudget, 
-  TIERED_BUDGET_MAP,
   getBudgetFormulaDisplay,
-  TIER_INCREMENTS
+  getDynamicTiers
 } from '../utils/budget';
 
 interface HomePageProps {
@@ -29,15 +28,11 @@ export const HomePage: React.FC<HomePageProps> = ({
   ordersOpen = true,
 }) => {
   const allowedBudget = calculateAllowedBudget(peopleCount);
+  const dynamicTiers = getDynamicTiers();
 
   const getTierIncrementText = (num: number) => {
-    switch(num) {
-      case 1: return 'BASE TIER';
-      case 2: return '+₹220 ADDED';
-      case 3: return '+₹160 ADDED';
-      case 4: return '+₹70 ADDED';
-      default: return '';
-    }
+    if (num === 1) return 'BASE TIER';
+    return `+₹${dynamicTiers[num - 1]} ADDED`;
   };
 
   // If ordering is closed, show a notice instead of the normal page
@@ -85,15 +80,16 @@ export const HomePage: React.FC<HomePageProps> = ({
             </h2>
           </div>
           <div className="bg-slate-100 text-slate-500 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full self-start sm:self-auto">
-            Max 4 Guests
+            Max {dynamicTiers.length} Guests
           </div>
         </div>
 
         {/* Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-5">
-          {[1, 2, 3, 4].map((num) => {
+        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${Math.min(4, dynamicTiers.length)} gap-3 sm:gap-4 mb-5`}>
+          {dynamicTiers.map((_, index) => {
+            const num = index + 1;
             const isSelected = peopleCount === num;
-            const budget = TIERED_BUDGET_MAP[num];
+            const budget = calculateAllowedBudget(num);
 
             return (
               <button

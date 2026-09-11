@@ -382,4 +382,24 @@ export const supabaseService = {
       body: JSON.stringify({ key: 'admin_password', value: password }),
     });
   },
+
+  getGuestTiers: async (): Promise<number[]> => {
+    try {
+      const rows = await supabaseFetch<any[]>('app_settings?key=eq.guest_tiers&select=value');
+      if (rows && rows.length > 0) {
+        return JSON.parse(rows[0].value);
+      }
+    } catch (e) {
+      // ignore
+    }
+    return [220, 220, 160, 70]; // Default fallback
+  },
+
+  setGuestTiers: async (tiers: number[]): Promise<void> => {
+    await supabaseFetch('app_settings?on_conflict=key', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify({ key: 'guest_tiers', value: JSON.stringify(tiers) }),
+    });
+  },
 };

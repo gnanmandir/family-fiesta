@@ -77,6 +77,19 @@ export const api = {
     }
   },
 
+  getGuestTiers: async (): Promise<number[]> => {
+    if (isSupabaseConfigured) {
+      return await supabaseService.getGuestTiers();
+    }
+    return [220, 220, 160, 70];
+  },
+
+  setGuestTiers: async (tiers: number[]) => {
+    if (isSupabaseConfigured) {
+      await supabaseService.setGuestTiers(tiers);
+    }
+  },
+
   getStudentById: async (id: string): Promise<Student> => {
     if (isTursoConfigured) {
       const all = await tursoService.getStudents();

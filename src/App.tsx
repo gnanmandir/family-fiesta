@@ -176,16 +176,18 @@ export default function App() {
     // Asynchronously fetch fresh data from backend
     const loadBackendData = async () => {
       try {
-        const [stList, menuList, orderList, isOpen] = await Promise.all([
+        const [stList, menuList, orderList, isOpen, dynamicTiers] = await Promise.all([
           fetchStudents(),
           fetchMenuItems(),
           fetchOrders(),
           api.getOrderingStatus(),
+          api.getGuestTiers(),
         ]);
         setStudents(stList);
         setMenuItems(menuList);
         setOrders(orderList);
         setOrdersOpen(isOpen);
+        localStorage.setItem('app_guest_tiers', JSON.stringify(dynamicTiers));
 
         const currentAdminToken = localStorage.getItem('admin_token');
         const currentSavedView = localStorage.getItem('app_current_view');
