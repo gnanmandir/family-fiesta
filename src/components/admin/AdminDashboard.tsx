@@ -15,6 +15,12 @@ import {
   Lock,
   LogOut,
   Power,
+  ShieldAlert,
+  Eye,
+  EyeOff,
+  X,
+  KeyRound,
+  AlertTriangle,
 } from 'lucide-react';
 import { AnalyticsCharts } from './AnalyticsCharts';
 import { OrderTable } from './OrderTable';
@@ -57,12 +63,70 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     'overview' | 'orders' | 'students' | 'food' | 'settings' | 'pricing'
   >('overview');
 
-  const handleProtectedAction = (action: () => void, message: string = "Enter system control password to proceed:") => {
-    const pwd = prompt(message);
-    if (pwd === 'niruma0212') {
-      action();
-    } else if (pwd !== null) {
-      alert('Incorrect password.');
+  // In-app Protected Action Modal State
+  const [protectedModal, setProtectedModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    confirmText?: string;
+    isDanger?: boolean;
+    onSuccess: () => void | Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    description: '',
+    confirmText: 'Confirm',
+    isDanger: false,
+    onSuccess: () => {},
+  });
+
+  const [systemPassword, setSystemPassword] = useState('');
+  const [systemPasswordError, setSystemPasswordError] = useState('');
+  const [showSystemPassword, setShowSystemPassword] = useState(false);
+  const [isProcessingAction, setIsProcessingAction] = useState(false);
+
+  // In-app Credentials Modal State
+  const [credModalOpen, setCredModalOpen] = useState(false);
+  const [credUsername, setCredUsername] = useState('');
+  const [credPassword, setCredPassword] = useState('');
+  const [credSysPass, setCredSysPass] = useState('');
+  const [credError, setCredError] = useState('');
+  const [isSavingCreds, setIsSavingCreds] = useState(false);
+
+  const openProtectedAction = (
+    title: string,
+    description: string,
+    action: () => void | Promise<void>,
+    isDanger: boolean = false,
+    confirmText: string = 'Confirm'
+  ) => {
+    setSystemPassword('');
+    setSystemPasswordError('');
+    setShowSystemPassword(false);
+    setProtectedModal({
+      isOpen: true,
+      title,
+      description,
+      confirmText,
+      isDanger,
+      onSuccess: action,
+    });
+  };
+
+  const handleVerifyProtectedPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (systemPassword !== 'niruma0212') {
+      setSystemPasswordError('Incorrect system password. Please try again.');
+      return;
+    }
+    setIsProcessingAction(true);
+    try {
+      await protectedModal.onSuccess();
+      setProtectedModal((prev) => ({ ...prev, isOpen: false }));
+    } catch (err: any) {
+      setSystemPasswordError('Action failed: ' + (err?.message || err));
+    } finally {
+      setIsProcessingAction(false);
     }
   };
 
@@ -292,12 +356,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       type="button"
                       onClick={() => {
                         const newState = !ordersOpen;
-                        const msg = newState
-                          ? 'Re-open ordering? Students will be able to place new orders again.'
-                          : 'Close ordering? Students will only be able to view/download existing receipts.';
-                        if (confirm(msg)) {
-                          handleProtectedAction(() => onToggleOrdering(newState), 'Enter system password (niruma0212) to toggle ordering:');
-                        }
+                        openProtectedAction(
+                          newState ? 'Open Ordering System' : 'Close Ordering System',
+                          newState
+                            ? 'Enter system password (niruma0212) to re-open ordering for students.'
+                            : 'Enter system password (niruma0212) to halt ordering. Students will only be able to view and download existing receipts.',
+                          () => onToggleOrdering(newState),
+                          !newState,
+                          newState ? 'Open Ordering' : 'Close Ordering'
+                        );
                       }}
                       className={`px-5 py-2.5 rounded-xl font-bold text-xs whitespace-nowrap cursor-pointer transition-all shadow-sm flex items-center space-x-2 ${
                         ordersOpen
@@ -332,10 +399,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <button
                     type="button"
                     onClick={() => {
-                      handleProtectedAction(() => {
-                        onResetDeviceLock();
-                        alert('Device lock cleared successfully.');
-                      }, 'Enter system password (niruma0212) to clear lock:');
+                      openProtectedAction(
+                        'Clear Local Device Lock',
+                        'Enter system password (niruma0212) to clear the local testing lock on this device.',
+                        () => {
+                          onResetDeviceLock();
+                          alert('Device lock cleared successfully.');
+                        },
+                        false,
+                        'Clear Device Lock'
+                      );
                     }}
                     className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs whitespace-nowrap cursor-pointer transition-all shadow-sm"
                   >
@@ -364,16 +437,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <button
                     type="button"
                     onClick={() => {
-                      if (confirm('CRITICAL WARNING: Are you sure you want to permanently DELETE ALL ORDERS? This cannot be undone.')) {
-                        handleProtectedAction(async () => {
-                          try {
-                            await onClearAllOrders();
-                            alert('All orders wiped successfully!');
-                          } catch (err) {
-                            alert('Encountered an issue wiping orders: ' + err);
-                          }
-                        }, 'Enter system password (niruma0212) to confirm WIPE:');
-                      }
+                      openProtectedAction(
+                        'Permanently Wipe All Orders',
+                        'CRITICAL WARNING: This action will permanently erase all order records and cannot be undone. Enter system password (niruma0212) to proceed.',
+                        async () => {
+                          await onClearAllOrders();
+                          alert('All orders wiped successfully!');
+                        },
+                        true,
+                        'Wipe All Orders'
+                      );
                     }}
                     className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs whitespace-nowrap cursor-pointer transition-all shadow-sm flex items-center space-x-1.5"
                   >
@@ -402,23 +475,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div className="mt-5 pt-4 border-t border-slate-100 flex justify-end">
                   <button
                     type="button"
-                    onClick={async () => {
-                      const newUsername = prompt("Enter NEW Admin Username:");
-                      if (!newUsername) return;
-                      const newPassword = prompt("Enter NEW Admin Password:");
-                      if (!newPassword) return;
-                      
-                      if (confirm(`Change admin login to Username: "${newUsername}" / Password: "${newPassword}"?`)) {
-                        handleProtectedAction(async () => {
-                          try {
-                            const { api } = await import('../../services/api');
-                            await api.setAdminCredentials(newUsername, newPassword);
-                            alert("Admin credentials updated successfully! You will use these to log in next time.");
-                          } catch(e) {
-                            alert("Failed to update credentials.");
-                          }
-                        }, 'Enter system password (niruma0212) to confirm change:');
-                      }
+                    onClick={() => {
+                      setCredUsername('');
+                      setCredPassword('');
+                      setCredSysPass('');
+                      setCredError('');
+                      setCredModalOpen(true);
                     }}
                     className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs whitespace-nowrap cursor-pointer transition-all shadow-sm"
                   >
@@ -431,6 +493,219 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         )}
 
       </div>
+
+      {/* 1. In-app System Password Modal */}
+      {protectedModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-slate-200 animate-in zoom-in-95 duration-150">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                  protectedModal.isDanger ? 'bg-red-50 text-red-600' : 'bg-indigo-50 text-indigo-600'
+                }`}>
+                  <ShieldAlert className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">{protectedModal.title}</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Authorization Required</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setProtectedModal((prev) => ({ ...prev, isOpen: false }))}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600 mb-5 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-200">
+              {protectedModal.description}
+            </p>
+
+            <form onSubmit={handleVerifyProtectedPassword} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  System Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showSystemPassword ? 'text' : 'password'}
+                    value={systemPassword}
+                    onChange={(e) => {
+                      setSystemPassword(e.target.value);
+                      if (systemPasswordError) setSystemPasswordError('');
+                    }}
+                    placeholder="Enter password (niruma0212)..."
+                    autoFocus
+                    required
+                    className={`w-full pl-3 pr-10 py-2.5 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all ${
+                      systemPasswordError
+                        ? 'border-red-300 focus:ring-red-200 text-red-900'
+                        : 'border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-900'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowSystemPassword(!showSystemPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                  >
+                    {showSystemPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {systemPasswordError && (
+                  <p className="text-xs text-red-600 mt-1.5 flex items-center font-medium">
+                    <AlertTriangle className="w-3.5 h-3.5 mr-1 inline shrink-0" />
+                    <span>{systemPasswordError}</span>
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end space-x-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setProtectedModal((prev) => ({ ...prev, isOpen: false }))}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isProcessingAction}
+                  className={`px-5 py-2.5 rounded-xl text-white font-bold text-xs transition-colors shadow-sm disabled:opacity-50 ${
+                    protectedModal.isDanger
+                      ? 'bg-red-600 hover:bg-red-700'
+                      : 'bg-indigo-600 hover:bg-indigo-700'
+                  }`}
+                >
+                  {isProcessingAction ? 'Verifying...' : (protectedModal.confirmText || 'Confirm')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 2. In-app Update Credentials Modal */}
+      {credModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-slate-200 animate-in zoom-in-95 duration-150">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                  <KeyRound className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">Update Admin Credentials</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Set new login credentials for this portal</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCredModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!credUsername.trim() || !credPassword.trim()) {
+                  setCredError('Username and password cannot be empty.');
+                  return;
+                }
+                if (credSysPass !== 'niruma0212') {
+                  setCredError('Incorrect system password (niruma0212). Confirmation required.');
+                  return;
+                }
+                setIsSavingCreds(true);
+                try {
+                  const { api } = await import('../../services/api');
+                  await api.setAdminCredentials(credUsername.trim(), credPassword.trim());
+                  alert('Admin credentials successfully updated! Use your new credentials on your next login.');
+                  setCredModalOpen(false);
+                } catch (err: any) {
+                  setCredError('Failed to update: ' + (err?.message || err));
+                } finally {
+                  setIsSavingCreds(false);
+                }
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  New Admin Username
+                </label>
+                <input
+                  type="text"
+                  value={credUsername}
+                  onChange={(e) => setCredUsername(e.target.value)}
+                  placeholder="e.g. dada"
+                  required
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  New Admin Password
+                </label>
+                <input
+                  type="text"
+                  value={credPassword}
+                  onChange={(e) => setCredPassword(e.target.value)}
+                  placeholder="Enter new admin password..."
+                  required
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  System Confirmation Password
+                </label>
+                <input
+                  type="password"
+                  value={credSysPass}
+                  onChange={(e) => setCredSysPass(e.target.value)}
+                  placeholder="Enter niruma0212 to confirm..."
+                  required
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-900"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Confirmation required to prevent unauthorized takeovers.
+                </p>
+              </div>
+
+              {credError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs flex items-center space-x-1.5 font-medium">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>{credError}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end space-x-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setCredModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingCreds}
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-colors shadow-sm disabled:opacity-50"
+                >
+                  {isSavingCreds ? 'Saving...' : 'Save New Credentials'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );
