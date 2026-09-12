@@ -103,20 +103,26 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onR
         </div>
 
         {/* Total & 50% Discount Summary */}
-        <div className="border-t border-slate-100 pt-2 space-y-1 mb-2 text-xs sm:text-sm">
-          <div className="flex justify-between items-center text-slate-500">
-            <span>Total price</span>
-            <span className="font-mono font-medium text-slate-700">₹{currentOrder.totalAmount}</span>
-          </div>
-          <div className="flex justify-between items-center text-emerald-600 font-medium">
-            <span>Discount amt</span>
-            <span className="font-mono">- ₹{currentOrder.totalAmount / 2}</span>
-          </div>
-          <div className="border-t border-slate-100 pt-1.5 flex justify-between items-center">
-            <span className="text-slate-800 uppercase text-[10px] sm:text-[11px] tracking-wider font-bold">Payable amt</span>
-            <span className="text-lg sm:text-xl text-indigo-600 font-mono font-bold">₹{currentOrder.totalAmount / 2}</span>
-          </div>
-        </div>
+        {(() => {
+          const payable = Math.ceil(currentOrder.totalAmount / 2);
+          const discount = currentOrder.totalAmount - payable;
+          return (
+            <div className="border-t border-slate-100 pt-2 space-y-1 mb-2 text-xs sm:text-sm">
+              <div className="flex justify-between items-center text-slate-500">
+                <span>Total price</span>
+                <span className="font-mono font-medium text-slate-700">₹{currentOrder.totalAmount}</span>
+              </div>
+              <div className="flex justify-between items-center text-emerald-600 font-medium">
+                <span>Discount amt</span>
+                <span className="font-mono">- ₹{discount}</span>
+              </div>
+              <div className="border-t border-slate-100 pt-1.5 flex justify-between items-center">
+                <span className="text-slate-800 uppercase text-[10px] sm:text-[11px] tracking-wider font-bold">Payable amt</span>
+                <span className="text-lg sm:text-xl text-indigo-600 font-mono font-bold">₹{payable}</span>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Cashless Notice */}
         <div className="my-2.5 p-2 sm:p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/80 text-amber-900 text-xs flex items-center space-x-2">

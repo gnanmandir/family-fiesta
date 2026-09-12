@@ -193,13 +193,16 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
 
   y += subRowHeight;
 
+  const payableAmt = Math.ceil(order.totalAmount / 2);
+  const discountAmt = order.totalAmount - payableAmt;
+
   doc.setFillColor(248, 250, 252);
   doc.rect(18, y, 174, subRowHeight, 'F');
   doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(16, 185, 129);
   doc.text('DISCOUNT AMT (50%):', 148, y + 4.5, { align: 'right' });
-  doc.text(`-Rs. ${order.totalAmount / 2}`, 186, y + 4.5, { align: 'right' });
+  doc.text(`-Rs. ${discountAmt}`, 186, y + 4.5, { align: 'right' });
 
   y += subRowHeight;
 
@@ -219,7 +222,7 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
 
   doc.setTextColor(234, 88, 12);
   doc.setFontSize(11.5);
-  doc.text(`Rs. ${order.totalAmount / 2}`, 186, y + 6.2, { align: 'right' });
+  doc.text(`Rs. ${payableAmt}`, 186, y + 6.2, { align: 'right' });
 
   y += totalRowHeight;
 
