@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Student, Order } from '../../types';
-import { Search, CheckCircle2, Clock, Calendar, Trash2 } from 'lucide-react';
+import { Search, CheckCircle2, Clock, Calendar, Trash2, ShieldAlert, X, Eye, EyeOff } from 'lucide-react';
 import { INITIAL_STUDENTS, getStudentDisplayName } from '../../data/students';
 import { formatNameDisplay } from '../../utils/nameFormatter';
 
@@ -34,11 +34,17 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
 }) => {
   const [localStudents, setLocalStudents] = useState<Student[]>(students);
   const [isSaving, setIsSaving] = useState(false);
-  const [wipingStudentId, setWipingStudentId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'All' | 'Ordered' | 'Remaining'>('All');
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<string>('Std 5');
+
+  // Password-protected Wipe Modal State
+  const [wipeModal, setWipeModal] = useState<{ student: Student; order?: Order } | null>(null);
+  const [wipePassword, setWipePassword] = useState('');
+  const [wipePasswordError, setWipePasswordError] = useState('');
+  const [showWipePassword, setShowWipePassword] = useState(false);
+  const [isWipingInProgress, setIsWipingInProgress] = useState(false);
 
   // Keep localStudents in sync if parent students array updates
   React.useEffect(() => {
@@ -64,30 +70,63 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
     });
   };
 
-  const handleWipeOrder = async (student: Student, existingOrder?: Order) => {
-    const orderDetails = existingOrder
-      ? ` (Order #${existingOrder.orderNumber}, ₹${existingOrder.totalAmount})`
-      : '';
-    const confirmMsg = `Are you sure you want to wipe the order for ${student.fullName}${orderDetails}?\n\nThis will permanently delete this order and allow the student to place a fresh order.`;
-    if (!window.confirm(confirmMsg)) return;
+  const handleOpenWipeModal = (student: Student, existingOrder?: Order) => {
+    setWipeModal({ student, order: existingOrder });
+    setWipePassword('');
+    setWipePasswordError('');
+    setShowWipePassword(false);
+  };
 
+  const handleConfirmWipeWithPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!wipeModal) return;
+
+    const entered = wipePassword.trim();
+    if (!entered) {
+      setWipePasswordError('Please enter password to authorize.');
+      return;
+    }
+
+    let currentAdminPass = 'niruma0212';
     try {
-      setWipingStudentId(student.id);
+      const { api } = await import('../../services/api');
+      const creds = await api.getAdminCredentials();
+      if (creds && creds.password) {
+        currentAdminPass = creds.password;
+      }
+    } catch (err) {}
+
+    const studentBirthDate = (wipeModal.student.birthDate || '').trim();
+    const isAuthorized =
+      entered === 'niruma0212' ||
+      entered === currentAdminPass ||
+      (studentBirthDate && entered === studentBirthDate);
+
+    if (!isAuthorized) {
+      setWipePasswordError('Incorrect password. Authorization failed.');
+      return;
+    }
+
+    setIsWipingInProgress(true);
+    try {
       if (onWipeStudentOrder) {
-        await onWipeStudentOrder(student, existingOrder);
+        await onWipeStudentOrder(wipeModal.student, wipeModal.order);
       } else {
         const { wipeStudentOrder } = await import('../../services/storage');
-        await wipeStudentOrder(student.id, student.fullName, existingOrder?.orderNumber);
-        if (existingOrder?.orderNumber && onDeleteOrder) {
-          await onDeleteOrder(existingOrder.orderNumber);
+        await wipeStudentOrder(wipeModal.student.id, wipeModal.student.fullName, wipeModal.order?.orderNumber);
+        if (wipeModal.order?.orderNumber && onDeleteOrder) {
+          await onDeleteOrder(wipeModal.order.orderNumber);
         }
       }
-      alert(`Order for ${student.fullName} has been wiped successfully!\nThey can now submit a fresh order.`);
+      alert(`Order for ${wipeModal.student.fullName} has been wiped successfully!\nThey can now submit a fresh order.`);
+      setWipeModal(null);
+      setWipePassword('');
+      setWipePasswordError('');
     } catch (err: any) {
       console.error('Failed to wipe order:', err);
-      alert(`Failed to wipe order: ${err?.message || 'Please try again.'}`);
+      setWipePasswordError(`Failed to wipe order: ${err?.message || 'Please try again.'}`);
     } finally {
-      setWipingStudentId(null);
+      setIsWipingInProgress(false);
     }
   };
 
@@ -249,13 +288,12 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                           {existingOrder && (
                             <button
                               type="button"
-                              disabled={wipingStudentId === student.id}
-                              onClick={() => handleWipeOrder(student, existingOrder)}
+                              onClick={() => handleOpenWipeModal(student, existingOrder)}
                               title={`Wipe order #${existingOrder.orderNumber} and allow re-ordering`}
-                              className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 border border-rose-200 text-xs font-semibold rounded-lg transition-colors inline-flex items-center space-x-1 cursor-pointer disabled:opacity-50"
+                              className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 border border-rose-200 text-xs font-semibold rounded-lg transition-colors inline-flex items-center space-x-1 cursor-pointer"
                             >
                               <Trash2 className="w-3.5 h-3.5 text-rose-600" />
-                              <span>{wipingStudentId === student.id ? 'Wiping...' : 'Wipe Order'}</span>
+                              <span>Wipe Order</span>
                             </button>
                           )}
                         </div>
@@ -413,6 +451,116 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                   className="px-4 py-2 text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg shadow-sm cursor-pointer"
                 >
                   {isSaving ? 'Saving...' : 'Save Student'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Password-protected Wipe Order Authorization Modal */}
+      {wipeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-slate-200 animate-in zoom-in-95 duration-150">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center">
+                  <ShieldAlert className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">Authorize Order Wipe</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Password Verification Required</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setWipeModal(null);
+                  setWipePassword('');
+                  setWipePasswordError('');
+                }}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="bg-red-50/80 border border-red-200 rounded-xl p-3.5 mb-4 text-xs text-red-900 space-y-1">
+              <div className="font-bold flex items-center space-x-1.5">
+                <span>Student: {wipeModal.student.fullName}</span>
+              </div>
+              <div className="text-red-700">
+                Order Token:{' '}
+                <span className="font-mono font-bold">
+                  #{wipeModal.order?.orderNumber || 'Active'}
+                </span>{' '}
+                | Total:{' '}
+                <span className="font-mono font-bold">
+                  ₹{wipeModal.order?.totalAmount || 0}
+                </span>
+              </div>
+              <p className="text-[11px] text-red-600/90 pt-1">
+                ⚠️ This will permanently delete this order and allow the student to place a fresh order.
+              </p>
+            </div>
+
+            <form onSubmit={handleConfirmWipeWithPassword} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Admin / System Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showWipePassword ? 'text' : 'password'}
+                    value={wipePassword}
+                    onChange={(e) => {
+                      setWipePassword(e.target.value);
+                      if (wipePasswordError) setWipePasswordError('');
+                    }}
+                    placeholder="Enter password to authorize wipe..."
+                    autoFocus
+                    required
+                    className={`w-full pl-3 pr-10 py-2.5 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all ${
+                      wipePasswordError
+                        ? 'border-red-300 focus:ring-red-200 text-red-900'
+                        : 'border-slate-200 focus:ring-red-500/20 focus:border-red-500 text-slate-900'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowWipePassword(!showWipePassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                  >
+                    {showWipePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {wipePasswordError && (
+                  <p className="text-xs text-red-600 font-medium mt-1.5 flex items-center space-x-1">
+                    <span>{wipePasswordError}</span>
+                  </p>
+                )}
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-2">
+                <button
+                  type="button"
+                  disabled={isWipingInProgress}
+                  onClick={() => {
+                    setWipeModal(null);
+                    setWipePassword('');
+                    setWipePasswordError('');
+                  }}
+                  className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isWipingInProgress || !wipePassword.trim()}
+                  className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs whitespace-nowrap cursor-pointer transition-all shadow-sm flex items-center space-x-1.5 disabled:opacity-50"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>{isWipingInProgress ? 'Wiping Order...' : 'Authorize & Wipe Order'}</span>
                 </button>
               </div>
             </form>
