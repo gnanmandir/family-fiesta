@@ -22,12 +22,14 @@ import {
   Check,
   Printer,
   FileText,
+  Trash2,
 } from 'lucide-react';
 
 interface OrderTableProps {
   orders: Order[];
   students?: Student[];
   onUpdateStatus?: (orderNumber: string, status: OrderStatus) => void;
+  onDeleteOrder?: (orderNumber: string) => void;
 }
 
 export function getOrderGmNo(order: Order, studentsList?: Student[]): number {
@@ -52,6 +54,7 @@ export function getOrderGmNo(order: Order, studentsList?: Student[]): number {
 export const OrderTable: React.FC<OrderTableProps> = ({
   orders,
   students,
+  onDeleteOrder,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrderForReceipt, setSelectedOrderForReceipt] = useState<Order | null>(null);
@@ -362,15 +365,36 @@ Thank you for ordering from Family Fiesta!
                         {order.dateDisplay || ''} {order.timeDisplay}
                       </td>
                       <td className="p-3.5 text-right whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedOrderForReceipt(order)}
-                          title="View Full Order Receipt & Details"
-                          className="px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold inline-flex items-center space-x-1 border border-stone-200 active:scale-95 transition-all cursor-pointer"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>View Details</span>
-                        </button>
+                        <div className="flex items-center justify-end space-x-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedOrderForReceipt(order)}
+                            title="View Full Order Receipt & Details"
+                            className="px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold inline-flex items-center space-x-1 border border-stone-200 active:scale-95 transition-all cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Details</span>
+                          </button>
+                          {onDeleteOrder && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (
+                                  window.confirm(
+                                    `Are you sure you want to wipe/delete Order #${order.orderNumber} for ${studentName}?\n\nThis will allow them to place a new order.`
+                                  )
+                                ) {
+                                  onDeleteOrder(order.orderNumber);
+                                }
+                              }}
+                              title="Wipe/Delete Order"
+                              className="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 border border-rose-200 text-xs font-semibold inline-flex items-center space-x-1 active:scale-95 transition-all cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                              <span>Wipe</span>
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

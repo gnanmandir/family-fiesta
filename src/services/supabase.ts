@@ -408,6 +408,34 @@ export const supabaseService = {
     });
   },
 
+  wipeStudentOrder: async (studentId: string, studentFullName?: string): Promise<void> => {
+    try {
+      if (studentId) {
+        await supabaseFetch(`orders?student_id=eq.${encodeURIComponent(studentId)}`, {
+          method: 'DELETE',
+        });
+      }
+    } catch (e) {
+      console.warn('Supabase wipeStudentOrder by student_id error:', e);
+    }
+    if (studentFullName) {
+      try {
+        await supabaseFetch(`orders?full_name=eq.${encodeURIComponent(studentFullName)}`, {
+          method: 'DELETE',
+        });
+      } catch (e) {
+        console.warn('Supabase wipeStudentOrder by full_name error:', e);
+      }
+      try {
+        await supabaseFetch(`orders?student_name=eq.${encodeURIComponent(studentFullName)}`, {
+          method: 'DELETE',
+        });
+      } catch (e) {
+        console.warn('Supabase wipeStudentOrder by student_name error:', e);
+      }
+    }
+  },
+
   deleteCompletedOrders: async (): Promise<void> => {
     await supabaseFetch('orders?status=eq.Completed', {
       method: 'DELETE',

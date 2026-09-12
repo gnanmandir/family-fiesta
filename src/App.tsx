@@ -738,6 +738,23 @@ export default function App() {
     });
   };
 
+  const handleWipeStudentOrder = async (student: Student, order?: Order) => {
+    const { wipeStudentOrder } = await import('./services/storage');
+    await wipeStudentOrder(student.id, student.fullName, order?.orderNumber);
+    const fresh = await fetchOrders();
+    setOrders(fresh);
+    if (
+      activeOrder &&
+      (activeOrder.orderNumber === order?.orderNumber ||
+        (activeOrder.studentId && student.id && activeOrder.studentId.toLowerCase() === student.id.toLowerCase()) ||
+        (activeOrder.fullName && activeOrder.fullName.toLowerCase() === student.fullName.toLowerCase()))
+    ) {
+      setActiveOrder(null);
+      localStorage.removeItem('active_order_number');
+      localStorage.removeItem('app_device_order');
+    }
+  };
+
   const handleResetDeviceLock = async () => {
     await clearDeviceLock();
     setActiveOrder(null);
@@ -875,6 +892,7 @@ export default function App() {
             onDeleteCompletedOrders={handleDeleteCompletedOrders}
             onSaveMenuItems={handleSaveMenuItems}
             onStudentUpdated={handleStudentUpdated}
+            onWipeStudentOrder={handleWipeStudentOrder}
             onResetDeviceLock={handleResetDeviceLock}
             onClearAllOrders={handleClearAllOrders}
             onExitAdmin={handleAdminLogout}

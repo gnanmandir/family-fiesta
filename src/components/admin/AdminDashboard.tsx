@@ -37,6 +37,7 @@ interface AdminDashboardProps {
   onDeleteCompletedOrders?: () => void;
   onSaveMenuItems: (items: FoodItem[]) => void;
   onStudentUpdated?: (student: Student) => void;
+  onWipeStudentOrder?: (student: Student, order?: Order) => Promise<void> | void;
   onResetDeviceLock: () => void;
   onClearAllOrders: () => void;
   onExitAdmin: () => void;
@@ -54,6 +55,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onDeleteCompletedOrders,
   onSaveMenuItems,
   onStudentUpdated,
+  onWipeStudentOrder,
   onResetDeviceLock,
   onClearAllOrders,
   onExitAdmin,
@@ -290,6 +292,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               orders={orders}
               students={students}
               onUpdateStatus={onUpdateOrderStatus}
+              onDeleteOrder={onDeleteOrder}
             />
           </div>
         )}
@@ -301,6 +304,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               students={students}
               orders={orders}
               onStudentUpdated={onStudentUpdated}
+              onDeleteOrder={onDeleteOrder}
+              onWipeStudentOrder={onWipeStudentOrder}
             />
           </div>
         )}

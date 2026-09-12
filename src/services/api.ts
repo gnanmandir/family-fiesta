@@ -347,6 +347,12 @@ export const api = {
     });
   },
 
+  wipeStudentOrder: async (studentId: string, studentFullName?: string): Promise<void> => {
+    if (isSupabaseConfigured) {
+      await supabaseService.wipeStudentOrder(studentId, studentFullName);
+    }
+  },
+
   deleteCompletedOrders: async (): Promise<void> => {
     if (isTursoConfigured) {
       await tursoService.deleteCompletedOrders();

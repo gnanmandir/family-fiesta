@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Student, Order } from '../../types';
-import { Search, CheckCircle2, Clock, Calendar } from 'lucide-react';
+import { Search, CheckCircle2, Clock, Calendar, Trash2 } from 'lucide-react';
 import { INITIAL_STUDENTS, getStudentDisplayName } from '../../data/students';
 import { formatNameDisplay } from '../../utils/nameFormatter';
 
@@ -8,6 +8,8 @@ interface StudentManagerProps {
   students: Student[];
   orders: Order[];
   onStudentUpdated?: (student: Student) => void;
+  onDeleteOrder?: (orderNumber: string) => Promise<void> | void;
+  onWipeStudentOrder?: (student: Student, order?: Order) => Promise<void> | void;
 }
 
 const PRESET_GRADES = [
@@ -23,9 +25,16 @@ const PRESET_GRADES = [
   'College',
 ];
 
-export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders, onStudentUpdated }) => {
+export const StudentManager: React.FC<StudentManagerProps> = ({
+  students,
+  orders,
+  onStudentUpdated,
+  onDeleteOrder,
+  onWipeStudentOrder,
+}) => {
   const [localStudents, setLocalStudents] = useState<Student[]>(students);
   const [isSaving, setIsSaving] = useState(false);
+  const [wipingStudentId, setWipingStudentId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'All' | 'Ordered' | 'Remaining'>('All');
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
@@ -36,15 +45,54 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
     setLocalStudents(students);
   }, [students]);
 
-  // Map student orders
-  const studentOrdersMap = new Map<string, Order>();
-  orders.forEach((o) => {
-    studentOrdersMap.set(o.studentId, o);
-  });
+  const normalize = (val: string) => (val || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  // Helper to reliably find an order for a student (by id, full_name, or student_name)
+  const getStudentOrder = (student: Student): Order | undefined => {
+    const normStudentName = normalize(student.fullName);
+    return orders.find((o) => {
+      if (o.studentId && student.id && o.studentId.toLowerCase() === student.id.toLowerCase()) {
+        return true;
+      }
+      if (o.fullName && normalize(o.fullName) === normStudentName) {
+        return true;
+      }
+      if (o.studentName && normalize(o.studentName) === normStudentName) {
+        return true;
+      }
+      return false;
+    });
+  };
+
+  const handleWipeOrder = async (student: Student, existingOrder?: Order) => {
+    const orderDetails = existingOrder
+      ? ` (Order #${existingOrder.orderNumber}, ₹${existingOrder.totalAmount})`
+      : '';
+    const confirmMsg = `Are you sure you want to wipe the order for ${student.fullName}${orderDetails}?\n\nThis will permanently delete this order and allow the student to place a fresh order.`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      setWipingStudentId(student.id);
+      if (onWipeStudentOrder) {
+        await onWipeStudentOrder(student, existingOrder);
+      } else {
+        const { wipeStudentOrder } = await import('../../services/storage');
+        await wipeStudentOrder(student.id, student.fullName, existingOrder?.orderNumber);
+        if (existingOrder?.orderNumber && onDeleteOrder) {
+          await onDeleteOrder(existingOrder.orderNumber);
+        }
+      }
+      alert(`Order for ${student.fullName} has been wiped successfully!\nThey can now submit a fresh order.`);
+    } catch (err: any) {
+      console.error('Failed to wipe order:', err);
+      alert(`Failed to wipe order: ${err?.message || 'Please try again.'}`);
+    } finally {
+      setWipingStudentId(null);
+    }
+  };
 
   // Enrich students with authoritative birth dates from INITIAL_STUDENTS
   const enrichedStudents = useMemo(() => {
-    const normalize = (val: string) => (val || '').toLowerCase().replace(/[^a-z0-9]/g, '');
     return localStudents.map((s) => {
       const init = INITIAL_STUDENTS.find(
         (i) => normalize(i.fullName) === normalize(s.fullName) || i.id === s.id
@@ -58,11 +106,11 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
   }, [localStudents]);
 
   const totalStudents = enrichedStudents.length;
-  const orderedCount = Array.from(studentOrdersMap.keys()).length;
+  const orderedCount = enrichedStudents.filter((s) => Boolean(getStudentOrder(s))).length;
   const remainingCount = totalStudents - orderedCount;
 
   const filteredStudents = enrichedStudents.filter((s) => {
-    const hasOrdered = studentOrdersMap.has(s.id);
+    const hasOrdered = Boolean(getStudentOrder(s));
     if (filter === 'Ordered' && !hasOrdered) return false;
     if (filter === 'Remaining' && hasOrdered) return false;
 
@@ -157,7 +205,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
             <tbody className="divide-y divide-stone-100 text-stone-700">
               {filteredStudents.length > 0 ? (
                 filteredStudents.map((student) => {
-                  const existingOrder = studentOrdersMap.get(student.id);
+                  const existingOrder = getStudentOrder(student);
 
                   return (
                     <tr key={student.id} className="hover:bg-stone-50/80 transition-colors">
@@ -187,16 +235,30 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
                         {existingOrder ? `₹${existingOrder.totalAmount}` : '-'}
                       </td>
                       <td className="p-3.5 text-right whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingStudent(student);
-                            setSelectedGrade(student.grade || 'Std 5');
-                          }}
-                          className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold rounded-lg transition-colors"
-                        >
-                          Edit
-                        </button>
+                        <div className="flex items-center justify-end space-x-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingStudent(student);
+                              setSelectedGrade(student.grade || 'Std 5');
+                            }}
+                            className="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                          >
+                            Edit
+                          </button>
+                          {existingOrder && (
+                            <button
+                              type="button"
+                              disabled={wipingStudentId === student.id}
+                              onClick={() => handleWipeOrder(student, existingOrder)}
+                              title={`Wipe order #${existingOrder.orderNumber} and allow re-ordering`}
+                              className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 border border-rose-200 text-xs font-semibold rounded-lg transition-colors inline-flex items-center space-x-1 cursor-pointer disabled:opacity-50"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                              <span>{wipingStudentId === student.id ? 'Wiping...' : 'Wipe Order'}</span>
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

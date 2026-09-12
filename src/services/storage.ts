@@ -247,9 +247,45 @@ export async function deleteOrder(orderNumber: string): Promise<void> {
     if (currentLock && currentLock.orderNumber === orderNumber) {
       localStorage.removeItem(KEYS.DEVICE_ORDER);
     }
+    const activeOrdNum = localStorage.getItem('active_order_number');
+    if (activeOrdNum === orderNumber) {
+      localStorage.removeItem('active_order_number');
+    }
     await api.deleteOrder(orderNumber);
   } catch (e) {
     console.error('Error deleting order:', e);
+  }
+}
+
+export async function wipeStudentOrder(studentId: string, studentFullName?: string, orderNumber?: string): Promise<void> {
+  try {
+    const orders = getCachedOrders();
+    const normalize = (v: string) => (v || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const normName = studentFullName ? normalize(studentFullName) : '';
+
+    const remaining = orders.filter((o) => {
+      if (orderNumber && o.orderNumber === orderNumber) return false;
+      const matchId = o.studentId && studentId && o.studentId.toLowerCase() === studentId.toLowerCase();
+      const matchName = normName && (normalize(o.fullName) === normName || normalize(o.studentName) === normName);
+      return !matchId && !matchName;
+    });
+
+    localStorage.setItem(KEYS.ORDERS, JSON.stringify(remaining));
+
+    const activeOrdNum = localStorage.getItem('active_order_number');
+    if (activeOrdNum && (activeOrdNum === orderNumber || !remaining.some((o) => o.orderNumber === activeOrdNum))) {
+      localStorage.removeItem('active_order_number');
+      localStorage.removeItem(KEYS.DEVICE_ORDER);
+    }
+
+    if (orderNumber) {
+      try {
+        await api.deleteOrder(orderNumber);
+      } catch (e) {}
+    }
+    await api.wipeStudentOrder(studentId, studentFullName);
+  } catch (e) {
+    console.error('Error in wipeStudentOrder:', e);
   }
 }
 
