@@ -177,19 +177,23 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
 
   // 5. Total Summary Box
   y += 4;
+  const totalBoxWidth = 58;
+  const totalBoxX = 192 - totalBoxWidth; // 134, aligns flush with table right edge
+  const totalBoxHeight = 9.5;
+
   doc.setFillColor(255, 241, 230);
   doc.setDrawColor(254, 215, 170);
   doc.setLineWidth(0.3);
-  doc.roundedRect(105, y, 87, 12, 2, 2, 'FD');
+  doc.roundedRect(totalBoxX, y, totalBoxWidth, totalBoxHeight, 2, 2, 'FD');
 
   doc.setTextColor(88, 28, 135);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.text('TOTAL:', 112, y + 8);
+  doc.setFontSize(10.5);
+  doc.text('TOTAL:', totalBoxX + 6, y + 6.6);
 
   doc.setTextColor(234, 88, 12);
-  doc.setFontSize(13);
-  doc.text(`Rs. ${order.totalAmount}`, 186, y + 8, { align: 'right' });
+  doc.setFontSize(12);
+  doc.text(`Rs. ${order.totalAmount}`, 186, y + 6.6, { align: 'right' });
 
   // 6. Verification & Instructions Box (Anchored Elegantly in the Lower Section)
   const footerBoxY = Math.max(y + 16, 210);
