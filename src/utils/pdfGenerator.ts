@@ -146,9 +146,8 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8.5);
   doc.text('ITEM DESCRIPTION', 24, y + 6);
-  doc.text('REGULAR', 96, y + 6, { align: 'right' });
-  doc.text('50% OFF', 126, y + 6, { align: 'right' });
-  doc.text('QTY', 148, y + 6, { align: 'center' });
+  doc.text('PRICE', 120, y + 6, { align: 'right' });
+  doc.text('QTY', 145, y + 6, { align: 'center' });
   doc.text('TOTAL', 186, y + 6, { align: 'right' });
 
   y += 9;
@@ -163,33 +162,10 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
 
     doc.setTextColor(30, 41, 59);
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.5);
+    doc.setFontSize(9);
     doc.text(item.name, 24, y + 5.5);
-
-    // Regular Price with Strikethrough
-    const regPriceText = `Rs. ${item.price * 2}`;
-    doc.setFontSize(8);
-    doc.setTextColor(148, 163, 184);
-    doc.text(regPriceText, 96, y + 5.5, { align: 'right' });
-    const regW = doc.getTextWidth(regPriceText);
-    doc.setDrawColor(148, 163, 184);
-    doc.setLineWidth(0.25);
-    doc.line(96 - regW, y + 4.3, 96, y + 4.3);
-
-    // 50% Discounted Price
-    doc.setTextColor(16, 185, 129);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8.5);
-    doc.text(`Rs. ${item.price}`, 126, y + 5.5, { align: 'right' });
-
-    // Quantity
-    doc.setTextColor(30, 41, 59);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`${item.quantity}`, 148, y + 5.5, { align: 'center' });
-
-    // Item Total
-    doc.setTextColor(88, 28, 135);
-    doc.setFont('helvetica', 'bold');
+    doc.text(`Rs. ${item.price}`, 120, y + 5.5, { align: 'right' });
+    doc.text(`${item.quantity}`, 145, y + 5.5, { align: 'center' });
     doc.text(`Rs. ${item.total}`, 186, y + 5.5, { align: 'right' });
     y += rowHeight;
 
@@ -199,33 +175,7 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
     }
   });
 
-  // 5. Integrated Table Total & Discount Summary
-  const subRowHeight = 7;
-  doc.setFillColor(248, 250, 252);
-  doc.setDrawColor(226, 232, 240);
-  doc.setLineWidth(0.25);
-  doc.rect(18, y, 174, subRowHeight, 'F');
-  doc.line(18, y, 192, y);
-
-  doc.setFontSize(7.5);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(100, 116, 139);
-  doc.text('REGULAR TOTAL:', 96, y + 4.7, { align: 'right' });
-  const regTotalText = `Rs. ${order.totalAmount * 2}`;
-  doc.text(regTotalText, 126, y + 4.7, { align: 'right' });
-  const regTotalW = doc.getTextWidth(regTotalText);
-  doc.setDrawColor(148, 163, 184);
-  doc.setLineWidth(0.25);
-  doc.line(126 - regTotalW, y + 3.7, 126, y + 3.7);
-
-  doc.setTextColor(16, 185, 129);
-  doc.setFont('helvetica', 'bold');
-  doc.text('50% FESTIVAL SAVINGS:', 158, y + 4.7, { align: 'right' });
-  doc.text(`-Rs. ${order.totalAmount}`, 186, y + 4.7, { align: 'right' });
-
-  y += subRowHeight;
-
-  // Final Net Payable Total Row
+  // 5. Integrated Table Total Row
   const totalRowHeight = 9.5;
   doc.setFillColor(255, 241, 230);
   doc.setDrawColor(251, 146, 60);
@@ -236,8 +186,8 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
 
   doc.setTextColor(88, 28, 135);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.5);
-  doc.text('FINAL PAYABLE TOTAL:', 140, y + 6.4, { align: 'right' });
+  doc.setFontSize(10);
+  doc.text('TOTAL AMOUNT:', 148, y + 6.4, { align: 'right' });
 
   doc.setTextColor(234, 88, 12);
   doc.setFontSize(11.5);

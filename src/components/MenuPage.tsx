@@ -98,20 +98,16 @@ export const MenuPage: React.FC<MenuPageProps> = ({
       {/* Main Layout: 1 Column */}
       <div className="w-full max-w-4xl mx-auto space-y-5">
 
-          {/* Header Row: Student Pill & 50% Off Offer Badge */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            {selectedStudent && (
+          {/* Student Pill */}
+          {selectedStudent && (
+            <div className="flex">
               <div className="inline-flex items-center space-x-2 px-4 py-2 bg-white border border-slate-200 rounded-full shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)]">
                 <User className="w-4 h-4 text-orange-500 stroke-[2.5]" />
                 <span className="text-sm font-medium text-slate-400">Student:</span>
                 <span className="text-sm font-bold text-slate-700">{formatNameDisplay(selectedStudent.fullName)}</span>
               </div>
-            )}
-            <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 bg-rose-50 border border-rose-200 rounded-full shadow-sm text-rose-700">
-              <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-              <span className="text-xs font-black uppercase tracking-wide">Family Fiesta Special: 50% OFF</span>
             </div>
-          </div>
+          )}
           
           {/* Search Bar */}
           <div className="relative pb-2">
@@ -148,9 +144,6 @@ export const MenuPage: React.FC<MenuPageProps> = ({
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1" />
                         VEG
                       </div>
-                      <div className="absolute top-3 right-3 bg-rose-600 text-white font-black text-[8px] px-1.5 py-0.5 rounded shadow-sm flex items-center tracking-tight">
-                        50% OFF
-                      </div>
                       {food.isChefSpecial && (
                         <div className="absolute bottom-3 left-3 bg-slate-900/90 backdrop-blur-sm border border-slate-700 rounded px-1.5 py-0.5 text-[8px] text-amber-400 font-bold flex items-center space-x-1 shadow-sm">
                           <Sparkles className="w-2.5 h-2.5" />
@@ -183,17 +176,9 @@ export const MenuPage: React.FC<MenuPageProps> = ({
                       </div>
                       
                       <div className="mt-2 flex items-center justify-between">
-                        <div className="flex items-baseline gap-1.5 flex-wrap">
-                          <span className="text-xs text-slate-400 line-through font-semibold font-mono">
-                            ₹{food.price * 2}
-                          </span>
-                          <span className="text-base font-black text-slate-900 font-mono">
-                            ₹{food.price}
-                          </span>
-                          <span className="text-[9px] font-black text-rose-600 bg-rose-50 border border-rose-200 px-1 py-0.5 rounded">
-                            50% OFF
-                          </span>
-                        </div>
+                        <span className="text-base font-black text-slate-900 font-mono">
+                          ₹{food.price}
+                        </span>
 
                         {inCartQty > 0 ? (
                           <div 

@@ -170,14 +170,12 @@ Group Size   : ${o.peopleCount} Person(s)
 Budget Limit : ₹${o.allowedBudget}
 
 ---------------- ORDERED ITEMS ------------------
-${o.items.map((i) => `${i.quantity}x ${i.name.padEnd(20)} Reg: ₹${i.total * 2} | 50% Off: ₹${i.total}`).join('\n')}
+${o.items.map((i) => `${i.quantity}x ${i.name.padEnd(24)} ₹${i.total}`).join('\n')}
 
 -------------------------------------------------
-Regular Total  : ₹${o.totalAmount * 2}
-Discount (50%) : -₹${o.totalAmount}
-TOTAL AMOUNT   : ₹${o.totalAmount}
-BUDGET CHECK   : ${o.totalAmount <= o.allowedBudget ? 'PASSED (Within Budget)' : 'EXCEEDED BUDGET'}
-NOTE           : All orders are completely cashless.
+TOTAL AMOUNT : ₹${o.totalAmount}
+BUDGET CHECK : ${o.totalAmount <= o.allowedBudget ? 'PASSED (Within Budget)' : 'EXCEEDED BUDGET'}
+NOTE         : All orders are completely cashless.
 =========================================
 Thank you for ordering from Family Fiesta!
 `;
@@ -539,7 +537,7 @@ Thank you for ordering from Family Fiesta!
                 </div>
                 <div className="space-y-1.5 pr-1">
                   {selectedOrderForReceipt.items.map((it) => (
-                    <div key={it.id} className="flex justify-between items-center text-xs py-1.5 px-3 rounded-lg bg-stone-50 border border-stone-200 text-stone-800">
+                    <div key={it.id} className="flex justify-between text-xs py-1.5 px-3 rounded-lg bg-stone-50 border border-stone-200 text-stone-800">
                       <span className="flex items-center gap-1.5 flex-wrap">
                         <strong className="text-stone-900 font-bold">{it.quantity}×</strong> {it.name}
                         {it.portion && (
@@ -547,14 +545,8 @@ Thank you for ordering from Family Fiesta!
                             ({it.portion})
                           </span>
                         )}
-                        <span className="text-[9px] text-rose-600 font-bold bg-rose-50 border border-rose-200 px-1 py-0.2 rounded">
-                          50% OFF
-                        </span>
                       </span>
-                      <span className="flex items-center gap-1.5 font-mono">
-                        <span className="text-stone-400 line-through text-[11px]">₹{it.total * 2}</span>
-                        <span className="font-bold text-stone-900">₹{it.total}</span>
-                      </span>
+                      <span className="font-bold text-stone-900 font-mono">₹{it.total}</span>
                     </div>
                   ))}
                 </div>
@@ -577,9 +569,7 @@ Thank you for ordering from Family Fiesta!
             {/* Fixed Footer with Total & Actions */}
             <div className="p-4 sm:p-5 border-t border-stone-100 bg-stone-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
               <div>
-                <span className="text-stone-400 text-[10px] block font-bold uppercase tracking-wider">
-                  Total Bill <span className="line-through text-stone-400 ml-1 font-mono">₹{selectedOrderForReceipt.totalAmount * 2}</span> <span className="text-emerald-600 font-semibold">(50% Festival Off)</span>
-                </span>
+                <span className="text-stone-400 text-[10px] block font-bold uppercase tracking-wider">Total Bill</span>
                 <span className="text-indigo-600 font-bold text-xl sm:text-2xl font-mono">₹{selectedOrderForReceipt.totalAmount}</span>
               </div>
               <div className="no-print flex items-center space-x-2 flex-wrap gap-y-2">
