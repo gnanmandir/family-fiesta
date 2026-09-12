@@ -174,17 +174,6 @@ export async function saveOrder(order: Order): Promise<Order> {
   const existing = getCachedOrders();
   const updated = [finalOrder, ...existing.filter((o) => o.orderNumber !== finalOrder.orderNumber)];
   localStorage.setItem(KEYS.ORDERS, JSON.stringify(updated));
-
-  // 3. Save device lock
-  const lockInfo: DeviceLockInfo = {
-    deviceId: order.deviceId,
-    studentId: finalOrder.studentId,
-    studentName: finalOrder.studentName,
-    orderNumber: finalOrder.orderNumber,
-    orderDate: finalOrder.createdAt,
-  };
-  localStorage.setItem(KEYS.DEVICE_ORDER, JSON.stringify(lockInfo));
-
   return finalOrder;
 }
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Order } from '../types';
-import { CheckCircle2, Ticket, Edit3, Download, Lock, Info } from 'lucide-react';
+import { CheckCircle2, Ticket, Edit3, Download, Lock, Info, LogOut } from 'lucide-react';
 import { generateAndDownloadPDFReceipt } from '../utils/pdfGenerator';
 import { INITIAL_STUDENTS } from '../data/students';
 import { formatNameDisplay } from '../utils/nameFormatter';
@@ -10,10 +10,11 @@ interface OrderConfirmationProps {
   order: Order;
   onRefreshOrder?: (updated: Order) => void;
   onEditOrder?: () => void;
+  onSignOut?: () => void;
   ordersOpen?: boolean;
 }
 
-export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onRefreshOrder, onEditOrder, ordersOpen = true }) => {
+export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onRefreshOrder, onEditOrder, onSignOut, ordersOpen = true }) => {
   const [currentOrder, setCurrentOrder] = useState<Order>(order);
 
   useEffect(() => {
@@ -158,6 +159,19 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onR
             </div>
           )}
         </div>
+
+        {onSignOut && (
+          <div className="no-print mt-2 pt-2 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={onSignOut}
+              className="w-full bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200 rounded-xl py-2 font-semibold flex items-center justify-center space-x-2 transition-all text-xs"
+            >
+              <LogOut className="w-3.5 h-3.5 text-slate-400" />
+              <span>Sign Out / Order for Another Student</span>
+            </button>
+          </div>
+        )}
 
       </div>
     </div>

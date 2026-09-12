@@ -847,6 +847,7 @@ export default function App() {
             order={activeOrder}
             onRefreshOrder={(up) => setActiveOrder(up)}
             onEditOrder={ordersOpen ? handleEditOrder : undefined}
+            onSignOut={handleSignOut}
             ordersOpen={ordersOpen}
           />
         )}

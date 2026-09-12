@@ -379,43 +379,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               )}
 
-              {/* Card 2: Reset Device Lock */}
-              <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center space-x-2">
-                      <Lock className="w-5 h-5 text-indigo-600" />
-                      <h4 className="font-bold text-slate-900 text-base">Device Lock Reset</h4>
-                    </div>
-                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
-                      Testing Utility
-                    </span>
-                  </div>
-                  <p className="text-slate-600 text-xs leading-relaxed">
-                    Clear the local browser device lock allowing this tablet or computer to place repeat test orders under different student IDs.
-                  </p>
-                </div>
-                <div className="mt-5 pt-4 border-t border-slate-100 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      openProtectedAction(
-                        'Clear Local Device Lock',
-                        'Enter system password to clear the local testing lock on this device.',
-                        () => {
-                          onResetDeviceLock();
-                          alert('Device lock cleared successfully.');
-                        },
-                        false,
-                        'Clear Device Lock'
-                      );
-                    }}
-                    className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs whitespace-nowrap cursor-pointer transition-all shadow-sm"
-                  >
-                    Clear Device Lock
-                  </button>
-                </div>
-              </div>
 
               {/* Card 3: Clear / Wipe All Orders */}
               <div className="p-6 rounded-2xl bg-white border border-red-200 shadow-xs flex flex-col justify-between">

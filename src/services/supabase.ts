@@ -277,21 +277,6 @@ export const supabaseService = {
       body: JSON.stringify(payload),
     });
 
-    // Save device lock
-    if (order.deviceId) {
-      await supabaseFetch('device_locks?on_conflict=device_id', {
-        method: 'POST',
-        headers: { 'Prefer': 'resolution=merge-duplicates' },
-        body: JSON.stringify({
-          device_id: order.deviceId,
-          student_id: order.studentId,
-          student_name: order.studentName,
-          order_number: order.orderNumber,
-          order_date: order.createdAt,
-        }),
-      }).catch(() => {});
-    }
-
     return order;
   },
 
