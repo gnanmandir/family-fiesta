@@ -3,7 +3,6 @@ import { Order } from '../types';
 
 import { INITIAL_STUDENTS } from '../data/students';
 import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
-import gnanMandirColorLogo from '../assets/images/gnan_mandir_color_logo.png';
 import gnanMandirStamp from '../assets/images/gnan_mandir_stamp.png';
 
 import { formatNameDisplay } from './nameFormatter';
@@ -36,9 +35,8 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
     });
   };
 
-  const [logoImg, gnanMandirLogoImg, stampImg] = await Promise.all([
+  const [logoImg, stampImg] = await Promise.all([
     loadImage(familyFiestaLogo),
-    loadImage(gnanMandirColorLogo),
     loadImage(gnanMandirStamp),
   ]);
 
@@ -51,34 +49,17 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   doc.setLineWidth(0.2);
   doc.rect(12, 12, 186, 273);
 
-  // 1. Dual Logo Header: Family Fiesta  X  Gnan Mandir
-  const topY = 16;
-  const ffW = 34;
-  const ffH = 34;
-  const ffX = 52;
-  const ffY = topY;
+  // 1. Centered Festival Logo
+  let logoY = 16;
+  let logoHeight = 0;
   if (logoImg.width > 0) {
-    doc.addImage(logoImg, 'PNG', ffX, ffY, ffW, ffH);
-  }
-
-  // 'X' Collaboration Mark
-  const centerY = topY + (ffH / 2);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
-  doc.setTextColor(100, 116, 139);
-  doc.text('X', 99.5, centerY + 1.5, { align: 'center' });
-
-  // Gnan Mandir Logo
-  if (gnanMandirLogoImg.width > 0) {
-    const gmW = 44;
-    const gmH = (gnanMandirLogoImg.height * gmW) / gnanMandirLogoImg.width;
-    const gmX = 111;
-    const gmY = centerY - (gmH / 2);
-    doc.addImage(gnanMandirLogoImg, 'PNG', gmX, gmY, gmW, gmH);
+    const logoWidth = 46;
+    logoHeight = (logoImg.height * logoWidth) / logoImg.width;
+    doc.addImage(logoImg, 'PNG', 105 - (logoWidth / 2), logoY, logoWidth, logoHeight);
   }
 
   // 2. Official Header Banner
-  let y = topY + ffH + 4;
+  let y = logoY + logoHeight + 4;
   doc.setFillColor(88, 28, 135);
   doc.roundedRect(18, y, 174, 10, 2, 2, 'F');
 
