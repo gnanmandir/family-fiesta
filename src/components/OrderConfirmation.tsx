@@ -20,6 +20,17 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onR
     setCurrentOrder(order);
   }, [order]);
 
+  const normalize = (val: string) => (val || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const orderStudentName = currentOrder.fullName || currentOrder.studentName || '';
+  const orderNameNorm = normalize(orderStudentName);
+  const matchedStudent = INITIAL_STUDENTS.find(
+    (s) =>
+      s.id.toLowerCase() === (currentOrder.studentId || '').toLowerCase() ||
+      normalize(s.fullName) === orderNameNorm ||
+      (orderNameNorm && (normalize(s.fullName).includes(orderNameNorm) || orderNameNorm.includes(normalize(s.fullName))))
+  );
+  const gmNumberDisplay = matchedStudent?.gmNo || currentOrder.studentId || 'N/A';
+
   return (
     <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 flex flex-col justify-center min-h-[calc(100vh-4rem)] py-2">
       
@@ -39,7 +50,7 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onR
               Official Digital Receipt
             </div>
             <div className="text-xl sm:text-3xl font-black text-slate-900 font-mono tracking-tight mt-0.5">
-              GM {INITIAL_STUDENTS.find((s) => s.id === currentOrder.studentId || s.fullName === currentOrder.fullName)?.gmNo || currentOrder.studentId}
+              GM {gmNumberDisplay}
             </div>
             <div className="text-[10px] sm:text-xs text-slate-500 mt-1 font-medium">
               Present this receipt at the coupon counter
@@ -66,7 +77,7 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onR
           </div>
           <div>
             <span className="text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold block">GM Number</span>
-            <span className="text-slate-800 font-bold text-xs font-mono">{INITIAL_STUDENTS.find((s) => s.id === currentOrder.studentId || s.fullName === currentOrder.fullName)?.gmNo || 'N/A'}</span>
+            <span className="text-slate-800 font-bold text-xs font-mono">{gmNumberDisplay}</span>
           </div>
           <div>
             <span className="text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold block">Guests</span>

@@ -6,7 +6,7 @@ import { api } from './api';
 const KEYS = {
   ORDERS: 'jusso_orders_v6',
   MENU: 'jusso_menu_v6',
-  STUDENTS: 'flame_co_students_v9',
+  STUDENTS: 'flame_co_students_v10',
   DEVICE_ID: 'jusso_device_id_v2',
   DEVICE_ORDER: 'jusso_device_order_v6',
 };

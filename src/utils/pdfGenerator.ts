@@ -14,9 +14,16 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
     format: 'a4',
   });
 
-  const student = INITIAL_STUDENTS.find((s) => s.id === order.studentId || s.fullName === order.fullName);
+  const normalize = (val: string) => (val || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const orderNameNorm = normalize(order.fullName || order.studentName);
+  const student = INITIAL_STUDENTS.find(
+    (s) =>
+      s.id.toLowerCase() === (order.studentId || '').toLowerCase() ||
+      normalize(s.fullName) === orderNameNorm ||
+      (orderNameNorm && (normalize(s.fullName).includes(orderNameNorm) || orderNameNorm.includes(normalize(s.fullName))))
+  );
   const cleanStudentName = formatNameDisplay(order.studentName || order.fullName || '');
-  const gmNumber = student ? String(student.gmNo) : 'N/A';
+  const gmNumber = student ? String(student.gmNo) : (order.studentId || 'N/A');
   const grade = student ? student.grade : 'Gurukul Roster';
 
   const loadImage = (src: string): Promise<HTMLImageElement> => {
