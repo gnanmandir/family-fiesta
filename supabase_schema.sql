@@ -11,8 +11,13 @@ CREATE TABLE IF NOT EXISTS public.students (
     full_name VARCHAR(255) NOT NULL,
     grade VARCHAR(100) DEFAULT 'Gurukul Roster',
     birth_date VARCHAR(50),
+    gm_no NUMERIC,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
 );
+
+-- Ensure all optional columns exist if table was previously created
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS gm_no NUMERIC;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS birth_date VARCHAR(50);
 
 CREATE TABLE IF NOT EXISTS public.menu_items (
     id TEXT PRIMARY KEY,

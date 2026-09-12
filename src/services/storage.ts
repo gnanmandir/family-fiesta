@@ -30,6 +30,13 @@ export async function fetchStudents(): Promise<Student[]> {
   try {
     const data = await api.getStudents();
     if (data && data.length > 0) {
+      // Check cached edits to ensure custom edits like 'Diploma' are preserved
+      const cached = getCachedStudents();
+      const cachedMap = new Map<string, Student>();
+      cached.forEach((c) => {
+        cachedMap.set(normalizeName(c.fullName), c);
+      });
+
       const map = new Map<string, Student>();
       INITIAL_STUDENTS.forEach((init) => {
         map.set(normalizeName(init.fullName), { ...init });
@@ -38,15 +45,24 @@ export async function fetchStudents(): Promise<Student[]> {
       data.forEach((s) => {
         const key = normalizeName(s.fullName);
         const existing = map.get(key);
+        const localCached = cachedMap.get(key);
+
         if (existing) {
+          const grade =
+            s.grade && s.grade !== 'Gurukul Roster'
+              ? s.grade
+              : localCached?.grade && localCached.grade !== 'Gurukul Roster'
+              ? localCached.grade
+              : existing.grade || s.grade || 'Gurukul Roster';
+
           map.set(key, {
             ...existing,
             ...s,
             id: existing.id,
-            birthDate: s.birthDate || existing.birthDate,
-            gmNo: s.gmNo || existing.gmNo,
+            birthDate: s.birthDate || localCached?.birthDate || existing.birthDate,
+            gmNo: s.gmNo || localCached?.gmNo || existing.gmNo,
             fullName: existing.fullName,
-            grade: s.grade || existing.grade,
+            grade,
           });
         } else {
           map.set(s.id || key, { ...s });
@@ -86,14 +102,30 @@ export function getCachedStudents(): Student[] {
 }
 
 export async function saveStudent(student: Student): Promise<Student> {
-  const saved = await api.saveStudent(student);
+  let saved = student;
+  try {
+    saved = await api.saveStudent(student);
+  } catch (e) {
+    console.warn('API saveStudent error, saving locally:', e);
+  }
+
   const existing = getCachedStudents();
-  const index = existing.findIndex(s => s.id === saved.id);
+  const index = existing.findIndex(
+    (s) => s.id === saved.id || normalizeName(s.fullName) === normalizeName(saved.fullName)
+  );
   
-  let updated;
+  let updated: Student[];
   if (index >= 0) {
     updated = [...existing];
-    updated[index] = saved;
+    updated[index] = {
+      ...existing[index],
+      ...saved,
+      grade: saved.grade || existing[index].grade,
+      birthDate: saved.birthDate || existing[index].birthDate,
+      fullName: saved.fullName || existing[index].fullName,
+      parentName: saved.parentName || existing[index].parentName,
+      gmNo: saved.gmNo || existing[index].gmNo,
+    };
   } else {
     updated = [...existing, saved];
   }
@@ -101,7 +133,7 @@ export async function saveStudent(student: Student): Promise<Student> {
   // Sort alphabetically by first name
   updated.sort((a, b) => a.firstName.localeCompare(b.firstName));
   localStorage.setItem(KEYS.STUDENTS, JSON.stringify(updated));
-  return saved;
+  return index >= 0 ? updated[index] : saved;
 }
 
 export async function fetchMenuItems(): Promise<FoodItem[]> {

@@ -724,6 +724,20 @@ export default function App() {
     setMenuItems(items);
   };
 
+  const handleStudentUpdated = (updatedStudent: Student) => {
+    setStudents((prev) => {
+      const idx = prev.findIndex(
+        (s) => s.id === updatedStudent.id || s.fullName.toLowerCase() === updatedStudent.fullName.toLowerCase()
+      );
+      if (idx >= 0) {
+        const copy = [...prev];
+        copy[idx] = updatedStudent;
+        return copy;
+      }
+      return [...prev, updatedStudent];
+    });
+  };
+
   const handleResetDeviceLock = async () => {
     await clearDeviceLock();
     setActiveOrder(null);
@@ -860,6 +874,7 @@ export default function App() {
             onDeleteOrder={handleDeleteOrder}
             onDeleteCompletedOrders={handleDeleteCompletedOrders}
             onSaveMenuItems={handleSaveMenuItems}
+            onStudentUpdated={handleStudentUpdated}
             onResetDeviceLock={handleResetDeviceLock}
             onClearAllOrders={handleClearAllOrders}
             onExitAdmin={handleAdminLogout}

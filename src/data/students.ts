@@ -968,7 +968,7 @@ export const INITIAL_STUDENTS: Student[] = [
     "parentName": "AshishKumar Patel",
     "fullName": "Dev AshishKumar Patel",
     "gmNo": 97,
-    "grade": "Std 11",
+    "grade": "Diploma",
     "birthDate": "31/07/2010"
   },
   {

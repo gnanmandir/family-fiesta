@@ -7,6 +7,7 @@ import { formatNameDisplay } from '../../utils/nameFormatter';
 interface StudentManagerProps {
   students: Student[];
   orders: Order[];
+  onStudentUpdated?: (student: Student) => void;
 }
 
 const PRESET_GRADES = [
@@ -22,11 +23,18 @@ const PRESET_GRADES = [
   'College',
 ];
 
-export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders }) => {
+export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders, onStudentUpdated }) => {
+  const [localStudents, setLocalStudents] = useState<Student[]>(students);
+  const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'All' | 'Ordered' | 'Remaining'>('All');
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<string>('Std 5');
+
+  // Keep localStudents in sync if parent students array updates
+  React.useEffect(() => {
+    setLocalStudents(students);
+  }, [students]);
 
   // Map student orders
   const studentOrdersMap = new Map<string, Order>();
@@ -37,7 +45,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
   // Enrich students with authoritative birth dates from INITIAL_STUDENTS
   const enrichedStudents = useMemo(() => {
     const normalize = (val: string) => (val || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-    return students.map((s) => {
+    return localStudents.map((s) => {
       const init = INITIAL_STUDENTS.find(
         (i) => normalize(i.fullName) === normalize(s.fullName) || i.id === s.id
       );
@@ -47,7 +55,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
         gmNo: s.gmNo || init?.gmNo || 0,
       };
     });
-  }, [students]);
+  }, [localStudents]);
 
   const totalStudents = enrichedStudents.length;
   const orderedCount = Array.from(studentOrdersMap.keys()).length;
@@ -216,31 +224,50 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
               onSubmit={async (e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
-                const fullName = formData.get('fullName') as string;
-                const birthDate = (formData.get('birthDate') as string || '').trim();
-                const grade = formData.get('grade') as string;
+                const fullName = ((formData.get('fullName') as string) || editingStudent.fullName || '').trim();
+                const birthDate = ((formData.get('birthDate') as string) || editingStudent.birthDate || '').trim();
+                const grade = ((formData.get('grade') as string) || selectedGrade || editingStudent.grade || 'Std 5').trim();
                 
                 const firstName = fullName.split(' ')[0] || fullName;
-                const parentName = formData.get('parentName') as string || '';
+                const parentName = ((formData.get('parentName') as string) || editingStudent.parentName || '').trim();
                 
                 const newStudent: Student = {
                   ...editingStudent,
                   id: editingStudent.id || `ST-${Math.random().toString(36).substr(2, 9)}`,
                   fullName,
                   firstName,
-                  parentName,
+                  parentName: parentName || editingStudent.parentName || 'Parent',
                   birthDate,
                   gmNo: editingStudent.gmNo || 0,
                   grade,
                 };
                 
                 try {
+                  setIsSaving(true);
                   const { saveStudent } = await import('../../services/storage');
-                  await saveStudent(newStudent);
-                  alert('Student saved successfully! Refresh page if list doesn\'t update immediately.');
+                  const saved = await saveStudent(newStudent);
+
+                  // Update local list in StudentManager so table updates IMMEDIATELY without reload
+                  setLocalStudents((prev) => {
+                    const idx = prev.findIndex(
+                      (s) => s.id === saved.id || s.fullName.toLowerCase() === saved.fullName.toLowerCase()
+                    );
+                    if (idx >= 0) {
+                      const copy = [...prev];
+                      copy[idx] = saved;
+                      return copy;
+                    }
+                    return [...prev, saved];
+                  });
+
+                  onStudentUpdated?.(saved);
+                  alert('Student saved successfully!');
                   setEditingStudent(null);
-                } catch(err) {
-                  alert('Error saving student.');
+                } catch(err: any) {
+                  console.error('Error saving student:', err);
+                  alert(`Error saving student: ${err?.message || 'Please try again.'}`);
+                } finally {
+                  setIsSaving(false);
                 }
               }}
               className="space-y-4"
@@ -318,7 +345,13 @@ export const StudentManager: React.FC<StudentManagerProps> = ({ students, orders
               </div>
               <div className="flex justify-end space-x-2 pt-4">
                 <button type="button" onClick={() => setEditingStudent(null)} className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
-                <button type="submit" className="px-4 py-2 text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-sm">Save Student</button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="px-4 py-2 text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg shadow-sm cursor-pointer"
+                >
+                  {isSaving ? 'Saving...' : 'Save Student'}
+                </button>
               </div>
             </form>
           </div>

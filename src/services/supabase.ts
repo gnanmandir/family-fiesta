@@ -62,20 +62,95 @@ export const supabaseService = {
   },
 
   saveStudent: async (student: Student): Promise<Student> => {
-    const payload = {
-      id: student.id,
-      gm_no: student.gmNo,
-      first_name: student.firstName,
-      parent_name: student.parentName,
-      full_name: student.fullName,
-      grade: student.grade,
-      birth_date: student.birthDate,
-    };
-    await supabaseFetch('students?on_conflict=id', {
-      method: 'POST',
-      headers: { 'Prefer': 'resolution=merge-duplicates' },
-      body: JSON.stringify(payload),
-    });
+    try {
+      // 1. Check if student already exists in Supabase by id or full_name
+      let targetId = student.id;
+      try {
+        const byId = await supabaseFetch<any[]>(`students?id=eq.${encodeURIComponent(student.id)}&select=id&limit=1`);
+        if (byId && byId.length > 0) {
+          targetId = byId[0].id;
+        } else {
+          const byName = await supabaseFetch<any[]>(`students?full_name=ilike.${encodeURIComponent(student.fullName)}&select=id&limit=1`);
+          if (byName && byName.length > 0) {
+            targetId = byName[0].id;
+          }
+        }
+      } catch (e) {
+        console.warn('Could not query existing student by id/name:', e);
+      }
+
+      // 2. Base payload with core columns guaranteed to exist
+      const basePayload: Record<string, any> = {
+        first_name: student.firstName || student.fullName.split(' ')[0] || student.fullName,
+        parent_name: student.parentName || student.fullName.split(' ')[1] || 'Parent',
+        full_name: student.fullName,
+        grade: student.grade || 'Gurukul Roster',
+      };
+
+      const sendUpdateOrInsert = async (payload: Record<string, any>) => {
+        if (targetId) {
+          try {
+            const patchRes = await supabaseFetch<any[]>(`students?id=eq.${encodeURIComponent(targetId)}`, {
+              method: 'PATCH',
+              body: JSON.stringify(payload),
+            });
+            if (patchRes) return;
+          } catch (patchErr: any) {
+            if (patchErr?.message && (patchErr.message.includes('column') || patchErr.message.includes('schema'))) {
+              throw patchErr;
+            }
+          }
+        }
+
+        await supabaseFetch('students?on_conflict=id', {
+          method: 'POST',
+          headers: { 'Prefer': 'resolution=merge-duplicates' },
+          body: JSON.stringify({ id: targetId || student.id, ...payload }),
+        });
+      };
+
+      const fullPayload = {
+        ...basePayload,
+        ...(student.birthDate ? { birth_date: student.birthDate } : {}),
+        ...(student.gmNo ? { gm_no: student.gmNo } : {}),
+      };
+
+      // Attempt 1: Full payload
+      try {
+        await sendUpdateOrInsert(fullPayload);
+        return student;
+      } catch (err1: any) {
+        const msg1 = err1?.message || '';
+        console.warn('Supabase saveStudent full payload failed:', msg1);
+
+        // Fallback 1: Retry without gm_no if column not present
+        if (msg1.includes('gm_no') || msg1.includes('column') || msg1.includes('schema')) {
+          try {
+            const payloadNoGm = {
+              ...basePayload,
+              ...(student.birthDate ? { birth_date: student.birthDate } : {}),
+            };
+            await sendUpdateOrInsert(payloadNoGm);
+            return student;
+          } catch (err2: any) {
+            const msg2 = err2?.message || '';
+            console.warn('Supabase saveStudent without gm_no failed:', msg2);
+
+            // Fallback 2: Retry with base payload (only core columns)
+            if (msg2.includes('birth_date') || msg2.includes('column') || msg2.includes('schema')) {
+              try {
+                await sendUpdateOrInsert(basePayload);
+                return student;
+              } catch (err3) {
+                console.error('Supabase saveStudent base payload failed:', err3);
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error('saveStudent unexpected error in supabaseService:', e);
+    }
     return student;
   },
 
