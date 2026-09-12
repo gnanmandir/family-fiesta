@@ -177,9 +177,19 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
 
   // 5. Total Summary Box
   y += 4;
-  const totalBoxWidth = 58;
-  const totalBoxX = 192 - totalBoxWidth; // 134, aligns flush with table right edge
-  const totalBoxHeight = 9.5;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10.5);
+  const totalLabel = 'TOTAL: ';
+  const totalLabelWidth = doc.getTextWidth(totalLabel);
+
+  doc.setFontSize(11.5);
+  const totalVal = `Rs. ${order.totalAmount}`;
+  const totalValWidth = doc.getTextWidth(totalVal);
+
+  const boxPaddingX = 4.5;
+  const totalBoxWidth = totalLabelWidth + totalValWidth + (boxPaddingX * 2);
+  const totalBoxX = 192 - totalBoxWidth;
+  const totalBoxHeight = 8.5;
 
   doc.setFillColor(255, 241, 230);
   doc.setDrawColor(254, 215, 170);
@@ -189,11 +199,11 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   doc.setTextColor(88, 28, 135);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10.5);
-  doc.text('TOTAL:', totalBoxX + 6, y + 6.6);
+  doc.text(totalLabel, totalBoxX + boxPaddingX, y + 5.8);
 
   doc.setTextColor(234, 88, 12);
-  doc.setFontSize(12);
-  doc.text(`Rs. ${order.totalAmount}`, 186, y + 6.6, { align: 'right' });
+  doc.setFontSize(11.5);
+  doc.text(totalVal, totalBoxX + boxPaddingX + totalLabelWidth, y + 5.8);
 
   // 6. Verification & Instructions Box (Anchored Elegantly in the Lower Section)
   const footerBoxY = Math.max(y + 16, 210);
