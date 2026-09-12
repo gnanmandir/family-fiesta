@@ -7,7 +7,7 @@ const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 export const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_KEY);
 
-async function supabaseFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+async function supabaseFetch<T>(endpoint: string, options: RequestInit = {}, retries = 2): Promise<T> {
   const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
   const headers = {
     'apikey': SUPABASE_KEY,
@@ -17,18 +17,33 @@ async function supabaseFetch<T>(endpoint: string, options: RequestInit = {}): Pr
     ...(options.headers || {}),
   };
 
-  const res = await fetch(url, { cache: 'no-cache', ...options, headers });
-  if (!res.ok) {
-    let errorText = `Supabase Error (${res.status}): ${res.statusText}`;
+  for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const errJson = await res.json();
-      if (errJson && errJson.message) errorText = errJson.message;
-    } catch (e) {}
-    throw new Error(errorText);
-  }
+      const res = await fetch(url, { cache: 'no-cache', ...options, headers });
+      if (!res.ok) {
+        if ([429, 502, 503, 504].includes(res.status) && attempt < retries) {
+          await new Promise((r) => setTimeout(r, 600 * (attempt + 1)));
+          continue;
+        }
+        let errorText = `Supabase Error (${res.status}): ${res.statusText}`;
+        try {
+          const errJson = await res.json();
+          if (errJson && errJson.message) errorText = errJson.message;
+        } catch (e) {}
+        throw new Error(errorText);
+      }
 
-  const text = await res.text();
-  return text ? JSON.parse(text) : (null as any);
+      const text = await res.text();
+      return text ? JSON.parse(text) : (null as any);
+    } catch (err: any) {
+      if (attempt < retries && (err.name === 'TypeError' || err.message?.includes('fetch') || err.message?.includes('network'))) {
+        await new Promise((r) => setTimeout(r, 600 * (attempt + 1)));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error('Supabase request failed after retries');
 }
 
 export const supabaseService = {
