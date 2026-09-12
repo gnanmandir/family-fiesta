@@ -164,9 +164,9 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.text(item.name, 24, y + 5.5);
-    doc.text(`Rs. ${item.price}`, 120, y + 5.5, { align: 'right' });
+    doc.text(`Rs. ${item.price * 2}`, 120, y + 5.5, { align: 'right' });
     doc.text(`${item.quantity}`, 145, y + 5.5, { align: 'center' });
-    doc.text(`Rs. ${item.total}`, 186, y + 5.5, { align: 'right' });
+    doc.text(`Rs. ${item.total * 2}`, 186, y + 5.5, { align: 'right' });
     y += rowHeight;
 
     if (y > 210) {
@@ -175,8 +175,36 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
     }
   });
 
-  // 5. Integrated Table Total Row
-  const totalRowHeight = 9.5;
+  // 5. Integrated Table Total & Discount Summary
+  const subRowHeight = 6.5;
+  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.25);
+  doc.rect(18, y, 174, subRowHeight, 'F');
+  doc.line(18, y, 192, y);
+
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100, 116, 139);
+  doc.text('TOTAL PRICE:', 148, y + 4.5, { align: 'right' });
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(51, 65, 85);
+  doc.text(`Rs. ${order.totalAmount * 2}`, 186, y + 4.5, { align: 'right' });
+
+  y += subRowHeight;
+
+  doc.setFillColor(248, 250, 252);
+  doc.rect(18, y, 174, subRowHeight, 'F');
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(16, 185, 129);
+  doc.text('DISCOUNT AMT (50%):', 148, y + 4.5, { align: 'right' });
+  doc.text(`-Rs. ${order.totalAmount}`, 186, y + 4.5, { align: 'right' });
+
+  y += subRowHeight;
+
+  // Final Payable Amt Row
+  const totalRowHeight = 9;
   doc.setFillColor(255, 241, 230);
   doc.setDrawColor(251, 146, 60);
   doc.setLineWidth(0.35);
@@ -186,12 +214,12 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
 
   doc.setTextColor(88, 28, 135);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.text('TOTAL AMOUNT:', 148, y + 6.4, { align: 'right' });
+  doc.setFontSize(9.5);
+  doc.text('PAYABLE AMT:', 148, y + 6.2, { align: 'right' });
 
   doc.setTextColor(234, 88, 12);
   doc.setFontSize(11.5);
-  doc.text(`Rs. ${order.totalAmount}`, 186, y + 6.4, { align: 'right' });
+  doc.text(`Rs. ${order.totalAmount}`, 186, y + 6.2, { align: 'right' });
 
   y += totalRowHeight;
 

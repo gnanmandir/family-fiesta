@@ -97,15 +97,25 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onR
                 <span className="text-slate-900 font-bold mr-1.5">{item.quantity}×</span> 
                 {item.name}
               </span>
-              <span className="text-indigo-600 font-mono font-bold">₹{item.total}</span>
+              <span className="text-slate-800 font-mono font-bold">₹{item.total * 2}</span>
             </div>
           ))}
         </div>
 
-        {/* Total */}
-        <div className="border-t border-slate-100 pt-2 flex justify-between items-center mb-2">
-          <span className="text-slate-500 uppercase text-[9px] sm:text-[10px] tracking-wider font-bold">Total Amount</span>
-          <span className="text-lg sm:text-xl text-indigo-600 font-mono font-bold">₹{currentOrder.totalAmount}</span>
+        {/* Total & 50% Discount Summary */}
+        <div className="border-t border-slate-100 pt-2 space-y-1 mb-2 text-xs sm:text-sm">
+          <div className="flex justify-between items-center text-slate-500">
+            <span>Total price</span>
+            <span className="font-mono font-medium text-slate-700">₹{currentOrder.totalAmount * 2}</span>
+          </div>
+          <div className="flex justify-between items-center text-emerald-600 font-medium">
+            <span>Discount amt</span>
+            <span className="font-mono">- ₹{currentOrder.totalAmount}</span>
+          </div>
+          <div className="border-t border-slate-100 pt-1.5 flex justify-between items-center">
+            <span className="text-slate-800 uppercase text-[10px] sm:text-[11px] tracking-wider font-bold">Payable amt</span>
+            <span className="text-lg sm:text-xl text-indigo-600 font-mono font-bold">₹{currentOrder.totalAmount}</span>
+          </div>
         </div>
 
         {/* Cashless Notice */}

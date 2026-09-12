@@ -170,10 +170,12 @@ Group Size   : ${o.peopleCount} Person(s)
 Budget Limit : ₹${o.allowedBudget}
 
 ---------------- ORDERED ITEMS ------------------
-${o.items.map((i) => `${i.quantity}x ${i.name.padEnd(24)} ₹${i.total}`).join('\n')}
+${o.items.map((i) => `${i.quantity}x ${i.name.padEnd(24)} ₹${i.total * 2}`).join('\n')}
 
 -------------------------------------------------
-TOTAL AMOUNT : ₹${o.totalAmount}
+Total price  : ₹${o.totalAmount * 2}
+Discount amt : -₹${o.totalAmount} (50% Off)
+Payable amt  : ₹${o.totalAmount}
 BUDGET CHECK : ${o.totalAmount <= o.allowedBudget ? 'PASSED (Within Budget)' : 'EXCEEDED BUDGET'}
 NOTE         : All orders are completely cashless.
 =========================================
@@ -546,7 +548,7 @@ Thank you for ordering from Family Fiesta!
                           </span>
                         )}
                       </span>
-                      <span className="font-bold text-stone-900 font-mono">₹{it.total}</span>
+                      <span className="font-bold text-stone-900 font-mono">₹{it.total * 2}</span>
                     </div>
                   ))}
                 </div>
@@ -568,9 +570,19 @@ Thank you for ordering from Family Fiesta!
 
             {/* Fixed Footer with Total & Actions */}
             <div className="p-4 sm:p-5 border-t border-stone-100 bg-stone-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
-              <div>
-                <span className="text-stone-400 text-[10px] block font-bold uppercase tracking-wider">Total Bill</span>
-                <span className="text-indigo-600 font-bold text-xl sm:text-2xl font-mono">₹{selectedOrderForReceipt.totalAmount}</span>
+              <div className="space-y-0.5 text-xs">
+                <div className="text-stone-500 flex items-center gap-2">
+                  <span>Total price:</span>
+                  <span className="font-mono font-medium text-stone-700">₹{selectedOrderForReceipt.totalAmount * 2}</span>
+                </div>
+                <div className="text-emerald-600 font-medium flex items-center gap-2">
+                  <span>Discount amt:</span>
+                  <span className="font-mono">- ₹{selectedOrderForReceipt.totalAmount}</span>
+                </div>
+                <div className="flex items-center gap-2 pt-0.5">
+                  <span className="text-stone-800 text-[10px] font-bold uppercase tracking-wider">Payable amt:</span>
+                  <span className="text-indigo-600 font-bold text-lg sm:text-xl font-mono">₹{selectedOrderForReceipt.totalAmount}</span>
+                </div>
               </div>
               <div className="no-print flex items-center space-x-2 flex-wrap gap-y-2">
                 <button
