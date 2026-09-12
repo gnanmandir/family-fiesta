@@ -453,7 +453,7 @@ export const supabaseService = {
     } catch (e) {
       // ignore
     }
-    return [220, 220, 160, 70]; // Default fallback
+    return [230, 230, 140, 80]; // Default fallback
   },
 
   setGuestTiers: async (tiers: number[]): Promise<void> => {

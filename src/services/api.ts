@@ -81,7 +81,7 @@ export const api = {
     if (isSupabaseConfigured) {
       return await supabaseService.getGuestTiers();
     }
-    return [220, 220, 160, 70];
+    return [230, 230, 140, 80];
   },
 
   setGuestTiers: async (tiers: number[]) => {
