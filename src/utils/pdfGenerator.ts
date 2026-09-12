@@ -164,9 +164,9 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.text(item.name, 24, y + 5.5);
-    doc.text(`Rs. ${item.price * 2}`, 120, y + 5.5, { align: 'right' });
+    doc.text(`Rs. ${item.price}`, 120, y + 5.5, { align: 'right' });
     doc.text(`${item.quantity}`, 145, y + 5.5, { align: 'center' });
-    doc.text(`Rs. ${item.total * 2}`, 186, y + 5.5, { align: 'right' });
+    doc.text(`Rs. ${item.total}`, 186, y + 5.5, { align: 'right' });
     y += rowHeight;
 
     if (y > 210) {
@@ -189,7 +189,7 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   doc.text('TOTAL PRICE:', 148, y + 4.5, { align: 'right' });
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(51, 65, 85);
-  doc.text(`Rs. ${order.totalAmount * 2}`, 186, y + 4.5, { align: 'right' });
+  doc.text(`Rs. ${order.totalAmount}`, 186, y + 4.5, { align: 'right' });
 
   y += subRowHeight;
 
@@ -199,7 +199,7 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(16, 185, 129);
   doc.text('DISCOUNT AMT (50%):', 148, y + 4.5, { align: 'right' });
-  doc.text(`-Rs. ${order.totalAmount}`, 186, y + 4.5, { align: 'right' });
+  doc.text(`-Rs. ${order.totalAmount / 2}`, 186, y + 4.5, { align: 'right' });
 
   y += subRowHeight;
 
@@ -219,7 +219,7 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
 
   doc.setTextColor(234, 88, 12);
   doc.setFontSize(11.5);
-  doc.text(`Rs. ${order.totalAmount}`, 186, y + 6.2, { align: 'right' });
+  doc.text(`Rs. ${order.totalAmount / 2}`, 186, y + 6.2, { align: 'right' });
 
   y += totalRowHeight;
 
