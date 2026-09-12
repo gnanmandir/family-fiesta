@@ -82,11 +82,11 @@ CREATE POLICY "Public access to device_locks" ON public.device_locks FOR ALL USI
 INSERT INTO public.menu_items (id, name, category, description, price, image, is_veg, is_chef_special, is_available, portion_value, portion_unit)
 VALUES
 ('FOOD-101', 'Club Sandwich', 'Chaat & Street Food', 'Three layers of deliciousness, packed with flavor and served with a creamy mayo dip & crispy wafers! 🥪🔥', 60, 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=600&q=80', true, true, true, 180, 'g'),
-('FOOD-102', 'Pani Puri', 'Chaat & Street Food', 'Crispy puris, tasty masala & refreshing mint water! 🌿🥣', 20, 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=600&q=80', true, true, true, 150, 'g'),
-('FOOD-103', 'Chole Kulcha', 'Main Course', 'Crispy kulcha, flavourful Amritsari chole & fresh onion salad—a perfect Punjabi feast! 🌶️🥙', 65, 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&w=600&q=80', true, true, true, 250, 'g'),
+('FOOD-102', 'Pani Puri', 'Chaat & Street Food', 'Crunchy, spicy, tangy, and absolutely irresistible in every bite! 😋✨', 25, 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=600&q=80', true, true, true, 150, 'g'),
+('FOOD-103', 'Chole Kulcha', 'Main Course', 'Crispy kulcha, flavourful Amritsari chole & fresh onion salad—a perfect Punjabi feast! 🌶️🥙', 55, 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&w=600&q=80', true, true, true, 250, 'g'),
 ('FOOD-104', 'Jamun Lemon Mojito', 'Beverages & Drinks', 'Jamun, lemon & fizzy soda with a sweet-salty twist! 🍇🍋✨', 20, 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80', true, false, true, 250, 'ml'),
 ('FOOD-105', 'Blueberry Trifle', 'Desserts', 'Crunchy biscuit, creamy vanilla cake & blueberry layers topped with juicy blueberries—a dreamy dessert in every spoonful! 🫐✨', 35, 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=600&q=80', true, false, true, 120, 'g'),
-('FOOD-106', 'Millet Khichdi', 'Healthy Special', 'Wholesome & comforting dish cooked with organic foxtail millet, yellow moong dal, desi ghee & herbs.', 40, 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=600&q=80', true, false, true, 200, 'g')
+('FOOD-106', 'Millet Khichdi', 'Healthy Special', 'Wholesome & comforting dish cooked with organic foxtail millet, yellow moong dal, desi ghee & herbs.', 35, 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=600&q=80', true, false, true, 200, 'g')
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     category = EXCLUDED.category,
