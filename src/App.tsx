@@ -28,6 +28,8 @@ import {
   getStudentExistingOrder,
 } from './services/storage';
 import { api } from './services/api';
+import { isSupabaseConfigured } from './services/supabase';
+import { isTursoConfigured } from './services/turso';
 
 import { Header } from './components/Header';
 import { HomePage } from './components/HomePage';
@@ -267,54 +269,85 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Sync orders with backend using SSE for live status updates
+  // Sync orders with backend using SSE only when dedicated backend URL is configured
   useEffect(() => {
-    const sseUrl = (import.meta.env.VITE_API_URL || '/api') + '/orders/stream';
-    const evtSource = new EventSource(sseUrl);
+    if (isSupabaseConfigured || isTursoConfigured || !import.meta.env.VITE_API_URL) return;
 
-    evtSource.onmessage = async (event) => {
-      if (event.data === 'connected') return;
-      try {
-        const freshOrders = await fetchOrders();
-        setOrders(freshOrders);
-        if (activeOrder) {
-          const updated = freshOrders.find((o) => o.orderNumber === activeOrder.orderNumber);
-          if (updated) {
-            setActiveOrder(updated);
+    try {
+      const sseUrl = (import.meta.env.VITE_API_URL || '/api') + '/orders/stream';
+      const evtSource = new EventSource(sseUrl);
+
+      evtSource.onmessage = async (event) => {
+        if (event.data === 'connected') return;
+        try {
+          const freshOrders = await fetchOrders();
+          setOrders(freshOrders);
+          if (activeOrder) {
+            const updated = freshOrders.find((o) => o.orderNumber === activeOrder.orderNumber);
+            if (updated) {
+              setActiveOrder(updated);
+            }
           }
+        } catch (e) {
+          // Fallback silently
         }
-      } catch (e) {
-        // Fallback silently
-      }
-    };
+      };
 
-    return () => evtSource.close();
+      return () => evtSource.close();
+    } catch (e) {
+      // Fallback silently
+    }
   }, [activeOrder]);
 
-  // Periodic background sync: ensures any menu price/availability/item change in Admin reflects on all devices within seconds
+  // Smart background sync: view-aware & throttled to protect database egress
   useEffect(() => {
     const syncLatestData = async () => {
+      // 1. Completely stop network activity when browser tab is inactive / phone screen locked
+      if (typeof document !== 'undefined' && document.hidden) return;
+
       try {
-        const [freshMenu, freshOrders, isOpen] = await Promise.all([
-          fetchMenuItems(),
-          fetchOrders(),
-          api.getOrderingStatus(),
-        ]);
-        if (freshMenu && freshMenu.length > 0) {
-          setMenuItems(freshMenu);
+        // 2. Only poll all orders when user is viewing the Admin Dashboard
+        if (currentView === 'admin') {
+          const [freshOrders, isOpen] = await Promise.all([
+            fetchOrders(),
+            api.getOrderingStatus(),
+          ]);
+          if (freshOrders && freshOrders.length > 0) {
+            setOrders(freshOrders);
+          }
+          setOrdersOpen(isOpen);
+        } else {
+          // 3. For student views: NEVER download the full orders database!
+          // Only check ordering open/closed status at a relaxed interval
+          const isOpen = await api.getOrderingStatus();
+          setOrdersOpen(isOpen);
         }
-        if (freshOrders && freshOrders.length > 0) {
-          setOrders(freshOrders);
-        }
-        setOrdersOpen(isOpen);
       } catch (e) {
         // Silent
       }
     };
 
-    const intervalId = setInterval(syncLatestData, 5000);
+    // 4. Relax polling interval: 30s in Admin, 90s in student views
+    const pollInterval = currentView === 'admin' ? 30000 : 90000;
+    const intervalId = setInterval(syncLatestData, pollInterval);
     return () => clearInterval(intervalId);
-  }, []);
+  }, [currentView]);
+
+  // 5. On tab regain focus / visibility, do a one-off gentle refresh
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        if (currentView === 'admin') {
+          fetchOrders().then((o) => o && o.length > 0 && setOrders(o)).catch(() => {});
+        } else if (currentView === 'menu') {
+          fetchMenuItems().then((m) => m && m.length > 0 && setMenuItems(m)).catch(() => {});
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [currentView]);
 
   // Persist session navigation state to localStorage so refresh keeps current view
   useEffect(() => {

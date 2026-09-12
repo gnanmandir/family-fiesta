@@ -19,7 +19,7 @@ async function supabaseFetch<T>(endpoint: string, options: RequestInit = {}, ret
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const res = await fetch(url, { cache: 'no-cache', ...options, headers });
+      const res = await fetch(url, { ...options, headers });
       if (!res.ok) {
         if ([429, 502, 503, 504].includes(res.status) && attempt < retries) {
           await new Promise((r) => setTimeout(r, 600 * (attempt + 1)));
