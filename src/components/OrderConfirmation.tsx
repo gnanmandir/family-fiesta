@@ -90,22 +90,46 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onR
         </div>
 
         {/* Items List */}
-        <div className="mt-3 mb-2 space-y-0.5 overflow-y-auto custom-scrollbar pr-1" style={{ maxHeight: '15vh' }}>
-          {currentOrder.items.map((item) => (
-            <div key={item.id} className="flex justify-between py-1 text-xs sm:text-[13px]">
-              <span className="text-slate-600">
-                <span className="text-slate-900 font-bold mr-1.5">{item.quantity}×</span> 
-                {item.name}
-              </span>
-              <span className="text-indigo-600 font-mono font-bold">₹{item.total}</span>
-            </div>
-          ))}
+        <div className="mt-3 mb-2 space-y-1.5 overflow-y-auto custom-scrollbar pr-1" style={{ maxHeight: '20vh' }}>
+          {currentOrder.items.map((item) => {
+            const originalUnitPrice = item.price * 2;
+            const originalItemTotal = item.total * 2;
+            return (
+              <div key={item.id} className="flex justify-between items-center py-1 border-b border-slate-100/60 last:border-0 text-xs sm:text-[13px]">
+                <div className="flex flex-col">
+                  <span className="text-slate-800 font-medium">
+                    <span className="text-indigo-600 font-bold mr-1.5">{item.quantity}×</span> 
+                    {item.name}
+                  </span>
+                  <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-mono mt-0.5">
+                    <span className="line-through">₹{originalUnitPrice}</span>
+                    <span className="text-slate-700 font-semibold">₹{item.price} each</span>
+                    <span className="text-[9px] font-bold text-rose-600 bg-rose-50 border border-rose-200/80 px-1 py-0.2 rounded">50% OFF</span>
+                  </div>
+                </div>
+                <div className="text-right flex flex-col items-end">
+                  <span className="text-slate-400 line-through text-[11px] font-mono">₹{originalItemTotal}</span>
+                  <span className="text-indigo-600 font-mono font-bold">₹{item.total}</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
-        {/* Total */}
-        <div className="border-t border-slate-100 pt-2 flex justify-between items-center mb-2">
-          <span className="text-slate-500 uppercase text-[9px] sm:text-[10px] tracking-wider font-bold">Total Amount</span>
-          <span className="text-lg sm:text-xl text-indigo-600 font-mono font-bold">₹{currentOrder.totalAmount}</span>
+        {/* Total & Discount Breakdown */}
+        <div className="border-t border-slate-100 pt-2 space-y-1 mb-2">
+          <div className="flex justify-between text-slate-400 text-xs">
+            <span>Regular Total:</span>
+            <span className="line-through font-mono">₹{currentOrder.totalAmount * 2}</span>
+          </div>
+          <div className="flex justify-between text-emerald-600 text-xs font-semibold">
+            <span>50% Festival Discount:</span>
+            <span className="font-mono">-₹{currentOrder.totalAmount}</span>
+          </div>
+          <div className="border-t border-slate-100 pt-1.5 flex justify-between items-center">
+            <span className="text-slate-800 uppercase text-[10px] sm:text-[11px] tracking-wider font-bold">Total Amount Paid</span>
+            <span className="text-lg sm:text-xl text-indigo-600 font-mono font-bold">₹{currentOrder.totalAmount}</span>
+          </div>
         </div>
 
         {/* Cashless Notice */}
