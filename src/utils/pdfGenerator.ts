@@ -214,21 +214,26 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.text('• Please present this digital or printed voucher at the food stall counters.', 24, footerBoxY + 15);
-  doc.text('• Note: All orders are completely cashless.', 24, footerBoxY + 21.5);
-  doc.text('• Valid only for the items specified above during Family Fiesta 2026.', 24, footerBoxY + 28);
-  doc.text('• Non-transferable and cannot be exchanged or redeemed for cash.', 24, footerBoxY + 34.5);
-  doc.text('• System generated official digital coupon issued by Gnan Mandir.', 24, footerBoxY + 41);
+  doc.text('• Valid only for the items specified above during Family Fiesta 2026.', 24, footerBoxY + 21.5);
+  doc.text('• Non-transferable and cannot be exchanged or redeemed for cash.', 24, footerBoxY + 28);
+  doc.text('• System generated official digital coupon issued by Gnan Mandir.', 24, footerBoxY + 34.5);
+
+  // Cashless notice highlighted in bold red at the last bullet point
+  doc.setTextColor(220, 38, 38);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.text('• Note: All orders are completely cashless.', 24, footerBoxY + 41.5);
 
   doc.setTextColor(148, 163, 184);
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'italic');
-  doc.text('May you enjoy a blessed, spiritually uplifting festival feast!', 24, footerBoxY + 47);
+  doc.text('May you enjoy a blessed, spiritually uplifting festival feast!', 24, footerBoxY + 48.5);
 
-  // Right Stamp Embedded inside the Verification Box
+  // Right Stamp Embedded inside the Verification Box (Compact Sizing)
   if (stampImg.width > 0) {
-    const stampWidth = 62;
+    const stampWidth = 44;
     const stampHeight = (stampImg.height * stampWidth) / stampImg.width;
-    const stampX = 126;
+    const stampX = 140;
     const stampY = footerBoxY + (footerBoxHeight - stampHeight) / 2;
     doc.addImage(stampImg, 'PNG', stampX, stampY, stampWidth, stampHeight);
   }
