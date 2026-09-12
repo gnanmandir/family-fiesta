@@ -103,6 +103,7 @@ ${o.items.map((i) => `${i.quantity}x ${i.name.padEnd(24)} ₹${i.total}`).join('
 -------------------------------------------------
 TOTAL AMOUNT : ₹${o.totalAmount}
 BUDGET CHECK : ${o.totalAmount <= o.allowedBudget ? 'PASSED (Within Budget)' : 'EXCEEDED BUDGET'}
+NOTE         : All orders are completely cashless.
 =========================================
 Thank you for ordering from Family Fiesta!
 `;

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Order } from '../types';
-import { CheckCircle2, Ticket, Edit3, Download, Lock } from 'lucide-react';
+import { CheckCircle2, Ticket, Edit3, Download, Lock, Info } from 'lucide-react';
 import { generateAndDownloadPDFReceipt } from '../utils/pdfGenerator';
 import { INITIAL_STUDENTS } from '../data/students';
 import { formatNameDisplay } from '../utils/nameFormatter';
@@ -106,6 +106,14 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onR
         <div className="border-t border-slate-100 pt-2 flex justify-between items-center mb-2">
           <span className="text-slate-500 uppercase text-[9px] sm:text-[10px] tracking-wider font-bold">Total Amount</span>
           <span className="text-lg sm:text-xl text-indigo-600 font-mono font-bold">₹{currentOrder.totalAmount}</span>
+        </div>
+
+        {/* Cashless Notice */}
+        <div className="my-2.5 p-2 sm:p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/80 text-amber-900 text-xs flex items-center space-x-2">
+          <Info className="w-4 h-4 text-amber-600 flex-shrink-0" />
+          <span className="text-[11px] sm:text-xs">
+            <strong className="font-semibold text-amber-800">Note:</strong> All orders are completely cashless.
+          </span>
         </div>
 
         {/* Official Gnan Mandir Stamp Voucher Verification */}

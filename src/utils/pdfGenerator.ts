@@ -209,10 +209,11 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   doc.setTextColor(71, 85, 105);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
-  doc.text('• Please present this digital or printed voucher at the food stall counters.', 24, footerBoxY + 16);
-  doc.text('• Valid only for the items specified above during Family Fiesta 2026.', 24, footerBoxY + 23);
-  doc.text('• Non-transferable and cannot be exchanged or redeemed for cash.', 24, footerBoxY + 30);
-  doc.text('• System generated official digital coupon issued by Gnan Mandir.', 24, footerBoxY + 37);
+  doc.text('• Please present this digital or printed voucher at the food stall counters.', 24, footerBoxY + 15);
+  doc.text('• Note: All orders are completely cashless.', 24, footerBoxY + 21.5);
+  doc.text('• Valid only for the items specified above during Family Fiesta 2026.', 24, footerBoxY + 28);
+  doc.text('• Non-transferable and cannot be exchanged or redeemed for cash.', 24, footerBoxY + 34.5);
+  doc.text('• System generated official digital coupon issued by Gnan Mandir.', 24, footerBoxY + 41);
 
   doc.setTextColor(148, 163, 184);
   doc.setFontSize(7.5);
