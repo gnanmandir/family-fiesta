@@ -105,7 +105,7 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onR
         {/* Total & 50% Discount Summary */}
         {(() => {
           const payable = Math.ceil(currentOrder.totalAmount / 2);
-          const discount = currentOrder.totalAmount - payable;
+          const discount = currentOrder.totalAmount / 2;
           return (
             <div className="border-t border-slate-100 pt-2 space-y-1 mb-2 text-xs sm:text-sm">
               <div className="flex justify-between items-center text-slate-500">

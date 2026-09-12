@@ -194,7 +194,7 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   y += subRowHeight;
 
   const payableAmt = Math.ceil(order.totalAmount / 2);
-  const discountAmt = order.totalAmount - payableAmt;
+  const discountAmt = order.totalAmount / 2;
 
   doc.setFillColor(248, 250, 252);
   doc.rect(18, y, 174, subRowHeight, 'F');
