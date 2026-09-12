@@ -577,7 +577,7 @@ Thank you for ordering from Family Fiesta!
                 </div>
                 <div className="text-emerald-600 font-medium flex items-center gap-2">
                   <span>Discount amt:</span>
-                  <span className="font-mono">- ₹{selectedOrderForReceipt.totalAmount - Math.ceil(selectedOrderForReceipt.totalAmount / 2)}</span>
+                  <span className="font-mono">- ₹{selectedOrderForReceipt.totalAmount / 2}</span>
                 </div>
                 <div className="flex items-center gap-2 pt-0.5">
                   <span className="text-stone-800 text-[10px] font-bold uppercase tracking-wider">Payable amt:</span>
