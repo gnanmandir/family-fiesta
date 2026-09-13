@@ -314,4 +314,30 @@ export const tursoService = {
   clearDeviceLock: async (deviceId: string): Promise<void> => {
     await tursoQuery('DELETE FROM device_locks WHERE device_id = ?', [deviceId]).catch(() => {});
   },
+
+  // --- Admin Credentials ---
+  getAdminCredentials: async (): Promise<{ username: string; password: string }> => {
+    const rows = await tursoQuery("SELECT key, value FROM app_settings WHERE key IN ('admin_username', 'admin_password')");
+    const map: Record<string, string> = {};
+    rows.forEach((r: any) => { map[r.key] = r.value; });
+    return {
+      username: map['admin_username'] || 'dadaji',
+      password: map['admin_password'] || 'dada5868',
+    };
+  },
+
+  // --- Ordering Status ---
+  getOrderingStatus: async (): Promise<boolean> => {
+    const rows = await tursoQuery("SELECT value FROM app_settings WHERE key = 'orders_open'");
+    if (!rows || rows.length === 0) return true;
+    const val = rows[0]?.value;
+    return val === 'true' || val === true || val === 1 || val === '1';
+  },
+
+  setOrderingStatus: async (isOpen: boolean): Promise<void> => {
+    await tursoQuery(
+      `INSERT INTO app_settings (key, value, updated_at) VALUES ('orders_open', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+      [isOpen ? 'true' : 'false', new Date().toISOString()]
+    );
+  },
 };

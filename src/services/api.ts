@@ -461,6 +461,13 @@ export const api = {
 
   // --- App Settings (Master Ordering Switch) ---
   getOrderingStatus: async (): Promise<boolean> => {
+    if (isTursoConfigured) {
+      try {
+        return await tursoService.getOrderingStatus();
+      } catch (e) {
+        console.warn('[Turso] Failed to fetch ordering status:', e);
+      }
+    }
     if (isSupabaseConfigured) {
       try {
         return await supabaseService.getOrderingStatus();
@@ -468,14 +475,36 @@ export const api = {
         console.warn('[Supabase] Failed to fetch ordering status:', e);
       }
     }
-    // Default: orders are open
     return true;
   },
 
   setOrderingStatus: async (isOpen: boolean): Promise<void> => {
+    if (isTursoConfigured) {
+      await tursoService.setOrderingStatus(isOpen);
+      return;
+    }
     if (isSupabaseConfigured) {
       await supabaseService.setOrderingStatus(isOpen);
       return;
     }
+  },
+
+  // --- Admin Credentials ---
+  getAdminCredentials: async (): Promise<{ username: string; password: string }> => {
+    if (isTursoConfigured) {
+      try {
+        return await tursoService.getAdminCredentials();
+      } catch (e) {
+        console.warn('[Turso] Failed to fetch admin credentials:', e);
+      }
+    }
+    if (isSupabaseConfigured) {
+      try {
+        return await supabaseService.getAdminCredentials();
+      } catch (e) {
+        console.warn('[Supabase] Failed to fetch admin credentials:', e);
+      }
+    }
+    return { username: 'dadaji', password: 'dada5868' };
   },
 };
