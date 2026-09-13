@@ -110,20 +110,22 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     setIsLoading(true);
 
     // 1. Fetch dynamic admin credentials
-    let adminUsername = 'dada';
-    let adminPassword = 'dada58';
+    let adminUsername = 'dadaji';
+    let adminPassword = 'dada5868';
     try {
       const { api } = await import('../services/api');
       const creds = await api.getAdminCredentials();
-      adminUsername = creds.username.toLowerCase();
-      adminPassword = creds.password;
+      if (creds?.username) adminUsername = creds.username.toLowerCase();
+      if (creds?.password) adminPassword = creds.password;
     } catch (e) {}
 
     // 2. Check if Admin Login
     const normalizedId = cleanId.replace(/\s+/g, '');
     const isAdminUser =
       normalizedId === adminUsername ||
-      normalizedId === 'admin';
+      normalizedId === 'admin' ||
+      normalizedId === 'dadaji' ||
+      normalizedId === 'dada';
     const isAdminPassword = cleanPwd === adminPassword;
 
     if (isAdminUser && isAdminPassword) {

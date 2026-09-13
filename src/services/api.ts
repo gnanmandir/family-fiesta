@@ -58,26 +58,30 @@ export const api = {
   },
 
   saveStudent: async (student: Student): Promise<Student> => {
+    if (isTursoConfigured) {
+      return await tursoService.saveStudent(student);
+    }
     if (isSupabaseConfigured) {
       return await supabaseService.saveStudent(student);
     }
     return student; // fallback
   },
 
-  getAdminCredentials: async () => {
-    if (isSupabaseConfigured) {
-      return await supabaseService.getAdminCredentials();
-    }
-    return { username: 'dada', password: 'dada58' };
-  },
-
   setAdminCredentials: async (username: string, password: string) => {
+    if (isTursoConfigured) {
+      await tursoService.setAdminCredentials(username, password);
+      return;
+    }
     if (isSupabaseConfigured) {
       await supabaseService.setAdminCredentials(username, password);
+      return;
     }
   },
 
   getGuestTiers: async (): Promise<number[]> => {
+    if (isTursoConfigured) {
+      return await tursoService.getGuestTiers();
+    }
     if (isSupabaseConfigured) {
       return await supabaseService.getGuestTiers();
     }
@@ -85,8 +89,13 @@ export const api = {
   },
 
   setGuestTiers: async (tiers: number[]) => {
+    if (isTursoConfigured) {
+      await tursoService.setGuestTiers(tiers);
+      return;
+    }
     if (isSupabaseConfigured) {
       await supabaseService.setGuestTiers(tiers);
+      return;
     }
   },
 

@@ -326,6 +326,51 @@ export const tursoService = {
     };
   },
 
+  setAdminCredentials: async (username: string, password: string): Promise<void> => {
+    await tursoQuery(
+      `INSERT INTO app_settings (key, value, updated_at) VALUES ('admin_username', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+      [username, new Date().toISOString()]
+    );
+    await tursoQuery(
+      `INSERT INTO app_settings (key, value, updated_at) VALUES ('admin_password', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+      [password, new Date().toISOString()]
+    );
+  },
+
+  // --- Guest Tiers ---
+  getGuestTiers: async (): Promise<number[]> => {
+    const rows = await tursoQuery("SELECT value FROM app_settings WHERE key = 'guest_tiers'");
+    if (rows && rows.length > 0) {
+      try {
+        return JSON.parse(rows[0].value);
+      } catch (e) {}
+    }
+    return [230, 230, 140, 80];
+  },
+
+  setGuestTiers: async (tiers: number[]): Promise<void> => {
+    await tursoQuery(
+      `INSERT INTO app_settings (key, value, updated_at) VALUES ('guest_tiers', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+      [JSON.stringify(tiers), new Date().toISOString()]
+    );
+  },
+
+  // --- Save Student ---
+  saveStudent: async (student: Student): Promise<Student> => {
+    await tursoQuery(
+      `INSERT INTO students (id, first_name, parent_name, full_name, grade, birth_date)
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET
+         first_name = excluded.first_name,
+         parent_name = excluded.parent_name,
+         full_name = excluded.full_name,
+         grade = excluded.grade,
+         birth_date = excluded.birth_date`,
+      [student.id, student.firstName, student.parentName, student.fullName, student.grade || 'Gurukul Roster', student.birthDate || null]
+    );
+    return student;
+  },
+
   // --- Ordering Status ---
   getOrderingStatus: async (): Promise<boolean> => {
     const rows = await tursoQuery("SELECT value FROM app_settings WHERE key = 'orders_open'");
