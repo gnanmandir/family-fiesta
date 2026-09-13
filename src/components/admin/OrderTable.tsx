@@ -85,32 +85,10 @@ export const OrderTable: React.FC<OrderTableProps> = ({
       return;
     }
 
-    let currentAdminPass = 'niruma0212';
-    try {
-      const { api } = await import('../../services/api');
-      const creds = await api.getAdminCredentials();
-      if (creds && creds.password) {
-        currentAdminPass = creds.password;
-      }
-    } catch (err) {}
-
-    const pool = students && students.length > 0 ? students : INITIAL_STUDENTS;
-    const foundStudent = pool.find(
-      (s) =>
-        s.id.toLowerCase() === orderToWipe.studentId.toLowerCase() ||
-        s.fullName.toLowerCase() === (orderToWipe.fullName || '').toLowerCase() ||
-        s.fullName.toLowerCase() === orderToWipe.studentName.toLowerCase()
-    );
-    const studentBirthDate = (foundStudent?.birthDate || '').trim();
-
-    const isAuthorized =
-      entered === 'niruma0212' ||
-      entered === 'niurma0212' ||
-      entered === currentAdminPass ||
-      (studentBirthDate && entered === studentBirthDate);
+    const isAuthorized = entered === 'niruma0212' || entered === 'niurma0212';
 
     if (!isAuthorized) {
-      setWipePasswordError('Incorrect password. Authorization failed.');
+      setWipePasswordError('Incorrect system password. Authorization failed.');
       return;
     }
 

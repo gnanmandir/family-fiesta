@@ -87,24 +87,10 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
       return;
     }
 
-    let currentAdminPass = 'niruma0212';
-    try {
-      const { api } = await import('../../services/api');
-      const creds = await api.getAdminCredentials();
-      if (creds && creds.password) {
-        currentAdminPass = creds.password;
-      }
-    } catch (err) {}
-
-    const studentBirthDate = (wipeModal.student.birthDate || '').trim();
-    const isAuthorized =
-      entered === 'niruma0212' ||
-      entered === 'niurma0212' ||
-      entered === currentAdminPass ||
-      (studentBirthDate && entered === studentBirthDate);
+    const isAuthorized = entered === 'niruma0212' || entered === 'niurma0212';
 
     if (!isAuthorized) {
-      setWipePasswordError('Incorrect password. Authorization failed.');
+      setWipePasswordError('Incorrect system password. Authorization failed.');
       return;
     }
 

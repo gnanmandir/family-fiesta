@@ -119,17 +119,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const handleVerifyProtectedPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    let currentAdminPass = 'dada5868';
-    try {
-      const { api } = await import('../../services/api');
-      const creds = await api.getAdminCredentials();
-      if (creds && creds.password) currentAdminPass = creds.password;
-    } catch (err) {}
-
-    const isAuthorized =
-      systemPassword === 'niruma0212' ||
-      systemPassword === 'niurma0212' ||
-      systemPassword === currentAdminPass;
+    const entered = systemPassword.trim();
+    const isAuthorized = entered === 'niruma0212' || entered === 'niurma0212';
 
     if (!isAuthorized) {
       setSystemPasswordError('Incorrect system password. Please try again.');
@@ -599,17 +590,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   setCredError('Username and password cannot be empty.');
                   return;
                 }
-                let currentAdminPass = 'dada5868';
-                try {
-                  const { api } = await import('../../services/api');
-                  const creds = await api.getAdminCredentials();
-                  if (creds && creds.password) currentAdminPass = creds.password;
-                } catch (err) {}
-
-                const isAuthorized =
-                  credSysPass === 'niruma0212' ||
-                  credSysPass === 'niurma0212' ||
-                  credSysPass === currentAdminPass;
+                const entered = credSysPass.trim();
+                const isAuthorized = entered === 'niruma0212' || entered === 'niurma0212';
 
                 if (!isAuthorized) {
                   setCredError('Incorrect system password. Confirmation required.');
