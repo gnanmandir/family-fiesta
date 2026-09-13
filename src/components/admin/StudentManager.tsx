@@ -99,6 +99,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
     const studentBirthDate = (wipeModal.student.birthDate || '').trim();
     const isAuthorized =
       entered === 'niruma0212' ||
+      entered === 'niurma0212' ||
       entered === currentAdminPass ||
       (studentBirthDate && entered === studentBirthDate);
 

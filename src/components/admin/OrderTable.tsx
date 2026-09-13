@@ -105,6 +105,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({
 
     const isAuthorized =
       entered === 'niruma0212' ||
+      entered === 'niurma0212' ||
       entered === currentAdminPass ||
       (studentBirthDate && entered === studentBirthDate);
 
