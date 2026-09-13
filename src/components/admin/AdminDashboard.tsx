@@ -97,6 +97,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [credError, setCredError] = useState('');
   const [isSavingCreds, setIsSavingCreds] = useState(false);
 
+  // In-app System Password Modal State
+  const [sysPassModalOpen, setSysPassModalOpen] = useState(false);
+  const [currentSysPass, setCurrentSysPass] = useState('');
+  const [newSysPass, setNewSysPass] = useState('');
+  const [confirmSysPass, setConfirmSysPass] = useState('');
+  const [sysPassError, setSysPassError] = useState('');
+  const [isSavingSysPass, setIsSavingSysPass] = useState(false);
+
   const openProtectedAction = (
     title: string,
     description: string,
@@ -120,7 +128,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleVerifyProtectedPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     const entered = systemPassword.trim();
-    const isAuthorized = entered === 'niruma0212' || entered === 'niurma0212';
+    let validPass = 'niruma0212';
+    try {
+      const { api } = await import('../../services/api');
+      validPass = await api.getSystemPassword();
+    } catch (err) {}
+
+    const isAuthorized =
+      entered === validPass ||
+      (validPass === 'niruma0212' && entered === 'niurma0212');
 
     if (!isAuthorized) {
       setSystemPasswordError('Incorrect system password. Please try again.');
@@ -462,6 +478,39 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </button>
                 </div>
               </div>
+
+              {/* Card 5: Master System Authorization Password */}
+              <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-2">
+                      <ShieldAlert className="w-5 h-5 text-amber-600" />
+                      <h4 className="font-bold text-slate-900 text-base">System Authorization Password</h4>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700">
+                      Master Key
+                    </span>
+                  </div>
+                  <p className="text-slate-600 text-xs leading-relaxed">
+                    Change the master authorization password required to wipe student orders and execute critical system overrides.
+                  </p>
+                </div>
+                <div className="mt-5 pt-4 border-t border-slate-100 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCurrentSysPass('');
+                      setNewSysPass('');
+                      setConfirmSysPass('');
+                      setSysPassError('');
+                      setSysPassModalOpen(true);
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs whitespace-nowrap cursor-pointer transition-all shadow-sm"
+                  >
+                    Update System Password
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -591,7 +640,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   return;
                 }
                 const entered = credSysPass.trim();
-                const isAuthorized = entered === 'niruma0212' || entered === 'niurma0212';
+                let validPass = 'niruma0212';
+                try {
+                  const { api } = await import('../../services/api');
+                  validPass = await api.getSystemPassword();
+                } catch (err) {}
+
+                const isAuthorized =
+                  entered === validPass ||
+                  (validPass === 'niruma0212' && entered === 'niurma0212');
 
                 if (!isAuthorized) {
                   setCredError('Incorrect system password. Confirmation required.');
@@ -677,6 +734,142 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-colors shadow-sm disabled:opacity-50"
                 >
                   {isSavingCreds ? 'Saving...' : 'Save New Credentials'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 3. In-app Update System Password Modal */}
+      {sysPassModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-slate-200 animate-in zoom-in-95 duration-150">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <ShieldAlert className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">Update System Password</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Master authorization key for Order Wipes</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSysPassModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setSysPassError('');
+                const curr = currentSysPass.trim();
+                const next = newSysPass.trim();
+                const conf = confirmSysPass.trim();
+
+                if (!curr || !next || !conf) {
+                  setSysPassError('All fields are required.');
+                  return;
+                }
+                if (next.length < 4) {
+                  setSysPassError('New password must be at least 4 characters.');
+                  return;
+                }
+                if (next !== conf) {
+                  setSysPassError('New password and confirmation do not match.');
+                  return;
+                }
+
+                setIsSavingSysPass(true);
+                try {
+                  const { api } = await import('../../services/api');
+                  const validCurrent = await api.getSystemPassword();
+                  const isAuth = curr === validCurrent || (validCurrent === 'niruma0212' && curr === 'niurma0212');
+                  if (!isAuth) {
+                    setSysPassError('Current system password is incorrect.');
+                    setIsSavingSysPass(false);
+                    return;
+                  }
+
+                  await api.setSystemPassword(next);
+                  alert('System Authorization Password successfully updated! Use your new password for future order wipes and system overrides.');
+                  setSysPassModalOpen(false);
+                } catch (err: any) {
+                  setSysPassError('Failed to update: ' + (err?.message || err));
+                } finally {
+                  setIsSavingSysPass(false);
+                }
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Current System Password
+                </label>
+                <input
+                  type="password"
+                  value={currentSysPass}
+                  onChange={(e) => setCurrentSysPass(e.target.value)}
+                  placeholder="Enter current password (e.g. niruma0212)..."
+                  required
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  New System Password
+                </label>
+                <input
+                  type="password"
+                  value={newSysPass}
+                  onChange={(e) => setNewSysPass(e.target.value)}
+                  placeholder="Enter new master authorization password..."
+                  required
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Confirm New System Password
+                </label>
+                <input
+                  type="password"
+                  value={confirmSysPass}
+                  onChange={(e) => setConfirmSysPass(e.target.value)}
+                  placeholder="Repeat new password..."
+                  required
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-slate-900"
+                />
+              </div>
+
+              {sysPassError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs flex items-center space-x-1.5 font-medium">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>{sysPassError}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end space-x-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSysPassModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingSysPass}
+                  className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                >
+                  {isSavingSysPass ? 'Saving...' : 'Save New Password'}
                 </button>
               </div>
             </form>

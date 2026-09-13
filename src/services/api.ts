@@ -516,4 +516,23 @@ export const api = {
     }
     return { username: 'dadaji', password: 'dada5868' };
   },
+
+  // --- Master System Password ---
+  getSystemPassword: async (): Promise<string> => {
+    if (isTursoConfigured) {
+      try {
+        return await tursoService.getSystemPassword();
+      } catch (e) {
+        console.warn('[Turso] Failed to fetch system password:', e);
+      }
+    }
+    return 'niruma0212';
+  },
+
+  setSystemPassword: async (password: string): Promise<void> => {
+    if (isTursoConfigured) {
+      await tursoService.setSystemPassword(password);
+      return;
+    }
+  },
 };

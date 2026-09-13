@@ -85,7 +85,15 @@ export const OrderTable: React.FC<OrderTableProps> = ({
       return;
     }
 
-    const isAuthorized = entered === 'niruma0212' || entered === 'niurma0212';
+    let validPass = 'niruma0212';
+    try {
+      const { api } = await import('../../services/api');
+      validPass = await api.getSystemPassword();
+    } catch (e) {}
+
+    const isAuthorized =
+      entered === validPass ||
+      (validPass === 'niruma0212' && entered === 'niurma0212');
 
     if (!isAuthorized) {
       setWipePasswordError('Incorrect system password. Authorization failed.');

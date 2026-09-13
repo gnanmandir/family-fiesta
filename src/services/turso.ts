@@ -385,4 +385,20 @@ export const tursoService = {
       [isOpen ? 'true' : 'false', new Date().toISOString()]
     );
   },
+
+  // --- System Master Password ---
+  getSystemPassword: async (): Promise<string> => {
+    const rows = await tursoQuery("SELECT value FROM app_settings WHERE key = 'system_password'");
+    if (rows && rows.length > 0 && rows[0]?.value) {
+      return rows[0].value;
+    }
+    return 'niruma0212';
+  },
+
+  setSystemPassword: async (password: string): Promise<void> => {
+    await tursoQuery(
+      `INSERT INTO app_settings (key, value, updated_at) VALUES ('system_password', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+      [password, new Date().toISOString()]
+    );
+  },
 };
