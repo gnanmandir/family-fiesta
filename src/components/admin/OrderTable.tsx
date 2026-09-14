@@ -25,13 +25,34 @@ import {
   Trash2,
   ShieldAlert,
   EyeOff,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
+
+export type SortKey = 'gmNo' | 'studentName' | 'group' | 'total' | 'budget' | 'time';
+export type SortDirection = 'asc' | 'desc';
 
 interface OrderTableProps {
   orders: Order[];
   students?: Student[];
   onUpdateStatus?: (orderNumber: string, status: OrderStatus) => void;
   onDeleteOrder?: (orderNumber: string) => void;
+}
+
+export function getOrderTimestamp(order: Order): number {
+  if (order.createdAt) {
+    const t = new Date(order.createdAt).getTime();
+    if (!isNaN(t) && t > 0) return t;
+  }
+  if (order.dateDisplay || order.timeDisplay) {
+    const combined = `${order.dateDisplay || ''} ${order.timeDisplay || ''}`
+      .replace(/Sept/gi, 'Sep')
+      .trim();
+    const t = Date.parse(combined);
+    if (!isNaN(t) && t > 0) return t;
+  }
+  return 0;
 }
 
 export function getOrderGmNo(order: Order, studentsList?: Student[]): number {
@@ -60,6 +81,36 @@ export const OrderTable: React.FC<OrderTableProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrderForReceipt, setSelectedOrderForReceipt] = useState<Order | null>(null);
+
+  // Sorting State
+  const [sortKey, setSortKey] = useState<SortKey>('gmNo');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  const handleHeaderClick = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      if (key === 'time' || key === 'total') {
+        setSortDirection('desc');
+      } else {
+        setSortDirection('asc');
+      }
+    }
+  };
+
+  const renderSortIcon = (key: SortKey) => {
+    if (sortKey === key) {
+      return sortDirection === 'asc' ? (
+        <ArrowUp className="w-3.5 h-3.5 text-indigo-600 stroke-[2.5]" />
+      ) : (
+        <ArrowDown className="w-3.5 h-3.5 text-indigo-600 stroke-[2.5]" />
+      );
+    }
+    return (
+      <ArrowUpDown className="w-3 h-3 text-stone-400 opacity-40 group-hover:opacity-100 transition-opacity" />
+    );
+  };
 
   // Password-protected Wipe Modal State
   const [orderToWipe, setOrderToWipe] = useState<Order | null>(null);
@@ -129,10 +180,52 @@ export const OrderTable: React.FC<OrderTableProps> = ({
     );
   });
 
-  // Sort orders by GM No in ascending order (1, 2, 3, ...)
-  const sortedOrders = [...filteredOrders].sort(
-    (a, b) => getOrderGmNo(a, students) - getOrderGmNo(b, students)
-  );
+  // Dynamically sort orders by active sortKey and sortDirection
+  const sortedOrders = [...filteredOrders].sort((a, b) => {
+    let result = 0;
+    switch (sortKey) {
+      case 'gmNo': {
+        const gmA = getOrderGmNo(a, students);
+        const gmB = getOrderGmNo(b, students);
+        result = gmA - gmB;
+        break;
+      }
+      case 'time': {
+        const timeA = getOrderTimestamp(a);
+        const timeB = getOrderTimestamp(b);
+        result = timeA - timeB;
+        break;
+      }
+      case 'studentName': {
+        const nameA = (a.fullName || a.studentName || '').toLowerCase();
+        const nameB = (b.fullName || b.studentName || '').toLowerCase();
+        result = nameA.localeCompare(nameB);
+        break;
+      }
+      case 'group': {
+        result = a.peopleCount - b.peopleCount;
+        break;
+      }
+      case 'total': {
+        result = a.totalAmount - b.totalAmount;
+        break;
+      }
+      case 'budget': {
+        const isWithinA = a.totalAmount <= a.allowedBudget ? 0 : 1;
+        const isWithinB = b.totalAmount <= b.allowedBudget ? 0 : 1;
+        if (isWithinA !== isWithinB) {
+          result = isWithinA - isWithinB;
+        } else {
+          result = (a.totalAmount - a.allowedBudget) - (b.totalAmount - b.allowedBudget);
+        }
+        break;
+      }
+      default:
+        result = 0;
+    }
+
+    return sortDirection === 'asc' ? result : -result;
+  });
 
   // Calculate sheet totals
   const sheetTotalRevenue = filteredOrders.reduce((sum, o) => sum + o.totalAmount, 0);
@@ -196,8 +289,8 @@ Thank you for ordering from Family Fiesta!
     });
     const foodItemsArray = Array.from(allFoodItems).sort();
 
-    // Sheet 1: Master Orders Registry
-    const ordersData = orders.map((o, idx) => {
+    // Sheet 1: Master Orders Registry (preserves active sort & filters)
+    const ordersData = sortedOrders.map((o, idx) => {
       const budgetStatus = o.totalAmount <= o.allowedBudget ? 'Within Budget' : 'Exceeded';
       const gmNo = getOrderGmNo(o, students);
 
@@ -346,17 +439,76 @@ Thank you for ordering from Family Fiesta!
 
       </div>
 
-      {/* Search Controls */}
-      <div className="bg-white p-3 rounded-xl border border-stone-200 shadow-xs">
-        <div className="relative w-full">
+      {/* Search & Sort Controls */}
+      <div className="bg-white p-3 rounded-xl border border-stone-200 shadow-xs flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
+        <div className="relative flex-1">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by student name or GM No..."
-            className="w-full pl-10 pr-4 py-2 bg-stone-50 border border-stone-200 rounded-lg text-stone-900 placeholder-stone-400 text-xs focus:outline-none focus:border-indigo-600 focus:bg-white transition-all"
+            className="w-full pl-10 pr-8 py-2 bg-stone-50 border border-stone-200 rounded-lg text-stone-900 placeholder-stone-400 text-xs focus:outline-none focus:border-indigo-600 focus:bg-white transition-all"
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 p-0.5 rounded cursor-pointer"
+              title="Clear search"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
+        {/* Sort Controls */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 bg-stone-50 border border-stone-200 px-3 py-1.5 rounded-lg">
+            <ArrowUpDown className="w-3.5 h-3.5 text-stone-500 shrink-0" />
+            <span className="text-[11px] font-semibold text-stone-600 whitespace-nowrap">Sort:</span>
+            <select
+              value={`${sortKey}-${sortDirection}`}
+              onChange={(e) => {
+                const [key, dir] = e.target.value.split('-') as [SortKey, SortDirection];
+                setSortKey(key);
+                setSortDirection(dir);
+              }}
+              className="bg-transparent text-stone-900 text-xs font-semibold focus:outline-none cursor-pointer pr-1"
+            >
+              <option value="time-desc">Date / Time: Newest First</option>
+              <option value="time-asc">Date / Time: Oldest First</option>
+              <option value="gmNo-asc">GM No. (1 → 100)</option>
+              <option value="gmNo-desc">GM No. (100 → 1)</option>
+              <option value="studentName-asc">Student Name (A → Z)</option>
+              <option value="studentName-desc">Student Name (Z → A)</option>
+              <option value="total-desc">Total Amount (High → Low)</option>
+              <option value="total-asc">Total Amount (Low → High)</option>
+              <option value="group-desc">Group Size (4p → 1p)</option>
+              <option value="group-asc">Group Size (1p → 4p)</option>
+              <option value="budget-asc">Budget (Within Budget First)</option>
+              <option value="budget-desc">Budget (Over Budget First)</option>
+            </select>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
+            title={sortDirection === 'asc' ? 'Ascending (Click for Descending)' : 'Descending (Click for Ascending)'}
+            className="px-2.5 py-1.5 rounded-lg bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200 text-xs font-semibold inline-flex items-center space-x-1 transition-all cursor-pointer"
+          >
+            {sortDirection === 'asc' ? (
+              <>
+                <ArrowUp className="w-3.5 h-3.5 text-indigo-600 stroke-[2.5]" />
+                <span className="text-[11px]">Asc</span>
+              </>
+            ) : (
+              <>
+                <ArrowDown className="w-3.5 h-3.5 text-indigo-600 stroke-[2.5]" />
+                <span className="text-[11px]">Desc</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
 
@@ -366,13 +518,79 @@ Thank you for ordering from Family Fiesta!
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-stone-50 border-b border-stone-200 text-stone-600 font-semibold uppercase tracking-wider text-[11px]">
-                <th className="p-3.5 whitespace-nowrap">GM No.</th>
-                <th className="p-3.5 whitespace-nowrap">Student Name</th>
-                <th className="p-3.5 whitespace-nowrap text-center">Group</th>
+                <th
+                  onClick={() => handleHeaderClick('gmNo')}
+                  className={`p-3.5 whitespace-nowrap cursor-pointer select-none transition-colors group ${
+                    sortKey === 'gmNo' ? 'bg-indigo-50/80 text-indigo-900 font-bold' : 'hover:bg-stone-100'
+                  }`}
+                  title="Click to sort by GM Number"
+                >
+                  <div className="flex items-center space-x-1.5">
+                    <span>GM No.</span>
+                    {renderSortIcon('gmNo')}
+                  </div>
+                </th>
+                <th
+                  onClick={() => handleHeaderClick('studentName')}
+                  className={`p-3.5 whitespace-nowrap cursor-pointer select-none transition-colors group ${
+                    sortKey === 'studentName' ? 'bg-indigo-50/80 text-indigo-900 font-bold' : 'hover:bg-stone-100'
+                  }`}
+                  title="Click to sort by Student Name"
+                >
+                  <div className="flex items-center space-x-1.5">
+                    <span>Student Name</span>
+                    {renderSortIcon('studentName')}
+                  </div>
+                </th>
+                <th
+                  onClick={() => handleHeaderClick('group')}
+                  className={`p-3.5 whitespace-nowrap text-center cursor-pointer select-none transition-colors group ${
+                    sortKey === 'group' ? 'bg-indigo-50/80 text-indigo-900 font-bold' : 'hover:bg-stone-100'
+                  }`}
+                  title="Click to sort by Group Size"
+                >
+                  <div className="flex items-center justify-center space-x-1.5">
+                    <span>Group</span>
+                    {renderSortIcon('group')}
+                  </div>
+                </th>
                 <th className="p-3.5 whitespace-nowrap min-w-[200px]">Ordered Items Breakdown</th>
-                <th className="p-3.5 whitespace-nowrap">Total ₹</th>
-                <th className="p-3.5 whitespace-nowrap">Budget Status</th>
-                <th className="p-3.5 whitespace-nowrap">Date / Time</th>
+                <th
+                  onClick={() => handleHeaderClick('total')}
+                  className={`p-3.5 whitespace-nowrap cursor-pointer select-none transition-colors group ${
+                    sortKey === 'total' ? 'bg-indigo-50/80 text-indigo-900 font-bold' : 'hover:bg-stone-100'
+                  }`}
+                  title="Click to sort by Total Amount"
+                >
+                  <div className="flex items-center space-x-1.5">
+                    <span>Total ₹</span>
+                    {renderSortIcon('total')}
+                  </div>
+                </th>
+                <th
+                  onClick={() => handleHeaderClick('budget')}
+                  className={`p-3.5 whitespace-nowrap cursor-pointer select-none transition-colors group ${
+                    sortKey === 'budget' ? 'bg-indigo-50/80 text-indigo-900 font-bold' : 'hover:bg-stone-100'
+                  }`}
+                  title="Click to sort by Budget Status"
+                >
+                  <div className="flex items-center space-x-1.5">
+                    <span>Budget Status</span>
+                    {renderSortIcon('budget')}
+                  </div>
+                </th>
+                <th
+                  onClick={() => handleHeaderClick('time')}
+                  className={`p-3.5 whitespace-nowrap cursor-pointer select-none transition-colors group ${
+                    sortKey === 'time' ? 'bg-indigo-50/80 text-indigo-900 font-bold' : 'hover:bg-stone-100'
+                  }`}
+                  title="Click to sort by Date / Time"
+                >
+                  <div className="flex items-center space-x-1.5">
+                    <span>Date / Time</span>
+                    {renderSortIcon('time')}
+                  </div>
+                </th>
                 <th className="p-3.5 whitespace-nowrap text-right">Actions</th>
               </tr>
             </thead>
