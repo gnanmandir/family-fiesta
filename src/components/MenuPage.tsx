@@ -133,23 +133,29 @@ export const MenuPage: React.FC<MenuPageProps> = ({
                     key={food.id}
                     className="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:border-slate-300 hover:shadow-md transition-all duration-300 group flex shadow-sm"
                   >
-                    {/* Image Area - Square Left Side */}
-                    <div className="relative w-28 h-28 sm:w-32 sm:h-32 bg-slate-50 overflow-hidden flex-shrink-0 p-2">
-                      <img
-                        src={food.image}
-                        alt={food.name}
-                        className="w-full h-full object-cover rounded-xl group-hover:scale-105 transition-transform duration-500"
-                      />
-                      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm border border-slate-200 rounded px-1.5 py-0.5 text-[8px] text-emerald-600 font-bold flex items-center shadow-sm">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1" />
-                        VEG
+                    {/* Left Column: Image Area & Veg Indicator */}
+                    <div className="w-28 sm:w-32 p-2 flex flex-col items-center justify-start flex-shrink-0 bg-slate-50/50">
+                      <div className="relative w-full aspect-square bg-slate-100 overflow-hidden rounded-xl">
+                        <img
+                          src={food.image}
+                          alt={food.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        {food.isChefSpecial && (
+                          <div className="absolute bottom-1.5 left-1.5 bg-slate-900/90 backdrop-blur-sm border border-slate-700 rounded px-1.5 py-0.5 text-[8px] text-amber-400 font-bold flex items-center space-x-1 shadow-sm">
+                            <Sparkles className="w-2.5 h-2.5" />
+                            <span>Special</span>
+                          </div>
+                        )}
                       </div>
-                      {food.isChefSpecial && (
-                        <div className="absolute bottom-3 left-3 bg-slate-900/90 backdrop-blur-sm border border-slate-700 rounded px-1.5 py-0.5 text-[8px] text-amber-400 font-bold flex items-center space-x-1 shadow-sm">
-                          <Sparkles className="w-2.5 h-2.5" />
-                          <span>Special</span>
-                        </div>
-                      )}
+
+                      {/* Veg Badge below food image */}
+                      <div className="mt-2 flex items-center justify-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200/80 shadow-xs">
+                        <span className="w-3.5 h-3.5 border-2 border-emerald-600 rounded-[3px] flex items-center justify-center p-[1.5px] bg-white">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                        </span>
+                        <span className="text-[10px] font-extrabold text-emerald-700 tracking-wider">VEG</span>
+                      </div>
                     </div>
 
                     {/* Content Area */}
