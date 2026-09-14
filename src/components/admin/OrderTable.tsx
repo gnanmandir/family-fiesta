@@ -550,7 +550,7 @@ Thank you for ordering from Family Fiesta!
                 <img
                   src={gnanMandirStamp}
                   alt="Gnan Mandir Stamp"
-                  className="h-16 sm:h-20 w-auto object-contain"
+                  className="h-12 sm:h-14 w-auto object-contain"
                 />
               </div>
             </div>
