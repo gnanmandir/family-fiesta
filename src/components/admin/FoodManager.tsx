@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { FoodItem } from '../../types';
-import { Plus, Edit2, Trash2, X, Check, Image as ImageIcon, Sparkles, Upload, Camera } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Check, Image as ImageIcon, Sparkles, Upload, Camera, Crop } from 'lucide-react';
+import { ImageCropModal } from './ImageCropModal';
 
 interface FoodManagerProps {
   menuItems: FoodItem[];
@@ -23,6 +24,8 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
   const [image, setImage] = useState('');
   const [isChefSpecial, setIsChefSpecial] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isCropModalOpen, setIsCropModalOpen] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleOpenAdd = () => {
@@ -62,49 +65,16 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
     const reader = new FileReader();
     reader.onload = (event) => {
       const result = event.target?.result as string;
-      if (!result) {
-        setIsUploadingImage(false);
-        return;
+      setIsUploadingImage(false);
+      if (result) {
+        setCropImageSrc(result);
+        setIsCropModalOpen(true);
       }
-
-      // Optimize image resolution via canvas for compact storage & rapid load
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 600;
-        const MAX_HEIGHT = 600;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
-            height = MAX_HEIGHT;
-          }
-        }
-
-        canvas.width = Math.round(width);
-        canvas.height = Math.round(height);
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          const compressed = canvas.toDataURL('image/jpeg', 0.85);
-          setImage(compressed);
-        } else {
-          setImage(result);
-        }
-        setIsUploadingImage(false);
-      };
-      img.onerror = () => {
-        setImage(result);
-        setIsUploadingImage(false);
-      };
-      img.src = result;
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+    reader.onerror = () => {
+      setIsUploadingImage(false);
+      alert('Failed to read image file.');
     };
     reader.readAsDataURL(file);
   };
@@ -394,7 +364,18 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-stone-800">Dish Photo Added</p>
                       <p className="text-[10px] text-stone-500">Image selected from device</p>
-                      <div className="flex items-center space-x-2 mt-1.5">
+                      <div className="flex items-center space-x-1.5 mt-1.5 flex-wrap gap-y-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCropImageSrc(image);
+                            setIsCropModalOpen(true);
+                          }}
+                          className="px-2.5 py-1 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-semibold border border-indigo-200 cursor-pointer transition-all flex items-center space-x-1"
+                        >
+                          <Crop className="w-3 h-3" />
+                          <span>Crop / Adjust</span>
+                        </button>
                         <button
                           type="button"
                           onClick={() => fileInputRef.current?.click()}
@@ -461,6 +442,16 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
           </div>
         </div>
       )}
+
+      {/* Interactive Photo Cropper Modal */}
+      <ImageCropModal
+        isOpen={isCropModalOpen}
+        imageSrc={cropImageSrc}
+        onClose={() => setIsCropModalOpen(false)}
+        onCropComplete={(croppedDataUrl) => {
+          setImage(croppedDataUrl);
+        }}
+      />
 
     </div>
   );
