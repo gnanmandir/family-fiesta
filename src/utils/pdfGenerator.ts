@@ -260,11 +260,11 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   doc.setFont('helvetica', 'italic');
   doc.text('May you enjoy a blessed, spiritually uplifting festival feast!', 24, footerBoxY + 48.5);
 
-  // Right Stamp Embedded inside the Verification Box (Compact Sizing)
+  // Right Stamp Embedded inside the Verification Box (Prominent Sizing)
   if (stampImg.width > 0) {
-    const stampWidth = 44;
+    const stampWidth = 54;
     const stampHeight = (stampImg.height * stampWidth) / stampImg.width;
-    const stampX = 140;
+    const stampX = 132;
     const stampY = footerBoxY + (footerBoxHeight - stampHeight) / 2;
     doc.addImage(stampImg, 'PNG', stampX, stampY, stampWidth, stampHeight);
   }

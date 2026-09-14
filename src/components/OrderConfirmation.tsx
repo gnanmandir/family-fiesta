@@ -141,7 +141,7 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onR
           <img
             src={gnanMandirStamp}
             alt="Gnan Mandir Stamp"
-            className="h-11 sm:h-12 w-auto object-contain"
+            className="h-16 sm:h-20 w-auto object-contain"
           />
         </div>
 
