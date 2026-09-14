@@ -201,12 +201,12 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(16, 185, 129);
-  doc.text('DISCOUNT AMT (50%):', 148, y + 4.5, { align: 'right' });
+  doc.text('DISCOUNT AMOUNT (50%):', 148, y + 4.5, { align: 'right' });
   doc.text(`-Rs. ${discountAmt}`, 186, y + 4.5, { align: 'right' });
 
   y += subRowHeight;
 
-  // Final Payable Amt Row
+  // Final Payable Amount Row
   const totalRowHeight = 9;
   doc.setFillColor(255, 241, 230);
   doc.setDrawColor(251, 146, 60);
@@ -218,7 +218,7 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   doc.setTextColor(88, 28, 135);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9.5);
-  doc.text('PAYABLE AMT:', 148, y + 6.2, { align: 'right' });
+  doc.text('PAYABLE AMOUNT:', 148, y + 6.2, { align: 'right' });
 
   doc.setTextColor(234, 88, 12);
   doc.setFontSize(11.5);

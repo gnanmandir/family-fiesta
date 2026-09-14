@@ -160,9 +160,9 @@ Budget Limit : ₹${o.allowedBudget}
 ${o.items.map((i) => `${i.quantity}x ${i.name.padEnd(24)} ₹${i.total}`).join('\n')}
 
 -------------------------------------------------
-Total price  : ₹${o.totalAmount}
-Discount amt : -₹${o.totalAmount - Math.ceil(o.totalAmount / 2)} (50% Off)
-Payable amt  : ₹${Math.ceil(o.totalAmount / 2)}
+Total price     : ₹${o.totalAmount}
+Discount amount : -₹${o.totalAmount - Math.ceil(o.totalAmount / 2)} (50% Off)
+Payable amount  : ₹${Math.ceil(o.totalAmount / 2)}
 BUDGET CHECK : ${o.totalAmount <= o.allowedBudget ? 'PASSED (Within Budget)' : 'EXCEEDED BUDGET'}
 NOTE         : All orders are completely cashless.
 =========================================
@@ -563,11 +563,11 @@ Thank you for ordering from Family Fiesta!
                   <span className="font-mono font-medium text-stone-700">₹{selectedOrderForReceipt.totalAmount}</span>
                 </div>
                 <div className="text-emerald-600 font-medium flex items-center gap-2">
-                  <span>Discount amt:</span>
+                  <span>Discount amount:</span>
                   <span className="font-mono">- ₹{selectedOrderForReceipt.totalAmount / 2}</span>
                 </div>
                 <div className="flex items-center gap-2 pt-0.5">
-                  <span className="text-stone-800 text-[10px] font-bold uppercase tracking-wider">Payable amt:</span>
+                  <span className="text-stone-800 text-[10px] font-bold uppercase tracking-wider">Payable amount:</span>
                   <span className="text-indigo-600 font-bold text-lg sm:text-xl font-mono">₹{Math.ceil(selectedOrderForReceipt.totalAmount / 2)}</span>
                 </div>
               </div>

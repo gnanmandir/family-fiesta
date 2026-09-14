@@ -113,11 +113,11 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onR
                 <span className="font-mono font-medium text-slate-700">₹{currentOrder.totalAmount}</span>
               </div>
               <div className="flex justify-between items-center text-emerald-600 font-medium">
-                <span>Discount amt</span>
+                <span>Discount amount</span>
                 <span className="font-mono">- ₹{discount}</span>
               </div>
               <div className="border-t border-slate-100 pt-1.5 flex justify-between items-center">
-                <span className="text-slate-800 uppercase text-[10px] sm:text-[11px] tracking-wider font-bold">Payable amt</span>
+                <span className="text-slate-800 uppercase text-[10px] sm:text-[11px] tracking-wider font-bold">Payable amount</span>
                 <span className="text-lg sm:text-xl text-indigo-600 font-mono font-bold">₹{payable}</span>
               </div>
             </div>
