@@ -44,6 +44,7 @@ interface AdminDashboardProps {
   onLogoutAdmin: () => void;
   ordersOpen?: boolean;
   onToggleOrdering?: (isOpen: boolean) => void;
+  onRefreshOrders?: () => Promise<void> | void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -62,6 +63,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onLogoutAdmin,
   ordersOpen = true,
   onToggleOrdering,
+  onRefreshOrders,
 }) => {
   const [activeTab, setActiveTab] = useState<
     'overview' | 'orders' | 'students' | 'food' | 'settings' | 'pricing'
@@ -312,6 +314,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               students={students}
               onUpdateStatus={onUpdateOrderStatus}
               onDeleteOrder={onDeleteOrder}
+              onRefreshOrders={onRefreshOrders}
             />
           </div>
         )}

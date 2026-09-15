@@ -306,13 +306,13 @@ export default function App() {
       if (typeof document !== 'undefined' && document.hidden) return;
 
       try {
-        // 2. Only poll all orders when user is viewing the Admin Dashboard
+        // 2. Fast background sync when user is viewing the Admin Dashboard
         if (currentView === 'admin') {
           const [freshOrders, isOpen] = await Promise.all([
             fetchOrders(),
             api.getOrderingStatus(),
           ]);
-          if (freshOrders && freshOrders.length > 0) {
+          if (freshOrders) {
             setOrders(freshOrders);
           }
           setOrdersOpen(isOpen);
@@ -327,18 +327,18 @@ export default function App() {
       }
     };
 
-    // 4. Relax polling interval: 30s in Admin, 90s in student views
-    const pollInterval = currentView === 'admin' ? 30000 : 90000;
+    // 4. Fast polling interval for Admin: 4s in Admin (Turso is fast & free), 60s in student views
+    const pollInterval = currentView === 'admin' ? 4000 : 60000;
     const intervalId = setInterval(syncLatestData, pollInterval);
     return () => clearInterval(intervalId);
   }, [currentView]);
 
-  // 5. On tab regain focus / visibility, do a one-off gentle refresh
+  // 5. On tab regain focus / visibility, do an immediate fresh fetch
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden) {
         if (currentView === 'admin') {
-          fetchOrders().then((o) => o && o.length > 0 && setOrders(o)).catch(() => {});
+          fetchOrders().then((o) => o && setOrders(o)).catch(() => {});
         } else if (currentView === 'menu') {
           fetchMenuItems().then((m) => m && m.length > 0 && setMenuItems(m)).catch(() => {});
         }
@@ -752,6 +752,17 @@ export default function App() {
     setOrders(fresh);
   };
 
+  const handleRefreshOrders = async () => {
+    try {
+      const fresh = await fetchOrders();
+      if (fresh) setOrders(fresh);
+      const isOpen = await api.getOrderingStatus();
+      setOrdersOpen(isOpen);
+    } catch (e) {
+      console.error('Failed to refresh orders:', e);
+    }
+  };
+
   const handleSaveMenuItems = async (items: FoodItem[]) => {
     await saveMenuItems(items);
     setMenuItems(items);
@@ -932,6 +943,7 @@ export default function App() {
             onLogoutAdmin={handleAdminLogout}
             ordersOpen={ordersOpen}
             onToggleOrdering={handleToggleOrdering}
+            onRefreshOrders={handleRefreshOrders}
           />
         )}
       </main>

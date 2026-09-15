@@ -294,6 +294,74 @@ export const tursoService = {
     return order;
   },
 
+  updateOrder: async (orderNumber: string, orderPayload: Partial<Order>): Promise<Order> => {
+    const sets: string[] = [];
+    const args: any[] = [];
+
+    if (orderPayload.peopleCount !== undefined) {
+      sets.push('people_count = ?');
+      args.push(orderPayload.peopleCount);
+    }
+    if (orderPayload.allowedBudget !== undefined) {
+      sets.push('allowed_budget = ?');
+      args.push(orderPayload.allowedBudget);
+    }
+    if (orderPayload.items !== undefined) {
+      sets.push('items = ?');
+      args.push(JSON.stringify(orderPayload.items));
+    }
+    if (orderPayload.totalAmount !== undefined) {
+      sets.push('total_amount = ?');
+      args.push(orderPayload.totalAmount);
+    }
+    if (orderPayload.status !== undefined) {
+      sets.push('status = ?');
+      args.push(orderPayload.status);
+    }
+    if (orderPayload.dateDisplay !== undefined) {
+      sets.push('date_display = ?');
+      args.push(orderPayload.dateDisplay);
+    }
+    if (orderPayload.timeDisplay !== undefined) {
+      sets.push('time_display = ?');
+      args.push(orderPayload.timeDisplay);
+    }
+
+    if (sets.length > 0) {
+      args.push(orderNumber);
+      await tursoQuery(`UPDATE orders SET ${sets.join(', ')} WHERE order_number = ?`, args);
+    }
+
+    const rows = await tursoQuery('SELECT * FROM orders WHERE order_number = ?', [orderNumber]);
+    if (rows && rows.length > 0) {
+      const r = rows[0];
+      let items: any[] = [];
+      try {
+        items = typeof r.items === 'string' ? JSON.parse(r.items) : (r.items || []);
+      } catch (e) {
+        items = [];
+      }
+      return {
+        orderNumber: r.order_number,
+        studentId: r.student_id,
+        studentName: r.student_name,
+        parentName: r.parent_name || '',
+        fullName: r.full_name || '',
+        deviceId: r.device_id,
+        peopleCount: Number(r.people_count) || 1,
+        allowedBudget: Number(r.allowed_budget),
+        items,
+        totalAmount: Number(r.total_amount),
+        status: r.status as OrderStatus,
+        createdAt: r.created_at,
+        dateDisplay: r.date_display || '',
+        timeDisplay: r.time_display || '',
+      };
+    }
+
+    return orderPayload as Order;
+  },
+
   updateOrderStatus: async (orderNumber: string, status: OrderStatus): Promise<void> => {
     await tursoQuery('UPDATE orders SET status = ? WHERE order_number = ?', [status, orderNumber]);
   },

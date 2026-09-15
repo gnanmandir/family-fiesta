@@ -28,6 +28,7 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  RotateCcw,
 } from 'lucide-react';
 
 export type SortKey = 'gmNo' | 'studentName' | 'group' | 'total' | 'budget' | 'time';
@@ -38,6 +39,7 @@ interface OrderTableProps {
   students?: Student[];
   onUpdateStatus?: (orderNumber: string, status: OrderStatus) => void;
   onDeleteOrder?: (orderNumber: string) => void;
+  onRefreshOrders?: () => Promise<void> | void;
 }
 
 export function getOrderTimestamp(order: Order): number {
@@ -78,9 +80,23 @@ export const OrderTable: React.FC<OrderTableProps> = ({
   orders,
   students,
   onDeleteOrder,
+  onRefreshOrders,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrderForReceipt, setSelectedOrderForReceipt] = useState<Order | null>(null);
+
+  // Manual Refresh State
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleManualRefresh = async () => {
+    if (!onRefreshOrders || isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await onRefreshOrders();
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 400);
+    }
+  };
 
   // Sorting State
   const [sortKey, setSortKey] = useState<SortKey>('gmNo');
@@ -390,7 +406,27 @@ Thank you for ordering from Family Fiesta!
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Live Sync Indicator */}
+            <div className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Live Auto-Sync (4s)</span>
+            </div>
+
+            {/* Manual Refresh Button */}
+            {onRefreshOrders && (
+              <button
+                type="button"
+                onClick={handleManualRefresh}
+                disabled={isRefreshing}
+                className="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold border border-stone-200 active:scale-95 flex items-center space-x-1.5 cursor-pointer transition-all disabled:opacity-60"
+                title="Immediately fetch latest orders and edits from database"
+              >
+                <RotateCcw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-indigo-600' : ''}`} />
+                <span>{isRefreshing ? 'Syncing...' : 'Refresh'}</span>
+              </button>
+            )}
+
             {/* Export to Excel */}
             <button
               type="button"
