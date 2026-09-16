@@ -362,7 +362,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               orders={orders}
               students={students}
               onUpdateStatus={onUpdateOrderStatus}
-              onDeleteOrder={onDeleteOrder}
+              onDeleteOrder={isSuper ? onDeleteOrder : undefined}
               onRefreshOrders={onRefreshOrders}
             />
           </div>
