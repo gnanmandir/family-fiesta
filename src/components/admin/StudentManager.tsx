@@ -300,22 +300,38 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
       {/* Student List Table */}
       <div className="bg-white border border-stone-200 rounded-xl overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-xs table-fixed min-w-[800px]">
+            <colgroup>
+              <col className="w-[32%]" />
+              <col className="w-[16%]" />
+              <col className="w-[9%]" />
+              <col className="w-[13%]" />
+              <col className="w-[10%]" />
+              {isSuper ? (
+                <>
+                  <col className="w-[6%]" />
+                  <col className="w-[10%]" />
+                  <col className="w-[4%]" />
+                </>
+              ) : (
+                <col className="w-[20%]" />
+              )}
+            </colgroup>
             <thead>
               <tr className="bg-stone-50 border-b border-stone-200 text-stone-600 font-semibold uppercase tracking-wider text-[11px]">
-                <th className="p-3.5">Student Name</th>
-                <th className="p-3.5">Birth Date (Password)</th>
-                <th className="p-3.5">Standard</th>
-                <th className="p-3.5">Order Status</th>
-                <th className="p-3.5 text-right">Order Total</th>
+                <th className="py-3 px-4">Student Name</th>
+                <th className="py-3 px-3">Birth Date (Password)</th>
+                <th className="py-3 px-3 text-center">Standard</th>
+                <th className="py-3 px-3 text-center">Order Status</th>
+                <th className="py-3 px-3 text-right">Order Total</th>
                 {isSuper ? (
                   <>
-                    <th className="p-3.5 text-center whitespace-nowrap">Edit</th>
-                    <th className="p-3.5 text-center whitespace-nowrap">Wipe Order</th>
-                    <th className="p-3.5 text-center whitespace-nowrap">Delete</th>
+                    <th className="py-3 px-1 text-center whitespace-nowrap">Edit</th>
+                    <th className="py-3 px-1 text-center whitespace-nowrap">Wipe Order</th>
+                    <th className="py-3 px-1 text-center whitespace-nowrap">Delete</th>
                   </>
                 ) : (
-                  <th className="p-3.5 text-right whitespace-nowrap">Actions</th>
+                  <th className="py-3 px-4 text-right whitespace-nowrap">Actions</th>
                 )}
               </tr>
             </thead>
@@ -326,16 +342,16 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
 
                   return (
                     <tr key={student.id} className="hover:bg-stone-50/80 transition-colors">
-                      <td className="p-3.5 font-bold text-stone-900 whitespace-nowrap">
+                      <td className="py-3 px-4 font-bold text-stone-900 truncate">
                         {formatNameDisplay(student.fullName)}
                       </td>
-                      <td className="p-3.5 font-mono text-indigo-600 font-bold whitespace-nowrap">
+                      <td className="py-3 px-3 font-mono text-indigo-600 font-bold whitespace-nowrap">
                         {student.birthDate || 'Not set'}
                       </td>
-                      <td className="p-3.5 text-stone-500 whitespace-nowrap font-medium">
+                      <td className="py-3 px-3 text-stone-500 whitespace-nowrap font-medium text-center">
                         {student.grade}
                       </td>
-                      <td className="p-3.5 whitespace-nowrap">
+                      <td className="py-3 px-3 whitespace-nowrap text-center">
                         {existingOrder ? (
                           <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-medium text-[11px] inline-flex items-center space-x-1">
                             <CheckCircle2 className="w-3 h-3 text-emerald-700" />
@@ -348,12 +364,12 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                           </span>
                         )}
                       </td>
-                      <td className="p-3.5 text-right font-bold text-stone-900 whitespace-nowrap font-mono">
+                      <td className="py-3 px-3 text-right font-bold text-stone-900 whitespace-nowrap font-mono">
                         {existingOrder ? `₹${existingOrder.totalAmount}` : '-'}
                       </td>
                       {isSuper ? (
                         <>
-                          <td className="p-3.5 text-center whitespace-nowrap">
+                          <td className="py-3 px-1 text-center whitespace-nowrap">
                             <button
                               type="button"
                               onClick={() => {
@@ -365,7 +381,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                               Edit
                             </button>
                           </td>
-                          <td className="p-3.5 text-center whitespace-nowrap">
+                          <td className="py-3 px-1 text-center whitespace-nowrap">
                             {existingOrder ? (
                               <button
                                 type="button"
@@ -380,7 +396,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                               <span className="text-stone-300 font-mono text-xs">-</span>
                             )}
                           </td>
-                          <td className="p-3.5 text-center whitespace-nowrap">
+                          <td className="py-3 px-1 text-center whitespace-nowrap">
                             <button
                               type="button"
                               onClick={() => handleOpenDeleteModal(student)}
@@ -392,7 +408,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                           </td>
                         </>
                       ) : (
-                        <td className="p-3.5 text-right whitespace-nowrap">
+                        <td className="py-3 px-4 text-right whitespace-nowrap">
                           <button
                             type="button"
                             onClick={() => {
