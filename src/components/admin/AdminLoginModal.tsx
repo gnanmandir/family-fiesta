@@ -5,7 +5,7 @@ import { Logo } from '../Logo';
 interface AdminLoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onLoginSuccess: () => void;
+  onLoginSuccess: (role: 'super' | 'admin') => void;
 }
 
 export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
@@ -13,7 +13,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
   onClose,
   onLoginSuccess,
 }) => {
-  const [username, setUsername] = useState('dada');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,39 +28,40 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
     setError(false);
     
     try {
-      let adminUser = 'dada';
-      let adminPwd = 'dada58';
-      try {
-        const { api } = await import('../../services/api');
-        const creds = await api.getAdminCredentials();
-        adminUser = creds.username;
-        adminPwd = creds.password;
-      } catch (e) {}
+      const { api } = await import('../../services/api');
+      const authResult = await api.verifyAdminLogin(cleanUser, cleanPwd);
 
-      if (cleanUser === adminUser && cleanPwd === adminPwd) {
+      if (authResult.success && authResult.role) {
         localStorage.setItem('admin_token', 'session_' + Date.now());
+        localStorage.setItem('admin_role', authResult.role);
         setError(false);
         setPassword('');
-        onLoginSuccess();
+        onLoginSuccess(authResult.role);
         return;
       }
 
-      const apiUrl = (import.meta.env.VITE_API_URL || '/api') + '/admin/login';
-      const res = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: cleanUser, password: cleanPwd }),
-      });
-      const data = await res.json();
-      
-      if (data.success && data.token) {
-        localStorage.setItem('admin_token', data.token);
-        setError(false);
-        setPassword('');
-        onLoginSuccess();
-      } else {
-        setError(true);
-      }
+      // Fallback check against backend API if present
+      try {
+        const apiUrl = (import.meta.env.VITE_API_URL || '/api') + '/admin/login';
+        const res = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: cleanUser, password: cleanPwd }),
+        });
+        const data = await res.json();
+        
+        if (data.success && data.token) {
+          const role = (data.role as 'super' | 'admin') || 'admin';
+          localStorage.setItem('admin_token', data.token);
+          localStorage.setItem('admin_role', role);
+          setError(false);
+          setPassword('');
+          onLoginSuccess(role);
+          return;
+        }
+      } catch (e) {}
+
+      setError(true);
     } catch (err) {
       setError(true);
     } finally {

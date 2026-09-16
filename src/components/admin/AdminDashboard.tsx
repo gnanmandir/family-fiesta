@@ -32,6 +32,7 @@ interface AdminDashboardProps {
   orders: Order[];
   students: Student[];
   menuItems: FoodItem[];
+  adminRole?: 'super' | 'admin';
   onUpdateOrderStatus: (orderNumber: string, status: OrderStatus) => void;
   onDeleteOrder: (orderNumber: string) => void;
   onDeleteCompletedOrders?: () => void;
@@ -52,6 +53,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   orders,
   students,
   menuItems,
+  adminRole = 'admin',
   onUpdateOrderStatus,
   onDeleteOrder,
   onDeleteCompletedOrders,
@@ -67,9 +69,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onToggleOrdering,
   onRefreshOrders,
 }) => {
+  const isSuper = adminRole === 'super';
   const [activeTab, setActiveTab] = useState<
     'overview' | 'orders' | 'students' | 'food' | 'settings' | 'pricing'
   >('overview');
+
+  // Protect restricted System Controls tab if not super admin
+  React.useEffect(() => {
+    if (!isSuper && activeTab === 'settings') {
+      setActiveTab('overview');
+    }
+  }, [isSuper, activeTab]);
 
   // In-app Protected Action Modal State
   const [protectedModal, setProtectedModal] = useState<{
@@ -108,6 +118,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [confirmSysPass, setConfirmSysPass] = useState('');
   const [sysPassError, setSysPassError] = useState('');
   const [isSavingSysPass, setIsSavingSysPass] = useState(false);
+
+  // In-app Super Admin Credentials Modal State
+  const [superCredModalOpen, setSuperCredModalOpen] = useState(false);
+  const [superCredUsername, setSuperCredUsername] = useState('');
+  const [superCredPassword, setSuperCredPassword] = useState('');
+  const [superCredSysPass, setSuperCredSysPass] = useState('');
+  const [superCredError, setSuperCredError] = useState('');
+  const [isSavingSuperCreds, setIsSavingSuperCreds] = useState(false);
 
   const openProtectedAction = (
     title: string,
@@ -200,9 +218,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="flex items-center space-x-2.5">
               <Logo size="sm" />
               <div>
-                <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Family Fiesta Admin</h1>
+                <div className="flex items-center space-x-2">
+                  <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Family Fiesta Admin</h1>
+                  {isSuper ? (
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs inline-flex items-center space-x-1">
+                      <span>👑</span>
+                      <span>Super Admin</span>
+                    </span>
+                  ) : (
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs inline-flex items-center space-x-1">
+                      <span>🛡️</span>
+                      <span>Stall Admin</span>
+                    </span>
+                  )}
+                </div>
                 <p className="text-[10px] text-indigo-600 font-semibold uppercase tracking-wider">
-                  Stall Operations & Reports
+                  {isSuper ? 'Full System & Operations Authority' : 'Stall Operations & Reports'}
                 </p>
               </div>
             </div>
@@ -232,7 +263,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             { id: 'students', label: `Students (${studentsOrdered}/${totalStudents})`, icon: <Users className="w-4 h-4" /> },
             { id: 'food', label: `Menu Catalog (${menuItems.length})`, icon: <UtensilsCrossed className="w-4 h-4" /> },
             { id: 'pricing', label: 'Pricing & Tiers', icon: <IndianRupee className="w-4 h-4" /> },
-            { id: 'settings', label: 'System Controls', icon: <RotateCcw className="w-4 h-4" /> },
+            ...(isSuper ? [
+              { id: 'settings', label: 'System Controls', icon: <RotateCcw className="w-4 h-4" /> },
+            ] : []),
           ].map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -327,6 +360,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <StudentManager
               students={students}
               orders={orders}
+              adminRole={adminRole}
               onStudentUpdated={onStudentUpdated}
               onStudentDeleted={onStudentDeleted}
               onDeleteOrder={onDeleteOrder}
@@ -338,17 +372,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {/* Tab 4: Food Management */}
         {activeTab === 'food' && (
           <div className="rounded-2xl bg-white border border-stone-200 p-6 shadow-xs">
-            <FoodManager menuItems={menuItems} onSaveMenuItems={onSaveMenuItems} />
+            <FoodManager
+              menuItems={menuItems}
+              onSaveMenuItems={onSaveMenuItems}
+              adminRole={adminRole}
+            />
           </div>
         )}
 
         {/* Tab: Pricing Manager */}
         {activeTab === 'pricing' && (
-          <PricingManager />
+          <PricingManager adminRole={adminRole} />
         )}
 
         {/* Tab 5: System Controls */}
-        {activeTab === 'settings' && (
+        {activeTab === 'settings' && isSuper && (
           <div className="space-y-6">
             <div>
               <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center">
@@ -452,20 +490,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
 
-              {/* Card 4: Admin Login Credentials */}
+              {/* Card 4: Stall Admin Credentials */}
               <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-2">
                       <Users className="w-5 h-5 text-indigo-600" />
-                      <h4 className="font-bold text-slate-900 text-base">Admin Credentials</h4>
+                      <h4 className="font-bold text-slate-900 text-base">Stall Admin Credentials</h4>
                     </div>
                     <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700">
-                      Security
+                      🛡️ Regular Admin
                     </span>
                   </div>
                   <p className="text-slate-600 text-xs leading-relaxed">
-                    Update the main admin username and password used to sign into this administrative operations portal.
+                    Update the regular Stall Admin username and password used for day-to-day order fulfillment and roster viewing.
                   </p>
                 </div>
                 <div className="mt-5 pt-4 border-t border-slate-100 flex justify-end">
@@ -480,7 +518,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     }}
                     className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs whitespace-nowrap cursor-pointer transition-all shadow-sm"
                   >
-                    Update Credentials
+                    Update Stall Admin Creds
+                  </button>
+                </div>
+              </div>
+
+              {/* Card 5: Super Admin Credentials */}
+              <div className="p-6 rounded-2xl bg-white border border-purple-200 shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-2">
+                      <KeyRound className="w-5 h-5 text-purple-600" />
+                      <h4 className="font-bold text-slate-900 text-base">Super Admin Credentials</h4>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-purple-50 text-purple-700">
+                      👑 Full Authority
+                    </span>
+                  </div>
+                  <p className="text-slate-600 text-xs leading-relaxed">
+                    Update the master Super Admin username and password with root access to all system settings, editing, and wiping.
+                  </p>
+                </div>
+                <div className="mt-5 pt-4 border-t border-slate-100 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSuperCredUsername('');
+                      setSuperCredPassword('');
+                      setSuperCredSysPass('');
+                      setSuperCredError('');
+                      setSuperCredModalOpen(true);
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs whitespace-nowrap cursor-pointer transition-all shadow-sm"
+                  >
+                    Update Super Admin Creds
                   </button>
                 </div>
               </div>
@@ -740,6 +811,138 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-colors shadow-sm disabled:opacity-50"
                 >
                   {isSavingCreds ? 'Saving...' : 'Save New Credentials'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* In-app Update Super Admin Credentials Modal */}
+      {superCredModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-slate-200 animate-in zoom-in-95 duration-150">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                  <KeyRound className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">Update Super Admin Credentials</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Set new master login for Super Account</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSuperCredModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!superCredUsername.trim() || !superCredPassword.trim()) {
+                  setSuperCredError('Username and password cannot be empty.');
+                  return;
+                }
+                const entered = superCredSysPass.trim();
+                let validPass = 'niruma0212';
+                try {
+                  const { api } = await import('../../services/api');
+                  validPass = await api.getSystemPassword();
+                } catch (err) {}
+
+                const isAuthorized =
+                  entered === validPass ||
+                  (validPass === 'niruma0212' && entered === 'niurma0212');
+
+                if (!isAuthorized) {
+                  setSuperCredError('Incorrect system password. Confirmation required.');
+                  return;
+                }
+                setIsSavingSuperCreds(true);
+                try {
+                  const { api } = await import('../../services/api');
+                  await api.setSuperCredentials(superCredUsername.trim(), superCredPassword.trim());
+                  alert('Super Admin credentials successfully updated! Use your new credentials on next sign-in.');
+                  setSuperCredModalOpen(false);
+                } catch (err: any) {
+                  setSuperCredError('Failed to update: ' + (err?.message || err));
+                } finally {
+                  setIsSavingSuperCreds(false);
+                }
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  New Super Admin Username
+                </label>
+                <input
+                  type="text"
+                  value={superCredUsername}
+                  onChange={(e) => setSuperCredUsername(e.target.value)}
+                  placeholder="e.g. superadmin"
+                  required
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  New Super Admin Password
+                </label>
+                <input
+                  type="text"
+                  value={superCredPassword}
+                  onChange={(e) => setSuperCredPassword(e.target.value)}
+                  placeholder="Enter new super admin password..."
+                  required
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  System Confirmation Password
+                </label>
+                <input
+                  type="password"
+                  value={superCredSysPass}
+                  onChange={(e) => setSuperCredSysPass(e.target.value)}
+                  placeholder="Enter system password to confirm..."
+                  required
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all text-slate-900"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Confirmation required to protect root administrative access.
+                </p>
+              </div>
+
+              {superCredError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs flex items-center space-x-1.5 font-medium">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>{superCredError}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end space-x-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSuperCredModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingSuperCreds}
+                  className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                >
+                  {isSavingSuperCreds ? 'Saving...' : 'Save Super Credentials'}
                 </button>
               </div>
             </form>

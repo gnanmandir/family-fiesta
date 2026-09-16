@@ -7,6 +7,7 @@ import { formatNameDisplay } from '../../utils/nameFormatter';
 interface StudentManagerProps {
   students: Student[];
   orders: Order[];
+  adminRole?: 'super' | 'admin';
   onStudentUpdated?: (student: Student) => void;
   onStudentDeleted?: (studentId: string, fullName?: string) => Promise<void> | void;
   onDeleteOrder?: (orderNumber: string) => Promise<void> | void;
@@ -29,11 +30,13 @@ const PRESET_GRADES = [
 export const StudentManager: React.FC<StudentManagerProps> = ({
   students,
   orders,
+  adminRole = 'admin',
   onStudentUpdated,
   onStudentDeleted,
   onDeleteOrder,
   onWipeStudentOrder,
 }) => {
+  const isSuper = adminRole === 'super';
   const [localStudents, setLocalStudents] = useState<Student[]>(students);
   const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -352,7 +355,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                           >
                             Edit
                           </button>
-                          {existingOrder && (
+                          {isSuper && existingOrder && (
                             <button
                               type="button"
                               onClick={() => handleOpenWipeModal(student, existingOrder)}
@@ -363,15 +366,17 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                               <span>Wipe Order</span>
                             </button>
                           )}
-                          <button
-                            type="button"
-                            onClick={() => handleOpenDeleteModal(student)}
-                            title={`Permanently remove ${student.fullName} from directory`}
-                            className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 hover:text-red-800 border border-red-200 text-xs font-semibold rounded-lg transition-colors inline-flex items-center space-x-1 cursor-pointer"
-                          >
-                            <UserMinus className="w-3.5 h-3.5 text-red-600" />
-                            <span>Delete</span>
-                          </button>
+                          {isSuper && (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenDeleteModal(student)}
+                              title={`Permanently remove ${student.fullName} from directory`}
+                              className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 hover:text-red-800 border border-red-200 text-xs font-semibold rounded-lg transition-colors inline-flex items-center space-x-1 cursor-pointer"
+                            >
+                              <UserMinus className="w-3.5 h-3.5 text-red-600" />
+                              <span>Delete</span>
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -520,7 +525,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                 />
               </div>
               <div className="flex items-center justify-between pt-4">
-                {editingStudent.id ? (
+                {isSuper && editingStudent.id ? (
                   <button
                     type="button"
                     onClick={() => {

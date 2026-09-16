@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { IndianRupee, Save, Plus, Trash2, Users, ShieldAlert, X, Eye, EyeOff, Lock, CheckCircle2 } from 'lucide-react';
 import { api } from '../../services/api';
 
-export const PricingManager: React.FC = () => {
+interface PricingManagerProps {
+  adminRole?: 'super' | 'admin';
+}
+
+export const PricingManager: React.FC<PricingManagerProps> = ({ adminRole = 'admin' }) => {
+  const isReadOnly = adminRole !== 'super';
   const [tiers, setTiers] = useState<(number | '')[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -134,6 +139,15 @@ export const PricingManager: React.FC = () => {
         </div>
       )}
 
+      {isReadOnly && (
+        <div className="mb-6 p-4 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 flex items-center space-x-2.5">
+          <Lock className="w-5 h-5 text-slate-500 shrink-0" />
+          <div className="text-xs">
+            <span className="font-bold">View-Only Mode:</span> Pricing tiers and guest meal allowances can only be modified by Super Admin.
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
           <div>
@@ -142,13 +156,19 @@ export const PricingManager: React.FC = () => {
               <span>Current Configuration ({tiers.length} Max Guests)</span>
             </h3>
           </div>
-          <button
-            onClick={addTier}
-            className="flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-indigo-700 font-semibold text-xs rounded-lg transition-colors shadow-xs"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Add Guest Tier</span>
-          </button>
+          {isReadOnly ? (
+            <span className="px-2.5 py-1 text-xs font-semibold text-slate-500 bg-slate-100 rounded-lg border border-slate-200">
+              🔒 View-Only
+            </span>
+          ) : (
+            <button
+              onClick={addTier}
+              className="flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-indigo-700 font-semibold text-xs rounded-lg transition-colors shadow-xs"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Guest Tier</span>
+            </button>
+          )}
         </div>
 
         <div className="p-6">
@@ -159,13 +179,15 @@ export const PricingManager: React.FC = () => {
                   <div className="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold text-xs rounded-md">
                     Guest {idx + 1}
                   </div>
-                  <button
-                    onClick={() => removeTier(idx)}
-                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                    title="Remove this guest tier"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {!isReadOnly && (
+                    <button
+                      onClick={() => removeTier(idx)}
+                      className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                      title="Remove this guest tier"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
                 
                 <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
@@ -179,9 +201,15 @@ export const PricingManager: React.FC = () => {
                     type="number"
                     min="0"
                     value={amount === '' ? '' : amount}
-                    onChange={(e) => updateTier(idx, e.target.value)}
+                    onChange={(e) => !isReadOnly && updateTier(idx, e.target.value)}
+                    readOnly={isReadOnly}
+                    disabled={isReadOnly}
                     placeholder="Enter amount..."
-                    className="block w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-semibold focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all"
+                    className={`block w-full pl-9 pr-3 py-2 border rounded-lg text-slate-900 font-semibold transition-all ${
+                      isReadOnly
+                        ? 'bg-slate-100 border-slate-200 cursor-not-allowed text-slate-600'
+                        : 'bg-slate-50 border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-transparent'
+                    }`}
                   />
                 </div>
               </div>
@@ -191,27 +219,35 @@ export const PricingManager: React.FC = () => {
           {tiers.length === 0 && (
             <div className="text-center py-10 bg-slate-50 rounded-xl border border-dashed border-slate-300">
               <p className="text-slate-500 font-medium">No guest tiers configured.</p>
-              <button
-                onClick={addTier}
-                className="mt-3 text-indigo-600 font-semibold text-sm hover:text-indigo-700 flex items-center justify-center mx-auto space-x-1"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add the first tier</span>
-              </button>
+              {!isReadOnly && (
+                <button
+                  onClick={addTier}
+                  className="mt-3 text-indigo-600 font-semibold text-sm hover:text-indigo-700 flex items-center justify-center mx-auto space-x-1"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add the first tier</span>
+                </button>
+              )}
             </div>
           )}
         </div>
 
         <div className="p-6 bg-slate-50 border-t border-slate-200 flex justify-end">
-          <button
-            type="button"
-            onClick={handleInitiateSave}
-            disabled={isSaving}
-            className="flex items-center space-x-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm transition-all disabled:opacity-50 cursor-pointer active:scale-95"
-          >
-            <Save className="w-4 h-4" />
-            <span>Save Configuration</span>
-          </button>
+          {isReadOnly ? (
+            <div className="text-xs text-slate-500 italic py-1">
+              Active festival guest tiers. Editing requires Super Admin sign in.
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleInitiateSave}
+              disabled={isSaving}
+              className="flex items-center space-x-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm transition-all disabled:opacity-50 cursor-pointer active:scale-95"
+            >
+              <Save className="w-4 h-4" />
+              <span>Save Configuration</span>
+            </button>
+          )}
         </div>
       </div>
 

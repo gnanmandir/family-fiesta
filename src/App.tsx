@@ -101,6 +101,9 @@ export default function App() {
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
     return Boolean(localStorage.getItem('admin_token'));
   });
+  const [adminRole, setAdminRole] = useState<'super' | 'admin' | null>(() => {
+    return (localStorage.getItem('admin_role') as 'super' | 'admin') || null;
+  });
   const [isAdminLoginModalOpen, setIsAdminLoginModalOpen] = useState<boolean>(false);
 
   // On App Mount: Initialize data & check One Device One Order rule
@@ -697,8 +700,11 @@ export default function App() {
     }
   };
 
-  const handleAdminLogin = () => {
+  const handleAdminLogin = (role?: 'super' | 'admin') => {
+    const assignedRole = role || (localStorage.getItem('admin_role') as 'super' | 'admin') || 'admin';
     localStorage.setItem('admin_token', 'admin_session_' + Date.now());
+    localStorage.setItem('admin_role', assignedRole);
+    setAdminRole(assignedRole);
     setIsAdminLoggedIn(true);
     setCurrentView('admin');
   };
@@ -707,6 +713,7 @@ export default function App() {
     localStorage.removeItem('active_student_id');
     localStorage.removeItem('jusso_device_order_v6');
     localStorage.removeItem('admin_token');
+    localStorage.removeItem('admin_role');
     localStorage.removeItem('app_current_view');
     localStorage.removeItem('active_cart');
     localStorage.removeItem('active_people_count');
@@ -714,14 +721,17 @@ export default function App() {
     setSelectedStudent(null);
     setActiveOrder(null);
     setIsAdminLoggedIn(false);
+    setAdminRole(null);
     setCart([]);
     setIsEditingOrder(false);
     setCurrentView('login');
   };
 
   // Admin Actions
-  const handleAdminLoginSuccess = () => {
+  const handleAdminLoginSuccess = (role: 'super' | 'admin') => {
     localStorage.setItem('admin_token', 'admin_session_' + Date.now());
+    localStorage.setItem('admin_role', role);
+    setAdminRole(role);
     setIsAdminLoggedIn(true);
     setIsAdminLoginModalOpen(false);
     setCurrentView('admin');
@@ -729,7 +739,9 @@ export default function App() {
 
   const handleAdminLogout = () => {
     setIsAdminLoggedIn(false);
+    setAdminRole(null);
     localStorage.removeItem('admin_token');
+    localStorage.removeItem('admin_role');
     localStorage.removeItem('app_current_view');
     setCurrentView('login');
   };
@@ -954,6 +966,7 @@ export default function App() {
             orders={orders}
             students={students}
             menuItems={menuItems}
+            adminRole={adminRole || 'admin'}
             onUpdateOrderStatus={handleUpdateOrderStatus}
             onDeleteOrder={handleDeleteOrder}
             onDeleteCompletedOrders={handleDeleteCompletedOrders}

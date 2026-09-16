@@ -405,6 +405,28 @@ export const tursoService = {
     );
   },
 
+  // --- Super Admin Credentials ---
+  getSuperCredentials: async (): Promise<{ username: string; password: string }> => {
+    const rows = await tursoQuery("SELECT key, value FROM app_settings WHERE key IN ('super_username', 'super_password')");
+    const map: Record<string, string> = {};
+    rows.forEach((r: any) => { map[r.key] = r.value; });
+    return {
+      username: map['super_username'] || 'superadmin',
+      password: map['super_password'] || 'super5868',
+    };
+  },
+
+  setSuperCredentials: async (username: string, password: string): Promise<void> => {
+    await tursoQuery(
+      `INSERT INTO app_settings (key, value, updated_at) VALUES ('super_username', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+      [username, new Date().toISOString()]
+    );
+    await tursoQuery(
+      `INSERT INTO app_settings (key, value, updated_at) VALUES ('super_password', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+      [password, new Date().toISOString()]
+    );
+  },
+
   // --- Guest Tiers ---
   getGuestTiers: async (): Promise<number[]> => {
     const rows = await tursoQuery("SELECT value FROM app_settings WHERE key = 'guest_tiers'");

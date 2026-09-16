@@ -8,7 +8,7 @@ import { AlertCircle, User, Info, Calendar } from 'lucide-react';
 interface LoginPageProps {
   students: Student[];
   onStudentLogin: (student: Student) => void;
-  onAdminLogin: () => void;
+  onAdminLogin: (role?: 'super' | 'admin') => void;
   ordersOpen?: boolean;
 }
 
@@ -109,55 +109,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
     setIsLoading(true);
 
-    // 1. Fetch dynamic admin credentials
-    let adminUsername = 'dadaji';
-    let adminPassword = 'dada5868';
+    // 1. Check if Admin or Super Admin Login
     try {
       const { api } = await import('../services/api');
-      const creds = await api.getAdminCredentials();
-      if (creds?.username) adminUsername = creds.username.toLowerCase();
-      if (creds?.password) adminPassword = creds.password;
-    } catch (e) {}
-
-    // 2. Check if Admin Login
-    const normalizedId = cleanId.replace(/\s+/g, '');
-    const isAdminUser =
-      normalizedId === adminUsername ||
-      normalizedId === 'admin' ||
-      normalizedId === 'dadaji' ||
-      normalizedId === 'dada';
-    const isAdminPassword = cleanPwd === adminPassword;
-
-    if (isAdminUser && isAdminPassword) {
-      try {
-        const apiUrl = (import.meta.env.VITE_API_URL || '/api') + '/admin/login';
-        const res = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: 'dada', password: cleanPwd }),
-        });
-        const data = await res.json();
-
-        if (data.success && data.token) {
-          localStorage.setItem('admin_token', data.token);
-          setIsLoading(false);
-          onAdminLogin();
-          return;
-        } else {
-          localStorage.setItem('admin_token', 'session_' + Date.now());
-          setIsLoading(false);
-          onAdminLogin();
-          return;
-        }
-      } catch (err) {
+      const authResult = await api.verifyAdminLogin(cleanId, cleanPwd);
+      if (authResult.success && authResult.role) {
         localStorage.setItem('admin_token', 'session_' + Date.now());
+        localStorage.setItem('admin_role', authResult.role);
         setIsLoading(false);
-        onAdminLogin();
+        onAdminLogin(authResult.role);
         return;
       }
-    }
+    } catch (e) {}
 
-    // 3. Check Student Login
+    // 2. Check Student Login
     const matchedStudent = allStudents.find((s) => {
       const sId = s.id.toLowerCase();
       const sFull = s.fullName.toLowerCase();

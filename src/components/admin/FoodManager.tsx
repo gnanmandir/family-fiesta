@@ -5,13 +5,16 @@ import { ImageCropModal } from './ImageCropModal';
 
 interface FoodManagerProps {
   menuItems: FoodItem[];
+  adminRole?: 'super' | 'admin';
   onSaveMenuItems: (items: FoodItem[]) => void;
 }
 
 export const FoodManager: React.FC<FoodManagerProps> = ({
   menuItems,
+  adminRole = 'admin',
   onSaveMenuItems,
 }) => {
+  const isReadOnly = adminRole !== 'super';
   const [isAddingOrEditing, setIsAddingOrEditing] = useState(false);
   const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
 
@@ -152,18 +155,36 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
       {/* Top Header & Add Button */}
       <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-stone-200 shadow-xs">
         <div>
-          <h3 className="text-base font-bold text-stone-900">Food Menu Catalog</h3>
-          <p className="text-xs text-stone-500">Add dishes, edit prices, upload photos, or toggle availability.</p>
+          <div className="flex items-center space-x-2">
+            <h3 className="text-base font-bold text-stone-900">Food Menu Catalog</h3>
+            {isReadOnly && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                View-Only
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-stone-500 mt-0.5">
+            {isReadOnly
+              ? 'Catalog items, portions, and pricing. (Super Admin authorization required to edit dishes)'
+              : 'Add dishes, edit prices, upload photos, or toggle availability.'}
+          </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleOpenAdd}
-          className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs tracking-wide shadow-md shadow-indigo-500/20 flex items-center space-x-2 active:scale-95 cursor-pointer transition-all"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add New Dish</span>
-        </button>
+        {isReadOnly ? (
+          <span className="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 text-xs font-semibold inline-flex items-center space-x-1.5">
+            <span>🔒</span>
+            <span>View-Only</span>
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={handleOpenAdd}
+            className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs tracking-wide shadow-md shadow-indigo-500/20 flex items-center space-x-2 active:scale-95 cursor-pointer transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add New Dish</span>
+          </button>
+        )}
       </div>
 
       {/* Menu Grid */}
@@ -198,34 +219,48 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
               <p className="text-[11px] text-stone-500 mt-0.5">{item.description}</p>
 
               <div className="flex items-center justify-between pt-2 border-t border-stone-100 mt-2">
-                <button
-                  type="button"
-                  onClick={() => handleToggleAvailable(item.id)}
-                  className={`px-2.5 py-1 rounded-md text-[10px] font-bold border transition-colors cursor-pointer ${
-                    item.isAvailable
-                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                      : 'bg-stone-100 text-stone-600 border-stone-200'
-                  }`}
-                >
-                  {item.isAvailable ? 'Available' : 'Unavailable'}
-                </button>
+                {isReadOnly ? (
+                  <span
+                    className={`px-2.5 py-1 rounded-md text-[10px] font-bold border ${
+                      item.isAvailable
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                        : 'bg-stone-100 text-stone-600 border-stone-200'
+                    }`}
+                  >
+                    {item.isAvailable ? 'Available' : 'Unavailable'}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleToggleAvailable(item.id)}
+                    className={`px-2.5 py-1 rounded-md text-[10px] font-bold border transition-colors cursor-pointer ${
+                      item.isAvailable
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                        : 'bg-stone-100 text-stone-600 border-stone-200'
+                    }`}
+                  >
+                    {item.isAvailable ? 'Available' : 'Unavailable'}
+                  </button>
+                )}
 
-                <div className="flex items-center space-x-1.5">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenEdit(item)}
-                    className="p-1.5 rounded-lg bg-stone-100 text-stone-600 hover:bg-stone-200 hover:text-stone-900 cursor-pointer transition-all"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteItem(item.id)}
-                    className="p-1.5 rounded-lg bg-stone-100 text-stone-400 hover:text-red-600 hover:bg-stone-200 cursor-pointer transition-all"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                {!isReadOnly && (
+                  <div className="flex items-center space-x-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEdit(item)}
+                      className="p-1.5 rounded-lg bg-stone-100 text-stone-600 hover:bg-stone-200 hover:text-stone-900 cursor-pointer transition-all"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteItem(item.id)}
+                      className="p-1.5 rounded-lg bg-stone-100 text-stone-400 hover:text-red-600 hover:bg-stone-200 cursor-pointer transition-all"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

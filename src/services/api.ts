@@ -545,4 +545,53 @@ export const api = {
       return;
     }
   },
+
+  // --- Super Admin Credentials ---
+  getSuperCredentials: async (): Promise<{ username: string; password: string }> => {
+    if (isTursoConfigured) {
+      try {
+        return await tursoService.getSuperCredentials();
+      } catch (e) {
+        console.warn('[Turso] Failed to fetch super credentials:', e);
+      }
+    }
+    return { username: 'superadmin', password: 'super5868' };
+  },
+
+  setSuperCredentials: async (username: string, password: string): Promise<void> => {
+    if (isTursoConfigured) {
+      await tursoService.setSuperCredentials(username, password);
+      return;
+    }
+  },
+
+  verifyAdminLogin: async (username: string, password: string): Promise<{ success: boolean; role: 'super' | 'admin' | null }> => {
+    const cleanUser = username.trim().toLowerCase();
+    const cleanPwd = password.trim();
+
+    try {
+      const superCreds = await api.getSuperCredentials();
+      if (
+        cleanUser === superCreds.username.trim().toLowerCase() &&
+        cleanPwd === superCreds.password.trim()
+      ) {
+        return { success: true, role: 'super' };
+      }
+    } catch (e) {}
+
+    try {
+      const adminCreds = await api.getAdminCredentials();
+      if (
+        (cleanUser === adminCreds.username.trim().toLowerCase() ||
+         cleanUser === 'admin' ||
+         cleanUser === 'dadaji' ||
+         cleanUser === 'dada') &&
+        cleanPwd === adminCreds.password.trim()
+      ) {
+        return { success: true, role: 'admin' };
+      }
+    } catch (e) {}
+
+    return { success: false, role: null };
+  },
 };
