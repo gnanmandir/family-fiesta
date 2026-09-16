@@ -228,7 +228,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   ) : (
                     <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs inline-flex items-center space-x-1">
                       <span>🛡️</span>
-                      <span>Stall Admin</span>
+                      <span>Admin</span>
                     </span>
                   )}
                 </div>
@@ -595,7 +595,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
                 </div>
 
-                {/* Credentials Card 2: Stall Admin */}
+                {/* Credentials Card 2: Admin Account */}
                 <div className="p-6 rounded-2xl bg-white border border-indigo-200 hover:border-indigo-300 hover:shadow-md transition-all flex flex-col justify-between shadow-2xs">
                   <div>
                     <div className="flex items-center justify-between mb-3">
@@ -603,11 +603,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <Users className="w-5 h-5" />
                       </div>
                       <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                        🛡️ Regular Admin
+                        🛡️ Admin Account
                       </span>
                     </div>
 
-                    <h4 className="font-bold text-slate-900 text-base">Stall Admin Account</h4>
+                    <h4 className="font-bold text-slate-900 text-base">Admin Account</h4>
                     <p className="text-slate-500 text-xs leading-relaxed mt-1.5">
                       Operational credentials for counter staff to manage live queue, mark orders as delivered, print receipts, and view directory.
                     </p>
@@ -625,7 +625,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       }}
                       className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs whitespace-nowrap cursor-pointer transition-all shadow-sm active:scale-95"
                     >
-                      Update Stall Credentials
+                      Update Admin Credentials
                     </button>
                   </div>
                 </div>
