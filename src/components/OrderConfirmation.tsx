@@ -64,16 +64,9 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onR
             <Ticket className="w-4 h-4 text-indigo-600" />
             <span>Order Details</span>
           </div>
-          <div className="flex items-center space-x-1.5">
-            <span className="text-slate-400 font-mono text-[9px] sm:text-[10px]">
-              {currentOrder.dateDisplay} • {currentOrder.timeDisplay}
-            </span>
-            {currentOrder.isEdited && (
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                Edited
-              </span>
-            )}
-          </div>
+          <span className="text-slate-400 font-mono text-[9px] sm:text-[10px]">
+            {currentOrder.dateDisplay} • {currentOrder.timeDisplay}
+          </span>
         </div>
 
         {/* Metadata Grid */}

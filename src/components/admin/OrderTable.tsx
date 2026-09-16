@@ -283,8 +283,8 @@ export const OrderTable: React.FC<OrderTableProps> = ({
   FAMILY FIESTA - RECEIPT
 =========================================
 GM Number    : ${gmNo !== 999999 ? gmNo : '-'}
-Date & Time  : ${o.dateDisplay || ''} ${o.timeDisplay}${o.isEdited ? ' (Edited)' : ''}
-Status       : ${o.status}${o.isEdited ? ' (Edited)' : ''}
+Date & Time  : ${o.dateDisplay || ''} ${o.timeDisplay}
+Status       : ${o.status}
 
 ---------------- STUDENT DETAILS ----------------
 Student Name : ${cleanStudentName}
@@ -785,21 +785,14 @@ Thank you for ordering from Family Fiesta!
 
             {/* Fixed Header */}
             <div className="p-5 sm:p-6 border-b border-stone-100 shrink-0">
-              <div className="flex items-center space-x-2">
-                <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold uppercase tracking-wider">
-                  Order Receipt
-                </span>
-                {selectedOrderForReceipt.isEdited && (
-                  <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold uppercase tracking-wider">
-                    Edited Order
-                  </span>
-                )}
-              </div>
+              <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold uppercase tracking-wider">
+                Order Receipt
+              </span>
               <h3 className="text-lg sm:text-xl font-bold text-stone-900 mt-1 pr-8">
                 {formatNameDisplay(selectedOrderForReceipt.fullName || selectedOrderForReceipt.studentName)}
               </h3>
               <p className="text-xs text-stone-500">
-                {selectedOrderForReceipt.isEdited ? 'Edited on' : 'Placed on'} {selectedOrderForReceipt.dateDisplay || ''} at {selectedOrderForReceipt.timeDisplay}
+                Placed on {selectedOrderForReceipt.dateDisplay || ''} at {selectedOrderForReceipt.timeDisplay}
               </p>
             </div>
 
