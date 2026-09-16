@@ -208,6 +208,7 @@ export const tursoService = {
         createdAt: r.created_at,
         dateDisplay: r.date_display || '',
         timeDisplay: r.time_display || '',
+        isEdited: Boolean(r.is_edited === 1 || r.is_edited === '1'),
       };
     });
   },
@@ -233,6 +234,7 @@ export const tursoService = {
       createdAt: r.created_at,
       dateDisplay: r.date_display || '',
       timeDisplay: r.time_display || '',
+      isEdited: Boolean(r.is_edited === 1 || r.is_edited === '1'),
     };
   },
 
@@ -257,6 +259,7 @@ export const tursoService = {
       createdAt: r.created_at,
       dateDisplay: r.date_display || '',
       timeDisplay: r.time_display || '',
+      isEdited: Boolean(r.is_edited === 1 || r.is_edited === '1'),
     };
   },
 
@@ -326,6 +329,14 @@ export const tursoService = {
       sets.push('time_display = ?');
       args.push(orderPayload.timeDisplay);
     }
+    if (orderPayload.createdAt !== undefined) {
+      sets.push('created_at = ?');
+      args.push(orderPayload.createdAt);
+    }
+    if (orderPayload.isEdited !== undefined) {
+      sets.push('is_edited = ?');
+      args.push(orderPayload.isEdited ? 1 : 0);
+    }
 
     if (sets.length > 0) {
       args.push(orderNumber);
@@ -356,6 +367,7 @@ export const tursoService = {
         createdAt: r.created_at,
         dateDisplay: r.date_display || '',
         timeDisplay: r.time_display || '',
+        isEdited: Boolean(r.is_edited === 1 || r.is_edited === '1'),
       };
     }
 

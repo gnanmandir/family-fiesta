@@ -283,8 +283,8 @@ export const OrderTable: React.FC<OrderTableProps> = ({
   FAMILY FIESTA - RECEIPT
 =========================================
 GM Number    : ${gmNo !== 999999 ? gmNo : '-'}
-Date & Time  : ${o.dateDisplay || ''} ${o.timeDisplay}
-Status       : ${o.status}
+Date & Time  : ${o.dateDisplay || ''} ${o.timeDisplay}${o.isEdited ? ' (Edited)' : ''}
+Status       : ${o.status}${o.isEdited ? ' (Edited)' : ''}
 
 ---------------- STUDENT DETAILS ----------------
 Student Name : ${cleanStudentName}
@@ -357,6 +357,8 @@ Thank you for ordering from Family Fiesta!
       // Add trailing columns
       row['Order Date'] = o.dateDisplay;
       row['Order Time'] = o.timeDisplay;
+      row['Order Status'] = o.isEdited ? `${o.status} (Edited)` : o.status;
+      row['Edited'] = o.isEdited ? 'Yes' : 'No';
 
       return row;
     });
@@ -718,8 +720,17 @@ Thank you for ordering from Family Fiesta!
                           {isWithinBudget ? `OK (Max ₹${order.allowedBudget})` : `Over by ₹${order.totalAmount - order.allowedBudget}`}
                         </span>
                       </td>
-                      <td className="p-3.5 text-stone-500 text-[11px] whitespace-nowrap font-mono">
-                        {order.dateDisplay || ''} {order.timeDisplay}
+                      <td className="p-3.5 whitespace-nowrap font-mono">
+                        <div className="flex flex-col items-start gap-1">
+                          <span className="text-stone-600 text-[11px] font-medium">
+                            {order.dateDisplay || ''} {order.timeDisplay}
+                          </span>
+                          {order.isEdited && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-amber-50 text-amber-800 border border-amber-200/80 shadow-2xs">
+                              Edited
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="p-3.5 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end space-x-1.5">
@@ -774,14 +785,21 @@ Thank you for ordering from Family Fiesta!
 
             {/* Fixed Header */}
             <div className="p-5 sm:p-6 border-b border-stone-100 shrink-0">
-              <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold uppercase tracking-wider">
-                Order Receipt
-              </span>
+              <div className="flex items-center space-x-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold uppercase tracking-wider">
+                  Order Receipt
+                </span>
+                {selectedOrderForReceipt.isEdited && (
+                  <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold uppercase tracking-wider">
+                    Edited Order
+                  </span>
+                )}
+              </div>
               <h3 className="text-lg sm:text-xl font-bold text-stone-900 mt-1 pr-8">
                 {formatNameDisplay(selectedOrderForReceipt.fullName || selectedOrderForReceipt.studentName)}
               </h3>
               <p className="text-xs text-stone-500">
-                Placed on {selectedOrderForReceipt.dateDisplay || ''} at {selectedOrderForReceipt.timeDisplay}
+                {selectedOrderForReceipt.isEdited ? 'Edited on' : 'Placed on'} {selectedOrderForReceipt.dateDisplay || ''} at {selectedOrderForReceipt.timeDisplay}
               </p>
             </div>
 

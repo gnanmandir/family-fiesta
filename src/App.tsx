@@ -579,12 +579,27 @@ export default function App() {
     }
 
     if (existingToUpdate) {
+      const now = new Date();
+      const newDateDisplay = now.toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      });
+      const newTimeDisplay = now.toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+
       const updatedOrder: Order = {
         ...existingToUpdate,
         peopleCount,
         allowedBudget: calculateAllowedBudget(peopleCount),
         items: orderItems,
         totalAmount,
+        dateDisplay: newDateDisplay,
+        timeDisplay: newTimeDisplay,
+        createdAt: now.toISOString(),
+        isEdited: true,
       };
 
       const saved = await updateOrderDetails(existingToUpdate.orderNumber, updatedOrder);

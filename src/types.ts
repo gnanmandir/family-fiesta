@@ -54,6 +54,7 @@ export interface Order {
   createdAt: string; // ISO date string
   dateDisplay: string;
   timeDisplay: string;
+  isEdited?: boolean;
 }
 
 export interface DeviceLockInfo {
