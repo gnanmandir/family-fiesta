@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Logo } from './Logo';
+import { EVENT_CONFIG } from '../config/eventConfig';
 import { ShoppingBag, LogOut, UserCheck } from 'lucide-react';
 
 interface HeaderProps {
@@ -55,7 +56,7 @@ export const Header: React.FC<HeaderProps> = ({
         <div 
           className="flex items-center cursor-pointer" 
           onClick={handleLogoClick}
-          title="Family Fiesta"
+          title={EVENT_CONFIG.name}
         >
           <Logo size="sm" showText={true} />
         </div>

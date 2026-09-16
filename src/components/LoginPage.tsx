@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Student, Order } from '../types';
 import { INITIAL_STUDENTS } from '../data/students';
-import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
+import { EVENT_CONFIG } from '../config/eventConfig';
 import { formatNameDisplay } from '../utils/nameFormatter';
 import { AlertCircle, User, Info, Calendar } from 'lucide-react';
 
@@ -215,8 +215,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         
         {/* Hero Image Logo */}
         <img
-          src={familyFiestaLogo}
-          alt="Family Fiesta 2026"
+          src={EVENT_CONFIG.logo}
+          alt={EVENT_CONFIG.fullName}
           className="w-48 sm:w-56 max-h-[190px] sm:max-h-[200px] object-contain mx-auto mb-3 sm:mb-4"
         />
 
@@ -226,10 +226,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <Info className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-600" />
             <div className="space-y-1">
               <span className="font-bold text-amber-950 block text-[12.5px] leading-snug">
-                🎪 Online Ordering Has Concluded for Family Fiesta 2026!
+                {EVENT_CONFIG.concludedNotice}
               </span>
               <span className="block text-amber-800 leading-relaxed text-[11.5px]">
-                Thank you for the wonderful response! If you have already placed your order, please sign in below to download your official receipt. See you at the fiesta! ✨
+                Thank you for the wonderful response! If you have already placed your order, please sign in below to download your official receipt. See you at the {EVENT_CONFIG.name}! ✨
               </span>
             </div>
           </div>
