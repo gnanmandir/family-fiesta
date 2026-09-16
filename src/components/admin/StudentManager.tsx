@@ -308,7 +308,15 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                 <th className="p-3.5">Standard</th>
                 <th className="p-3.5">Order Status</th>
                 <th className="p-3.5 text-right">Order Total</th>
-                <th className="p-3.5 text-right">Actions</th>
+                {isSuper ? (
+                  <>
+                    <th className="p-3.5 text-center whitespace-nowrap">Edit</th>
+                    <th className="p-3.5 text-center whitespace-nowrap">Wipe Order</th>
+                    <th className="p-3.5 text-center whitespace-nowrap">Delete</th>
+                  </>
+                ) : (
+                  <th className="p-3.5 text-right whitespace-nowrap">Actions</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100 text-stone-700">
@@ -343,8 +351,49 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                       <td className="p-3.5 text-right font-bold text-stone-900 whitespace-nowrap font-mono">
                         {existingOrder ? `₹${existingOrder.totalAmount}` : '-'}
                       </td>
-                      <td className="p-3.5 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end space-x-1.5">
+                      {isSuper ? (
+                        <>
+                          <td className="p-3.5 text-center whitespace-nowrap">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingStudent(student);
+                                setSelectedGrade(student.grade || 'Std 5');
+                              }}
+                              className="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                            >
+                              Edit
+                            </button>
+                          </td>
+                          <td className="p-3.5 text-center whitespace-nowrap">
+                            {existingOrder ? (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenWipeModal(student, existingOrder)}
+                                title={`Wipe order #${existingOrder.orderNumber} and allow re-ordering`}
+                                className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 border border-rose-200 text-xs font-semibold rounded-lg transition-colors inline-flex items-center space-x-1 cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                                <span>Wipe Order</span>
+                              </button>
+                            ) : (
+                              <span className="text-stone-300 font-mono text-xs">-</span>
+                            )}
+                          </td>
+                          <td className="p-3.5 text-center whitespace-nowrap">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenDeleteModal(student)}
+                              title={`Permanently remove ${student.fullName} from directory`}
+                              className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 hover:text-red-800 border border-red-200 text-xs font-semibold rounded-lg transition-colors inline-flex items-center space-x-1 cursor-pointer"
+                            >
+                              <UserMinus className="w-3.5 h-3.5 text-red-600" />
+                              <span>Delete</span>
+                            </button>
+                          </td>
+                        </>
+                      ) : (
+                        <td className="p-3.5 text-right whitespace-nowrap">
                           <button
                             type="button"
                             onClick={() => {
@@ -355,36 +404,14 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                           >
                             Edit
                           </button>
-                          {isSuper && existingOrder && (
-                            <button
-                              type="button"
-                              onClick={() => handleOpenWipeModal(student, existingOrder)}
-                              title={`Wipe order #${existingOrder.orderNumber} and allow re-ordering`}
-                              className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 border border-rose-200 text-xs font-semibold rounded-lg transition-colors inline-flex items-center space-x-1 cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5 text-rose-600" />
-                              <span>Wipe Order</span>
-                            </button>
-                          )}
-                          {isSuper && (
-                            <button
-                              type="button"
-                              onClick={() => handleOpenDeleteModal(student)}
-                              title={`Permanently remove ${student.fullName} from directory`}
-                              className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 hover:text-red-800 border border-red-200 text-xs font-semibold rounded-lg transition-colors inline-flex items-center space-x-1 cursor-pointer"
-                            >
-                              <UserMinus className="w-3.5 h-3.5 text-red-600" />
-                              <span>Delete</span>
-                            </button>
-                          )}
-                        </div>
-                      </td>
+                        </td>
+                      )}
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-stone-500 font-medium">
+                  <td colSpan={isSuper ? 8 : 6} className="p-8 text-center text-stone-500 font-medium">
                     No students match your query.
                   </td>
                 </tr>
