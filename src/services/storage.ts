@@ -136,6 +136,34 @@ export async function saveStudent(student: Student): Promise<Student> {
   return index >= 0 ? updated[index] : saved;
 }
 
+export async function deleteStudent(studentId: string, fullName?: string): Promise<void> {
+  try {
+    await api.deleteStudent(studentId, fullName);
+  } catch (e) {
+    console.warn('API deleteStudent error, deleting locally:', e);
+  }
+
+  const existing = getCachedStudents();
+  const normName = fullName ? normalizeName(fullName) : '';
+  const updated = existing.filter(
+    (s) => s.id !== studentId && (normName ? normalizeName(s.fullName) !== normName : true)
+  );
+  localStorage.setItem(KEYS.STUDENTS, JSON.stringify(updated));
+
+  // Clean up any orders associated with this student in local cache
+  try {
+    const cachedOrders = getCachedOrders();
+    const filteredOrders = cachedOrders.filter(
+      (o) =>
+        o.studentId !== studentId &&
+        (normName ? normalizeName(o.fullName || o.studentName || '') !== normName : true)
+    );
+    if (filteredOrders.length !== cachedOrders.length) {
+      localStorage.setItem(KEYS.ORDERS, JSON.stringify(filteredOrders));
+    }
+  } catch (e) {}
+}
+
 export async function fetchMenuItems(): Promise<FoodItem[]> {
   try {
     const data = await api.getMenuItems();

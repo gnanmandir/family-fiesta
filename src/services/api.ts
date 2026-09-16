@@ -67,6 +67,16 @@ export const api = {
     return student; // fallback
   },
 
+  deleteStudent: async (studentId: string, fullName?: string): Promise<void> => {
+    if (isTursoConfigured) {
+      await tursoService.deleteStudent(studentId, fullName);
+      return;
+    }
+    await fetchJson(`${API_BASE}/students/${encodeURIComponent(studentId)}`, {
+      method: 'DELETE',
+    }).catch(() => {});
+  },
+
   setAdminCredentials: async (username: string, password: string) => {
     if (isTursoConfigured) {
       await tursoService.setAdminCredentials(username, password);

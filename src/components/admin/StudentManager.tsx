@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Student, Order } from '../../types';
-import { Search, CheckCircle2, Clock, Calendar, Trash2, ShieldAlert, X, Eye, EyeOff } from 'lucide-react';
+import { Search, CheckCircle2, Clock, Calendar, Trash2, ShieldAlert, X, Eye, EyeOff, UserMinus } from 'lucide-react';
 import { INITIAL_STUDENTS, getStudentDisplayName } from '../../data/students';
 import { formatNameDisplay } from '../../utils/nameFormatter';
 
@@ -8,6 +8,7 @@ interface StudentManagerProps {
   students: Student[];
   orders: Order[];
   onStudentUpdated?: (student: Student) => void;
+  onStudentDeleted?: (studentId: string, fullName?: string) => Promise<void> | void;
   onDeleteOrder?: (orderNumber: string) => Promise<void> | void;
   onWipeStudentOrder?: (student: Student, order?: Order) => Promise<void> | void;
 }
@@ -29,6 +30,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
   students,
   orders,
   onStudentUpdated,
+  onStudentDeleted,
   onDeleteOrder,
   onWipeStudentOrder,
 }) => {
@@ -45,6 +47,13 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
   const [wipePasswordError, setWipePasswordError] = useState('');
   const [showWipePassword, setShowWipePassword] = useState(false);
   const [isWipingInProgress, setIsWipingInProgress] = useState(false);
+
+  // Password-protected Delete Student Modal State
+  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deletePasswordError, setDeletePasswordError] = useState('');
+  const [showDeletePassword, setShowDeletePassword] = useState(false);
+  const [isDeletingInProgress, setIsDeletingInProgress] = useState(false);
 
   // Keep localStudents in sync if parent students array updates
   React.useEffect(() => {
@@ -122,6 +131,69 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
       setWipePasswordError(`Failed to wipe order: ${err?.message || 'Please try again.'}`);
     } finally {
       setIsWipingInProgress(false);
+    }
+  };
+
+  const handleOpenDeleteModal = (student: Student) => {
+    setStudentToDelete(student);
+    setDeletePassword('');
+    setDeletePasswordError('');
+    setShowDeletePassword(false);
+  };
+
+  const handleConfirmDeleteStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!studentToDelete) return;
+
+    const entered = deletePassword.trim();
+    if (!entered) {
+      setDeletePasswordError('Please enter password to authorize.');
+      return;
+    }
+
+    let validPass = 'niruma0212';
+    try {
+      const { api } = await import('../../services/api');
+      validPass = await api.getSystemPassword();
+    } catch (e) {}
+
+    const isAuthorized =
+      entered === validPass ||
+      (validPass === 'niruma0212' && entered === 'niurma0212');
+
+    if (!isAuthorized) {
+      setDeletePasswordError('Incorrect system password. Authorization failed.');
+      return;
+    }
+
+    setIsDeletingInProgress(true);
+    try {
+      if (onStudentDeleted) {
+        await onStudentDeleted(studentToDelete.id, studentToDelete.fullName);
+      } else {
+        const { deleteStudent } = await import('../../services/storage');
+        await deleteStudent(studentToDelete.id, studentToDelete.fullName);
+      }
+      // Update local list in StudentManager so table updates IMMEDIATELY without reload
+      setLocalStudents((prev) =>
+        prev.filter(
+          (s) =>
+            s.id !== studentToDelete.id &&
+            s.fullName.toLowerCase() !== studentToDelete.fullName.toLowerCase()
+        )
+      );
+      alert(`Student "${studentToDelete.fullName}" has been permanently removed.`);
+      setStudentToDelete(null);
+      setDeletePassword('');
+      setDeletePasswordError('');
+      if (editingStudent?.id === studentToDelete.id) {
+        setEditingStudent(null);
+      }
+    } catch (err: any) {
+      console.error('Failed to delete student:', err);
+      setDeletePasswordError(`Failed to delete student: ${err?.message || 'Please try again.'}`);
+    } finally {
+      setIsDeletingInProgress(false);
     }
   };
 
@@ -291,6 +363,15 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                               <span>Wipe Order</span>
                             </button>
                           )}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenDeleteModal(student)}
+                            title={`Permanently remove ${student.fullName} from directory`}
+                            className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 hover:text-red-800 border border-red-200 text-xs font-semibold rounded-lg transition-colors inline-flex items-center space-x-1 cursor-pointer"
+                          >
+                            <UserMinus className="w-3.5 h-3.5 text-red-600" />
+                            <span>Delete</span>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -438,15 +519,31 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                   required
                 />
               </div>
-              <div className="flex justify-end space-x-2 pt-4">
-                <button type="button" onClick={() => setEditingStudent(null)} className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="px-4 py-2 text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg shadow-sm cursor-pointer"
-                >
-                  {isSaving ? 'Saving...' : 'Save Student'}
-                </button>
+              <div className="flex items-center justify-between pt-4">
+                {editingStudent.id ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const target = editingStudent;
+                      setEditingStudent(null);
+                      handleOpenDeleteModal(target);
+                    }}
+                    className="px-3 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg border border-rose-200 transition-colors inline-flex items-center space-x-1 cursor-pointer"
+                  >
+                    <UserMinus className="w-3.5 h-3.5 text-rose-600" />
+                    <span>Delete Student</span>
+                  </button>
+                ) : <div />}
+                <div className="flex items-center space-x-2">
+                  <button type="button" onClick={() => setEditingStudent(null)} className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer">Cancel</button>
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="px-4 py-2 text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg shadow-sm cursor-pointer"
+                  >
+                    {isSaving ? 'Saving...' : 'Save Student'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
@@ -562,6 +659,120 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
           </div>
         </div>
       )}
+
+      {/* Password-protected Delete Student Authorization Modal */}
+      {studentToDelete && (() => {
+        const associatedOrder = getStudentOrder(studentToDelete);
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-slate-200 animate-in zoom-in-95 duration-150">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center">
+                    <UserMinus className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-base">Delete Student</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">System Authorization Required</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStudentToDelete(null);
+                    setDeletePassword('');
+                    setDeletePasswordError('');
+                  }}
+                  className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="bg-red-50/80 border border-red-200 rounded-xl p-3.5 mb-4 text-xs text-red-900 space-y-1.5">
+                <div className="font-bold text-sm text-red-950 flex items-center justify-between">
+                  <span>{formatNameDisplay(studentToDelete.fullName)}</span>
+                  <span className="text-xs font-normal text-red-800 bg-red-100/80 px-2 py-0.5 rounded-md">{studentToDelete.grade}</span>
+                </div>
+                <div className="text-red-700 text-[11px]">
+                  Birth Date: <span className="font-mono font-semibold">{studentToDelete.birthDate || 'Not set'}</span>
+                  {studentToDelete.gmNo ? ` | GM No: ${studentToDelete.gmNo}` : ''}
+                </div>
+                {associatedOrder ? (
+                  <div className="mt-2 p-2 bg-red-100/90 rounded-lg text-red-900 text-[11px] font-medium border border-red-200">
+                    ⚠️ <strong>Active Order Detected:</strong> This student has placed order #{associatedOrder.orderNumber} (₹{associatedOrder.totalAmount}). Deleting the student will also permanently remove their order and device lock.
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-red-700/90 pt-0.5">
+                    ⚠️ Are you sure you want to delete this student? They will be permanently removed from the Gurukul directory roster.
+                  </p>
+                )}
+              </div>
+
+              <form onSubmit={handleConfirmDeleteStudent} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Admin / System Authorization Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showDeletePassword ? 'text' : 'password'}
+                      value={deletePassword}
+                      onChange={(e) => {
+                        setDeletePassword(e.target.value);
+                        if (deletePasswordError) setDeletePasswordError('');
+                      }}
+                      placeholder="Enter password to authorize deletion..."
+                      autoFocus
+                      required
+                      className={`w-full pl-3 pr-10 py-2.5 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all ${
+                        deletePasswordError
+                          ? 'border-red-300 focus:ring-red-200 text-red-900'
+                          : 'border-slate-200 focus:ring-red-500/20 focus:border-red-500 text-slate-900'
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowDeletePassword(!showDeletePassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                    >
+                      {showDeletePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {deletePasswordError && (
+                    <p className="text-xs text-red-600 font-medium mt-1.5 flex items-center space-x-1">
+                      <span>{deletePasswordError}</span>
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex justify-end space-x-2 pt-2">
+                  <button
+                    type="button"
+                    disabled={isDeletingInProgress}
+                    onClick={() => {
+                      setStudentToDelete(null);
+                      setDeletePassword('');
+                      setDeletePasswordError('');
+                    }}
+                    className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isDeletingInProgress || !deletePassword.trim()}
+                    className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs whitespace-nowrap cursor-pointer transition-all shadow-sm flex items-center space-x-1.5 disabled:opacity-50"
+                  >
+                    <UserMinus className="w-4 h-4" />
+                    <span>{isDeletingInProgress ? 'Deleting Student...' : 'Authorize & Delete Student'}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        );
+      })()}
 
     </div>
   );

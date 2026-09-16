@@ -439,6 +439,16 @@ export const tursoService = {
     return student;
   },
 
+  deleteStudent: async (studentId: string, fullName?: string): Promise<void> => {
+    await tursoQuery('DELETE FROM students WHERE id = ?', [studentId]);
+    await tursoQuery('DELETE FROM orders WHERE student_id = ?', [studentId]).catch(() => {});
+    if (fullName) {
+      await tursoQuery('DELETE FROM orders WHERE full_name = ?', [fullName]).catch(() => {});
+      await tursoQuery('DELETE FROM orders WHERE student_name = ?', [fullName]).catch(() => {});
+    }
+    await tursoQuery('DELETE FROM device_locks WHERE student_id = ?', [studentId]).catch(() => {});
+  },
+
   // --- Ordering Status ---
   getOrderingStatus: async (): Promise<boolean> => {
     const rows = await tursoQuery("SELECT value FROM app_settings WHERE key = 'orders_open'");
