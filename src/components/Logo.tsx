@@ -2,22 +2,23 @@ import React from 'react';
 import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
 
 interface LogoProps {
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
   showText?: boolean;
 }
 
 export const Logo: React.FC<LogoProps> = ({ size = 'md', className = '', showText = false }) => {
   const sizeClasses = {
-    sm: 'w-14 h-14',
-    md: 'w-16 h-16',
+    xs: 'w-8 h-8 sm:w-9 sm:h-9',
+    sm: 'w-10 h-10 sm:w-12 sm:h-12',
+    md: 'w-14 h-14 sm:w-16 sm:h-16',
     lg: 'w-24 h-24',
     xl: 'w-32 h-32 sm:w-40 sm:h-40',
   };
 
   return (
-    <div className={`flex items-center space-x-3 ${className}`}>
-      <div className={`relative flex items-center justify-center overflow-hidden bg-white ring-2 ring-blue-500/10 shadow-sm p-0.5 rounded-full transition-transform hover:scale-105 ${sizeClasses[size]}`}>
+    <div className={`flex items-center ${showText ? 'space-x-2.5 sm:space-x-3' : ''} ${className}`}>
+      <div className={`relative flex items-center justify-center overflow-hidden bg-white ring-2 ring-blue-500/10 shadow-xs p-0.5 rounded-full transition-transform hover:scale-105 shrink-0 ${sizeClasses[size]}`}>
         <img
           src={familyFiestaLogo}
           alt="Family Fiesta 2026 Logo"

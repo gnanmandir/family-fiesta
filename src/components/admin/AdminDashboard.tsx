@@ -198,50 +198,68 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
       
       {/* Top Admin Navigation Header */}
-      <div className="sticky top-0 z-40 bg-white border-b border-slate-200 px-4 sm:px-6 lg:px-10 py-3.5 shadow-xs">
-        <div className="max-w-[1600px] w-full mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-3.5">
+      <div className="sticky top-0 z-40 bg-white border-b border-slate-200 px-3 sm:px-6 lg:px-10 py-2.5 sm:py-3.5 shadow-xs">
+        <div className="max-w-[1600px] w-full mx-auto flex items-center justify-between gap-2">
+          
+          {/* Left: Back button + Logo + Title & Role Badge */}
+          <div className="flex items-center space-x-2 sm:space-x-3.5 min-w-0">
             <button
               type="button"
               onClick={onExitAdmin}
-              className="p-2.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-200 cursor-pointer transition-colors"
+              className="p-2 sm:p-2.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-200 cursor-pointer transition-colors shrink-0"
               title="Return to Main Portal"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-            <div className="flex items-center space-x-2.5">
-              <Logo size="sm" />
-              <div>
-                <div className="flex items-center space-x-2">
-                  <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Family Fiesta Admin</h1>
+
+            <div className="flex items-center space-x-2 sm:space-x-2.5 min-w-0">
+              <div className="shrink-0">
+                <Logo size="xs" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center space-x-1.5 sm:space-x-2 min-w-0">
+                  <h1 className="text-sm sm:text-lg lg:text-xl font-bold text-slate-900 tracking-tight whitespace-nowrap">
+                    Family Fiesta <span className="hidden md:inline font-bold">Admin</span>
+                  </h1>
                   {isSuper ? (
-                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs inline-flex items-center space-x-1">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-300 shadow-2xs whitespace-nowrap inline-flex items-center space-x-1 shrink-0">
                       <span>👑</span>
                       <span>Super Admin</span>
                     </span>
                   ) : (
-                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs inline-flex items-center space-x-1">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs whitespace-nowrap inline-flex items-center space-x-1 shrink-0">
                       <span>🛡️</span>
                       <span>Admin</span>
                     </span>
                   )}
                 </div>
-                <p className="text-[10px] text-indigo-600 font-semibold uppercase tracking-wider">
-                  {isSuper ? 'Full System & Operations Authority' : 'Stall Operations & Reports'}
+                <p className="text-[9px] sm:text-[10px] text-indigo-600 font-semibold uppercase tracking-wider truncate">
+                  {isSuper ? (
+                    <>
+                      <span className="sm:hidden">Full System Authority</span>
+                      <span className="hidden sm:inline">Full System & Operations Authority</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="sm:hidden">Stall Operations</span>
+                      <span className="hidden sm:inline">Stall Operations & Reports</span>
+                    </>
+                  )}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center space-x-3">
+          {/* Right: Log Out Button */}
+          <div className="flex items-center space-x-2 shrink-0">
             <button
               type="button"
               onClick={onLogoutAdmin}
-              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-semibold text-xs tracking-wide flex items-center space-x-1.5 active:scale-95 transition-all cursor-pointer"
+              className="p-2 sm:px-3.5 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-semibold text-xs tracking-wide flex items-center space-x-1.5 active:scale-95 transition-all cursor-pointer shrink-0"
               title="Log Out of Admin Panel"
             >
-              <LogOut className="w-4 h-4" />
-              <span>Log Out</span>
+              <LogOut className="w-4 h-4 text-slate-600" />
+              <span className="hidden sm:inline">Log Out</span>
             </button>
           </div>
         </div>
