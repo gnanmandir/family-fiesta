@@ -257,11 +257,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
         {/* Orders Closed Notice Banner */}
         {!ordersOpen && (
-          <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-start space-x-2 font-medium animate-in fade-in">
+          <div className="p-3.5 rounded-xl bg-amber-50/90 border border-amber-200 text-amber-900 text-xs flex items-start space-x-2.5 font-medium animate-in fade-in shadow-xs text-left">
             <Info className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-600" />
-            <div>
-              <span className="font-bold text-amber-900">Online ordering is now closed.</span>
-              <span className="block mt-0.5 text-amber-700">Already ordered? Sign in below to view and download your food coupons & receipt.</span>
+            <div className="space-y-1">
+              <span className="font-bold text-amber-950 block text-[12.5px] leading-snug">
+                🎪 Online Ordering Has Concluded for Family Fiesta 2026!
+              </span>
+              <span className="block text-amber-800 leading-relaxed text-[11.5px]">
+                Thank you for the wonderful response! If you have already placed your order, please sign in below to download your official receipt. See you at the fiesta! ✨
+              </span>
             </div>
           </div>
         )}
