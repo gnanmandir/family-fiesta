@@ -357,8 +357,7 @@ Thank you for ordering from Family Fiesta!
       // Add trailing columns
       row['Order Date'] = o.dateDisplay;
       row['Order Time'] = o.timeDisplay;
-      row['Order Status'] = o.isEdited ? `${o.status} (Edited)` : o.status;
-      row['Edited'] = o.isEdited ? 'Yes' : 'No';
+      row['Order Status'] = o.status;
 
       return row;
     });
@@ -720,17 +719,8 @@ Thank you for ordering from Family Fiesta!
                           {isWithinBudget ? `OK (Max ₹${order.allowedBudget})` : `Over by ₹${order.totalAmount - order.allowedBudget}`}
                         </span>
                       </td>
-                      <td className="p-3.5 whitespace-nowrap font-mono">
-                        <div className="flex flex-col items-start gap-1">
-                          <span className="text-stone-600 text-[11px] font-medium">
-                            {order.dateDisplay || ''} {order.timeDisplay}
-                          </span>
-                          {order.isEdited && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-amber-50 text-amber-800 border border-amber-200/80 shadow-2xs">
-                              Edited
-                            </span>
-                          )}
-                        </div>
+                      <td className="p-3.5 text-stone-500 text-[11px] whitespace-nowrap font-mono">
+                        {order.dateDisplay || ''} {order.timeDisplay}
                       </td>
                       <td className="p-3.5 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end space-x-1.5">
