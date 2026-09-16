@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { Order, OrderStatus, Student } from '../../types';
 import { generateAndDownloadPDFReceipt } from '../../utils/pdfGenerator';
@@ -29,10 +29,26 @@ import {
   ArrowUp,
   ArrowDown,
   RotateCcw,
+  ChevronDown,
 } from 'lucide-react';
 
 export type SortKey = 'gmNo' | 'studentName' | 'group' | 'total' | 'budget' | 'time';
 export type SortDirection = 'asc' | 'desc';
+
+export const SORT_OPTIONS: { label: string; key: SortKey; dir: SortDirection }[] = [
+  { label: 'Date / Time: Newest First', key: 'time', dir: 'desc' },
+  { label: 'Date / Time: Oldest First', key: 'time', dir: 'asc' },
+  { label: 'GM No. (1 → 100)', key: 'gmNo', dir: 'asc' },
+  { label: 'GM No. (100 → 1)', key: 'gmNo', dir: 'desc' },
+  { label: 'Student Name (A → Z)', key: 'studentName', dir: 'asc' },
+  { label: 'Student Name (Z → A)', key: 'studentName', dir: 'desc' },
+  { label: 'Total Amount (High → Low)', key: 'total', dir: 'desc' },
+  { label: 'Total Amount (Low → High)', key: 'total', dir: 'asc' },
+  { label: 'Group Size (4p → 1p)', key: 'group', dir: 'desc' },
+  { label: 'Group Size (1p → 4p)', key: 'group', dir: 'asc' },
+  { label: 'Budget (Within Budget First)', key: 'budget', dir: 'asc' },
+  { label: 'Budget (Over Budget First)', key: 'budget', dir: 'desc' },
+];
 
 interface OrderTableProps {
   orders: Order[];
@@ -101,6 +117,18 @@ export const OrderTable: React.FC<OrderTableProps> = ({
   // Sorting State
   const [sortKey, setSortKey] = useState<SortKey>('gmNo');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
+  const sortDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
+        setIsSortDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleHeaderClick = (key: SortKey) => {
     if (sortKey === key) {
@@ -500,31 +528,48 @@ Thank you for ordering from Family Fiesta!
 
         {/* Sort Controls */}
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 bg-stone-50 border border-stone-200 px-3 py-1.5 rounded-lg">
-            <ArrowUpDown className="w-3.5 h-3.5 text-stone-500 shrink-0" />
-            <span className="text-[11px] font-semibold text-stone-600 whitespace-nowrap">Sort:</span>
-            <select
-              value={`${sortKey}-${sortDirection}`}
-              onChange={(e) => {
-                const [key, dir] = e.target.value.split('-') as [SortKey, SortDirection];
-                setSortKey(key);
-                setSortDirection(dir);
-              }}
-              className="bg-transparent text-stone-900 text-xs font-semibold focus:outline-none cursor-pointer pr-1"
+          <div className="relative" ref={sortDropdownRef}>
+            <button
+              type="button"
+              onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+              className={`flex items-center space-x-2 bg-stone-50 border px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-800 transition-all cursor-pointer shadow-2xs ${
+                isSortDropdownOpen
+                  ? 'border-indigo-500 bg-white ring-2 ring-indigo-500/20'
+                  : 'border-stone-200 hover:bg-stone-100'
+              }`}
             >
-              <option value="time-desc">Date / Time: Newest First</option>
-              <option value="time-asc">Date / Time: Oldest First</option>
-              <option value="gmNo-asc">GM No. (1 → 100)</option>
-              <option value="gmNo-desc">GM No. (100 → 1)</option>
-              <option value="studentName-asc">Student Name (A → Z)</option>
-              <option value="studentName-desc">Student Name (Z → A)</option>
-              <option value="total-desc">Total Amount (High → Low)</option>
-              <option value="total-asc">Total Amount (Low → High)</option>
-              <option value="group-desc">Group Size (4p → 1p)</option>
-              <option value="group-asc">Group Size (1p → 4p)</option>
-              <option value="budget-asc">Budget (Within Budget First)</option>
-              <option value="budget-desc">Budget (Over Budget First)</option>
-            </select>
+              <ArrowUpDown className="w-3.5 h-3.5 text-stone-500 shrink-0" />
+              <span className="text-[11px] font-semibold text-stone-600 whitespace-nowrap">Sort:</span>
+              <span className="text-stone-900 font-bold">
+                {SORT_OPTIONS.find((o) => o.key === sortKey && o.dir === sortDirection)?.label || 'Custom'}
+              </span>
+              <ChevronDown className={`w-3.5 h-3.5 text-stone-400 transition-transform duration-200 ${isSortDropdownOpen ? 'rotate-180 text-indigo-600' : ''}`} />
+            </button>
+
+            {isSortDropdownOpen && (
+              <div className="absolute left-0 top-full mt-1.5 w-64 bg-white border border-stone-200 rounded-xl shadow-xl z-50 p-1.5 max-h-72 overflow-y-auto space-y-0.5 animate-in fade-in zoom-in-95 duration-150">
+                {SORT_OPTIONS.map((opt) => {
+                  const isSelected = sortKey === opt.key && sortDirection === opt.dir;
+                  return (
+                    <button
+                      key={`${opt.key}-${opt.dir}`}
+                      type="button"
+                      onClick={() => {
+                        setSortKey(opt.key);
+                        setSortDirection(opt.dir);
+                        setIsSortDropdownOpen(false);
+                      }}
+                      className={`w-full px-2.5 py-2 rounded-lg flex items-center justify-between text-left text-xs transition-colors cursor-pointer ${
+                        isSelected ? 'bg-indigo-50 text-indigo-950 font-bold' : 'text-stone-700 hover:bg-stone-50 font-medium'
+                      }`}
+                    >
+                      <span>{opt.label}</span>
+                      {isSelected && <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <button

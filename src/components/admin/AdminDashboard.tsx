@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Order, Student, FoodItem, OrderStatus } from '../../types';
 import { Logo } from '../Logo';
 import {
@@ -24,6 +24,7 @@ import {
   ChevronDown,
   Crown,
   ShieldCheck,
+  Check,
 } from 'lucide-react';
 import { AnalyticsCharts } from './AnalyticsCharts';
 import { OrderTable } from './OrderTable';
@@ -109,11 +110,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // In-app Unified Credentials Modal State (Role selected via dropdown)
   const [credModalOpen, setCredModalOpen] = useState(false);
   const [credRole, setCredRole] = useState<'super' | 'admin'>('super');
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+  const roleDropdownRef = useRef<HTMLDivElement>(null);
   const [credUsername, setCredUsername] = useState('');
   const [credPassword, setCredPassword] = useState('');
   const [credSysPass, setCredSysPass] = useState('');
   const [credError, setCredError] = useState('');
   const [isSavingCreds, setIsSavingCreds] = useState(false);
+
+  // Close custom role dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target as Node)) {
+        setIsRoleDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // In-app System Password Modal State
   const [sysPassModalOpen, setSysPassModalOpen] = useState(false);
@@ -798,26 +812,82 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               }}
               className="space-y-4"
             >
-              {/* Role Selector Dropdown */}
+              {/* Role Selector Custom Dropdown */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   Select Account Role
                 </label>
-                <div className="relative">
-                  <select
-                    value={credRole}
-                    onChange={(e) => {
-                      setCredRole(e.target.value as 'super' | 'admin');
-                      setCredError('');
-                    }}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer appearance-none pr-10"
+                <div className="relative" ref={roleDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+                    className={`w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl text-sm font-bold text-slate-900 flex items-center justify-between transition-all cursor-pointer shadow-2xs ${
+                      isRoleDropdownOpen
+                        ? 'border-indigo-500 bg-white ring-2 ring-indigo-500/20'
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
                   >
-                    <option value="super">👑 Super Admin Account</option>
-                    <option value="admin">🛡️ Admin Account</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
-                    <ChevronDown className="w-4 h-4" />
-                  </div>
+                    <div className="flex items-center space-x-2.5">
+                      {credRole === 'super' ? (
+                        <>
+                          <span className="text-base">👑</span>
+                          <span className="text-slate-900 font-bold">Super Admin Account</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-base">🛡️</span>
+                          <span className="text-slate-900 font-bold">Admin Account</span>
+                        </>
+                      )}
+                    </div>
+                    <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isRoleDropdownOpen ? 'rotate-180 text-indigo-600' : ''}`} />
+                  </button>
+
+                  {isRoleDropdownOpen && (
+                    <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1.5 space-y-1 animate-in fade-in zoom-in-95 duration-150">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCredRole('super');
+                          setCredError('');
+                          setIsRoleDropdownOpen(false);
+                        }}
+                        className={`w-full px-3 py-2.5 rounded-lg flex items-center justify-between text-left transition-colors cursor-pointer ${
+                          credRole === 'super' ? 'bg-indigo-50/80 text-indigo-950 font-bold' : 'hover:bg-slate-50 text-slate-700 font-medium'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2.5">
+                          <span className="text-base">👑</span>
+                          <div>
+                            <div className="text-xs font-bold leading-tight">Super Admin Account</div>
+                            <div className="text-[10.5px] text-slate-500 font-normal mt-0.5">Root access with all master system controls</div>
+                          </div>
+                        </div>
+                        {credRole === 'super' && <Check className="w-4 h-4 text-indigo-600 shrink-0" />}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCredRole('admin');
+                          setCredError('');
+                          setIsRoleDropdownOpen(false);
+                        }}
+                        className={`w-full px-3 py-2.5 rounded-lg flex items-center justify-between text-left transition-colors cursor-pointer ${
+                          credRole === 'admin' ? 'bg-indigo-50/80 text-indigo-950 font-bold' : 'hover:bg-slate-50 text-slate-700 font-medium'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2.5">
+                          <span className="text-base">🛡️</span>
+                          <div>
+                            <div className="text-xs font-bold leading-tight">Admin Account</div>
+                            <div className="text-[10.5px] text-slate-500 font-normal mt-0.5">Counter operations for orders and directory</div>
+                          </div>
+                        </div>
+                        {credRole === 'admin' && <Check className="w-4 h-4 text-indigo-600 shrink-0" />}
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <p className="text-[11px] text-slate-500 mt-1">
                   {credRole === 'super'
