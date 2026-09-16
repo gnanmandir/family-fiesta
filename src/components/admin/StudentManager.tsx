@@ -385,10 +385,9 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                               type="button"
                               onClick={() => handleOpenDeleteModal(student)}
                               title={`Permanently remove ${student.fullName} from directory`}
-                              className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 hover:text-red-800 border border-red-200 text-xs font-semibold rounded-lg transition-colors inline-flex items-center space-x-1 cursor-pointer"
+                              className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 border border-red-200 rounded-lg transition-all inline-flex items-center justify-center cursor-pointer active:scale-95"
                             >
-                              <UserMinus className="w-3.5 h-3.5 text-red-600" />
-                              <span>Delete</span>
+                              <Trash2 className="w-4 h-4 text-red-600" />
                             </button>
                           </td>
                         </>
