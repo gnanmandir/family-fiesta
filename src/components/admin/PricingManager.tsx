@@ -139,15 +139,6 @@ export const PricingManager: React.FC<PricingManagerProps> = ({ adminRole = 'adm
         </div>
       )}
 
-      {isReadOnly && (
-        <div className="mb-6 p-4 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 flex items-center space-x-2.5">
-          <Lock className="w-5 h-5 text-slate-500 shrink-0" />
-          <div className="text-xs">
-            <span className="font-bold">View-Only Mode:</span> Pricing tiers and guest meal allowances can only be modified by Super Admin.
-          </div>
-        </div>
-      )}
-
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
           <div>
@@ -156,11 +147,7 @@ export const PricingManager: React.FC<PricingManagerProps> = ({ adminRole = 'adm
               <span>Current Configuration ({tiers.length} Max Guests)</span>
             </h3>
           </div>
-          {isReadOnly ? (
-            <span className="px-2.5 py-1 text-xs font-semibold text-slate-500 bg-slate-100 rounded-lg border border-slate-200">
-              🔒 View-Only
-            </span>
-          ) : (
+          {!isReadOnly && (
             <button
               onClick={addTier}
               className="flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-indigo-700 font-semibold text-xs rounded-lg transition-colors shadow-xs"
@@ -207,7 +194,7 @@ export const PricingManager: React.FC<PricingManagerProps> = ({ adminRole = 'adm
                     placeholder="Enter amount..."
                     className={`block w-full pl-9 pr-3 py-2 border rounded-lg text-slate-900 font-semibold transition-all ${
                       isReadOnly
-                        ? 'bg-slate-100 border-slate-200 cursor-not-allowed text-slate-600'
+                        ? 'bg-slate-50/70 border-slate-200 cursor-default text-slate-700'
                         : 'bg-slate-50 border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-transparent'
                     }`}
                   />
@@ -232,12 +219,8 @@ export const PricingManager: React.FC<PricingManagerProps> = ({ adminRole = 'adm
           )}
         </div>
 
-        <div className="p-6 bg-slate-50 border-t border-slate-200 flex justify-end">
-          {isReadOnly ? (
-            <div className="text-xs text-slate-500 italic py-1">
-              Active festival guest tiers. Editing requires Super Admin sign in.
-            </div>
-          ) : (
+        {!isReadOnly && (
+          <div className="p-6 bg-slate-50 border-t border-slate-200 flex justify-end">
             <button
               type="button"
               onClick={handleInitiateSave}
@@ -247,8 +230,8 @@ export const PricingManager: React.FC<PricingManagerProps> = ({ adminRole = 'adm
               <Save className="w-4 h-4" />
               <span>Save Configuration</span>
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* System Authorization Password Modal */}

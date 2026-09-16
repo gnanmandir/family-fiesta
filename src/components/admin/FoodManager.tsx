@@ -155,27 +155,15 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
       {/* Top Header & Add Button */}
       <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-stone-200 shadow-xs">
         <div>
-          <div className="flex items-center space-x-2">
-            <h3 className="text-base font-bold text-stone-900">Food Menu Catalog</h3>
-            {isReadOnly && (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
-                View-Only
-              </span>
-            )}
-          </div>
+          <h3 className="text-base font-bold text-stone-900">Food Menu Catalog</h3>
           <p className="text-xs text-stone-500 mt-0.5">
             {isReadOnly
-              ? 'Catalog items, portions, and pricing. (Super Admin authorization required to edit dishes)'
+              ? 'Catalog items, portions, and pricing.'
               : 'Add dishes, edit prices, upload photos, or toggle availability.'}
           </p>
         </div>
 
-        {isReadOnly ? (
-          <span className="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 text-xs font-semibold inline-flex items-center space-x-1.5">
-            <span>🔒</span>
-            <span>View-Only</span>
-          </span>
-        ) : (
+        {!isReadOnly && (
           <button
             type="button"
             onClick={handleOpenAdd}
