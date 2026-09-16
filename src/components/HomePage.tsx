@@ -2,7 +2,6 @@ import React from 'react';
 import { Student } from '../types';
 import { Check, Users, User, ArrowRight, ShieldCheck, Sparkles, Lock } from 'lucide-react';
 import { formatNameDisplay } from '../utils/nameFormatter';
-import { EVENT_CONFIG } from '../config/eventConfig';
 
 import { 
   calculateAllowedBudget, 
@@ -47,7 +46,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           </div>
           <h2 className="text-xl font-bold text-slate-900">Ordering is Closed</h2>
           <p className="text-sm text-slate-500 leading-relaxed">
-            No prior order was found for your account. Online ordering for {EVENT_CONFIG.name} has concluded.
+            No prior order was found for your account. Online ordering for Family Fiesta has concluded.
           </p>
           <p className="text-xs text-slate-400">
             If you believe this is a mistake, please contact an organizer.

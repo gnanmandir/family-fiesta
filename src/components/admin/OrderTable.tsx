@@ -4,7 +4,6 @@ import { Order, OrderStatus, Student } from '../../types';
 import { generateAndDownloadPDFReceipt } from '../../utils/pdfGenerator';
 import { INITIAL_STUDENTS } from '../../data/students';
 import { formatNameDisplay } from '../../utils/nameFormatter';
-import { EVENT_CONFIG } from '../../config/eventConfig';
 import gnanMandirStamp from '../../assets/images/gnan_mandir_stamp.png';
 import {
   Search,
@@ -253,7 +252,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({
     const cleanStudentName = o.studentName.replace(/\s*\(.*\)/, '').trim();
     const gmNo = getOrderGmNo(o, students);
     const receiptText = `=========================================
-  ${EVENT_CONFIG.receiptTitle}
+  FAMILY FIESTA - RECEIPT
 =========================================
 GM Number    : ${gmNo !== 999999 ? gmNo : '-'}
 Date & Time  : ${o.dateDisplay || ''} ${o.timeDisplay}
@@ -276,14 +275,14 @@ Payable amount  : ₹${Math.ceil(o.totalAmount / 2)}
 BUDGET CHECK : ${o.totalAmount <= o.allowedBudget ? 'PASSED (Within Budget)' : 'EXCEEDED BUDGET'}
 NOTE         : All orders are completely cashless.
 =========================================
-${EVENT_CONFIG.thankYouMessage}
+Thank you for ordering from Family Fiesta!
 `;
 
     const blob = new Blob([receiptText], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${EVENT_CONFIG.name.replace(/\s+/g, '_')}_Receipt_${cleanStudentName.replace(/\s+/g, '_')}.txt`;
+    a.download = `Family_Fiesta_Receipt_${cleanStudentName.replace(/\s+/g, '_')}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -387,7 +386,7 @@ ${EVENT_CONFIG.thankYouMessage}
     XLSX.utils.book_append_sheet(wb, wsItems, 'Food Stall Summary');
 
     const dateStr = new Date().toISOString().slice(0, 10);
-    XLSX.writeFile(wb, `${EVENT_CONFIG.name.replace(/\s+/g, '_')}_Food_Orders_${dateStr}.xlsx`);
+    XLSX.writeFile(wb, `Family_Fiesta_Food_Orders_${dateStr}.xlsx`);
   };
 
   return (
@@ -403,7 +402,7 @@ ${EVENT_CONFIG.thankYouMessage}
               <h2 className="text-base font-bold text-stone-900">All Master Orders Sheet</h2>
             </div>
             <p className="text-xs text-stone-500 mt-0.5">
-              Live comprehensive registry of all {orders.length} student food orders for {EVENT_CONFIG.fullName}.
+              Live comprehensive registry of all {orders.length} student food orders for Family Fiesta 2026.
             </p>
           </div>
 

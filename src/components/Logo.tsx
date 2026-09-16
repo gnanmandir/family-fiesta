@@ -1,5 +1,5 @@
 import React from 'react';
-import { EVENT_CONFIG } from '../config/eventConfig';
+import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
 
 interface LogoProps {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -20,8 +20,8 @@ export const Logo: React.FC<LogoProps> = ({ size = 'md', className = '', showTex
     <div className={`flex items-center ${showText ? 'space-x-2.5 sm:space-x-3' : ''} ${className}`}>
       <div className={`relative flex items-center justify-center overflow-hidden bg-white ring-2 ring-blue-500/10 shadow-xs p-0.5 rounded-full transition-transform hover:scale-105 shrink-0 ${sizeClasses[size]}`}>
         <img
-          src={EVENT_CONFIG.logo}
-          alt={`${EVENT_CONFIG.fullName} Logo`}
+          src={familyFiestaLogo}
+          alt="Family Fiesta 2026 Logo"
           referrerPolicy="no-referrer"
           className="w-full h-full object-contain rounded-full"
         />
@@ -30,7 +30,7 @@ export const Logo: React.FC<LogoProps> = ({ size = 'md', className = '', showTex
         <div className="flex flex-col">
           <div className="flex items-center space-x-2">
             <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 leading-none">
-              {EVENT_CONFIG.name}
+              Family Fiesta
             </h1>
           </div>
         </div>

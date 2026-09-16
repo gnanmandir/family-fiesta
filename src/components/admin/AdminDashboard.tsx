@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Order, Student, FoodItem, OrderStatus } from '../../types';
 import { Logo } from '../Logo';
-import { EVENT_CONFIG } from '../../config/eventConfig';
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -221,7 +220,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
               <div className="min-w-0">
                 <h1 className="text-sm sm:text-lg lg:text-xl font-bold text-slate-900 tracking-tight whitespace-nowrap">
-                  {EVENT_CONFIG.name} <span className="hidden md:inline font-bold">Admin</span>
+                  Family Fiesta <span className="hidden md:inline font-bold">Admin</span>
                 </h1>
                 <p className="text-[9px] sm:text-[10px] text-indigo-600 font-semibold uppercase tracking-wider truncate mt-0.5">
                   {isSuper ? (
@@ -473,7 +472,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <p className="text-slate-600 text-xs leading-relaxed mt-2">
                         {ordersOpen
                           ? 'Ordering portal is fully active. Students can select attendees, customize dishes, and submit official orders.'
-                          : `Ordering is closed. The ${EVENT_CONFIG.name} conclusion banner is displayed. Students can only log in to view and download existing receipts.`}
+                          : 'Ordering is closed. The fiesta conclusion banner is displayed. Students can only log in to view and download existing receipts.'}
                       </p>
                     </div>
 

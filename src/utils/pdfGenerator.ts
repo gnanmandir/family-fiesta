@@ -2,7 +2,7 @@ import jsPDF from 'jspdf';
 import { Order } from '../types';
 
 import { INITIAL_STUDENTS } from '../data/students';
-import { EVENT_CONFIG } from '../config/eventConfig';
+import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
 import gnanMandirStamp from '../assets/images/gnan_mandir_stamp.png';
 
 import { formatNameDisplay } from './nameFormatter';
@@ -36,7 +36,7 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   };
 
   const [logoImg, stampImg] = await Promise.all([
-    loadImage(EVENT_CONFIG.logo),
+    loadImage(familyFiestaLogo),
     loadImage(gnanMandirStamp),
   ]);
 
@@ -245,7 +245,7 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.text('• Please present this digital or printed voucher at the coupon counter.', 24, footerBoxY + 15);
-  doc.text(`• ${EVENT_CONFIG.receiptFooter}`, 24, footerBoxY + 21.5);
+  doc.text('• Valid only for the items specified above during Family Fiesta 2026.', 24, footerBoxY + 21.5);
   doc.text('• Non-transferable and cannot be exchanged or redeemed for cash.', 24, footerBoxY + 28);
   doc.text('• System generated official digital coupon issued by Gnan Mandir.', 24, footerBoxY + 34.5);
 
@@ -269,5 +269,5 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
     doc.addImage(stampImg, 'PNG', stampX, stampY, stampWidth, stampHeight);
   }
 
-  doc.save(`${EVENT_CONFIG.name.replace(/\s+/g, '_')}_Receipt_GM_${gmNumber}.pdf`);
+  doc.save(`Family_Fiesta_Receipt_GM_${gmNumber}.pdf`);
 };
