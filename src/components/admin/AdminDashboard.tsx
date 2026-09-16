@@ -590,7 +590,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       }}
                       className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs whitespace-nowrap cursor-pointer transition-all shadow-sm active:scale-95"
                     >
-                      Update Super Credentials
+                      Update Super Account Credentials
                     </button>
                   </div>
                 </div>
