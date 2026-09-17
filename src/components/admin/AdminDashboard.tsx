@@ -22,6 +22,7 @@ import {
   KeyRound,
   AlertTriangle,
   ChevronDown,
+  ChevronUp,
   Crown,
   ShieldCheck,
   Check,
@@ -63,11 +64,284 @@ interface AdminDashboardProps {
   onRefreshOrders?: () => Promise<void> | void;
 }
 
+interface CircularClockDialProps {
+  hour12: number;
+  minute: number;
+  ampm: 'AM' | 'PM';
+  onChangeHour: (h: number) => void;
+  onChangeMinute: (m: number) => void;
+  onChangeAmpm: (ap: 'AM' | 'PM') => void;
+  theme?: 'rose' | 'emerald' | 'indigo';
+}
+
+const CircularClockDial: React.FC<CircularClockDialProps> = ({
+  hour12,
+  minute,
+  ampm,
+  onChangeHour,
+  onChangeMinute,
+  onChangeAmpm,
+  theme = 'indigo',
+}) => {
+  const [mode, setMode] = useState<'hours' | 'minutes'>('hours');
+  const dialRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+
+  const themeConfig = {
+    indigo: {
+      bg: 'bg-indigo-600',
+      activeText: 'text-indigo-600',
+      stroke: '#4f46e5',
+      bubble: 'bg-indigo-600 text-white',
+    },
+    emerald: {
+      bg: 'bg-emerald-600',
+      activeText: 'text-emerald-600',
+      stroke: '#059669',
+      bubble: 'bg-emerald-600 text-white',
+    },
+    rose: {
+      bg: 'bg-rose-600',
+      activeText: 'text-rose-600',
+      stroke: '#e11d48',
+      bubble: 'bg-rose-600 text-white',
+    },
+  }[theme];
+
+  // Dimensions
+  const cx = 90;
+  const cy = 90;
+  const rNum = 64;
+
+  const handlePointer = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dialRef.current) return;
+    const rect = dialRef.current.getBoundingClientRect();
+    const dx = e.clientX - rect.left - cx;
+    const dy = e.clientY - rect.top - cy;
+
+    let angle = (Math.atan2(dy, dx) * 180) / Math.PI + 90;
+    if (angle < 0) angle += 360;
+
+    if (mode === 'hours') {
+      let h = Math.round(angle / 30) % 12;
+      if (h === 0) h = 12;
+      onChangeHour(h);
+    } else {
+      let m = Math.round(angle / 6) % 60;
+      onChangeMinute(m);
+    }
+  };
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    isDragging.current = true;
+    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    handlePointer(e);
+  };
+
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging.current) return;
+    handlePointer(e);
+  };
+
+  const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    try {
+      (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+    } catch (err) {}
+    if (mode === 'hours') {
+      setTimeout(() => setMode('minutes'), 250);
+    }
+  };
+
+  // Hand position
+  const handAngleDeg = mode === 'hours' ? hour12 * 30 - 90 : minute * 6 - 90;
+  const handRad = (handAngleDeg * Math.PI) / 180;
+  const handX = cx + rNum * Math.cos(handRad);
+  const handY = cy + rNum * Math.sin(handRad);
+
+  const hoursList = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  const minutesList = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+
+  return (
+    <div className="flex flex-col items-center select-none py-1">
+      {/* Digital Readout & Unit Switcher */}
+      <div className="flex items-center space-x-2 mb-1.5">
+        <div className="flex items-center bg-slate-200/80 p-0.5 rounded-xl shadow-2xs">
+          <button
+            type="button"
+            onClick={() => setMode('hours')}
+            className={`px-3 py-1 rounded-lg text-xs sm:text-sm font-black transition-all cursor-pointer ${
+              mode === 'hours'
+                ? `${themeConfig.bg} text-white shadow-xs`
+                : 'text-slate-700 hover:text-slate-900'
+            }`}
+          >
+            {String(hour12).padStart(2, '0')}
+          </button>
+          <span className="px-0.5 text-slate-400 font-bold text-xs sm:text-sm">:</span>
+          <button
+            type="button"
+            onClick={() => setMode('minutes')}
+            className={`px-3 py-1 rounded-lg text-xs sm:text-sm font-black transition-all cursor-pointer ${
+              mode === 'minutes'
+                ? `${themeConfig.bg} text-white shadow-xs`
+                : 'text-slate-700 hover:text-slate-900'
+            }`}
+          >
+            {String(minute).padStart(2, '0')}
+          </button>
+        </div>
+
+        {/* AM / PM Segmented Control */}
+        <div className="flex items-center bg-slate-200/80 p-0.5 rounded-xl h-[33px]">
+          <button
+            type="button"
+            onClick={() => onChangeAmpm('AM')}
+            className={`px-2.5 h-full rounded-lg text-xs font-black transition-all cursor-pointer ${
+              ampm === 'AM'
+                ? 'bg-white text-slate-900 shadow-xs ring-1 ring-slate-200'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            AM
+          </button>
+          <button
+            type="button"
+            onClick={() => onChangeAmpm('PM')}
+            className={`px-2.5 h-full rounded-lg text-xs font-black transition-all cursor-pointer ${
+              ampm === 'PM'
+                ? 'bg-white text-slate-900 shadow-xs ring-1 ring-slate-200'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            PM
+          </button>
+        </div>
+      </div>
+
+      {/* Mode Subtitle Guide */}
+      <span className="text-[10px] font-bold text-slate-400 mb-1 tracking-wide flex items-center space-x-1">
+        <Clock className="w-3 h-3 text-slate-400" />
+        <span>{mode === 'hours' ? 'Tap hour on circular clock' : 'Tap minute on circular clock'}</span>
+      </span>
+
+      {/* Circular Clock Dial */}
+      <div
+        ref={dialRef}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        className="w-[180px] h-[180px] rounded-full bg-white border-2 border-slate-200/90 relative shadow-inner flex items-center justify-center select-none cursor-pointer touch-none"
+        title="Tap or drag anywhere to set time"
+      >
+        {/* Minute ticks */}
+        {Array.from({ length: 60 }, (_, i) => i).map((i) => {
+          if (i % 5 === 0) return null;
+          const ang = (i * 6 - 90) * (Math.PI / 180);
+          const x = cx + (rNum + 7) * Math.cos(ang);
+          const y = cy + (rNum + 7) * Math.sin(ang);
+          return (
+            <div
+              key={i}
+              className="absolute w-1 h-1 rounded-full bg-slate-300 pointer-events-none -translate-x-1/2 -translate-y-1/2"
+              style={{ left: `${x}px`, top: `${y}px` }}
+            />
+          );
+        })}
+
+        {/* SVG Clock Hand Line */}
+        <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">
+          <line
+            x1={cx}
+            y1={cy}
+            x2={handX}
+            y2={handY}
+            stroke={themeConfig.stroke}
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          />
+        </svg>
+
+        {/* Center Pivot */}
+        <div
+          className={`absolute w-3 h-3 rounded-full ${themeConfig.bg} z-20 pointer-events-none shadow-xs`}
+          style={{ left: `${cx}px`, top: `${cy}px`, transform: 'translate(-50%, -50%)' }}
+        />
+
+        {/* Selected Pointer Bubble */}
+        <div
+          className={`absolute w-6.5 h-6.5 rounded-full ${themeConfig.bg} text-white font-black text-[11px] flex items-center justify-center z-15 pointer-events-none shadow-md`}
+          style={{ left: `${handX}px`, top: `${handY}px`, transform: 'translate(-50%, -50%)' }}
+        >
+          {mode === 'hours' ? hour12 : String(minute).padStart(2, '0')}
+        </div>
+
+        {/* Clock Numbers */}
+        {mode === 'hours'
+          ? hoursList.map((h) => {
+              const ang = (h * 30 - 90) * (Math.PI / 180);
+              const x = cx + rNum * Math.cos(ang);
+              const y = cy + rNum * Math.sin(ang);
+              const isSelected = h === hour12;
+              return (
+                <div
+                  key={h}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onChangeHour(h);
+                    setTimeout(() => setMode('minutes'), 250);
+                  }}
+                  className={`absolute w-6.5 h-6.5 rounded-full flex items-center justify-center text-xs font-black transition-colors cursor-pointer ${
+                    isSelected ? 'text-white' : 'text-slate-700 hover:text-indigo-600'
+                  }`}
+                  style={{
+                    left: `${x}px`,
+                    top: `${y}px`,
+                    transform: 'translate(-50%, -50%)',
+                  }}
+                >
+                  {h}
+                </div>
+              );
+            })
+          : minutesList.map((m) => {
+              const ang = (m * 6 - 90) * (Math.PI / 180);
+              const x = cx + rNum * Math.cos(ang);
+              const y = cy + rNum * Math.sin(ang);
+              const isSelected = m === minute;
+              return (
+                <div
+                  key={m}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onChangeMinute(m);
+                  }}
+                  className={`absolute w-6.5 h-6.5 rounded-full flex items-center justify-center text-[10.5px] font-black transition-colors cursor-pointer ${
+                    isSelected ? 'text-white' : 'text-slate-700 hover:text-indigo-600'
+                  }`}
+                  style={{
+                    left: `${x}px`,
+                    top: `${y}px`,
+                    transform: 'translate(-50%, -50%)',
+                  }}
+                >
+                  {String(m).padStart(2, '0')}
+                </div>
+              );
+            })}
+      </div>
+    </div>
+  );
+};
+
 interface DateTimePickerProps {
   label: string;
   sublabel?: string;
   icon: React.ReactNode;
   iconBg: string;
+  themeColor?: 'rose' | 'emerald' | 'indigo';
+  defaultExpanded?: boolean;
   value: string; // "YYYY-MM-DDTHH:mm" or ""
   onChange: (isoString: string) => void;
   onClear?: () => void;
@@ -97,6 +371,8 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   sublabel,
   icon,
   iconBg,
+  themeColor = 'indigo',
+  defaultExpanded = true,
   value,
   onChange,
   onClear,
@@ -104,8 +380,8 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   presets,
   note,
 }) => {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const parsed = parseDateTimeParts(value);
-  const timeInputRef = useRef<HTMLInputElement>(null);
 
   const commit = (dateStr: string, hour12: number, minute: number, ampm: 'AM' | 'PM') => {
     const pad = (n: number) => String(n).padStart(2, '0');
@@ -138,64 +414,18 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
     handleDateChange(dateStr);
   };
 
-  const stepHour = (delta: number) => {
-    const curH = parsed ? parsed.hour12 : defaultTime.hour;
-    const curM = parsed ? parsed.minute : defaultTime.minute;
-    const curAp = parsed ? parsed.ampm : defaultTime.ampm;
-    let next = (curH + delta) % 12;
-    if (next <= 0) next += 12;
-    commit(parsed?.dateStr || '', next, curM, curAp);
-  };
-
-  const stepMinute = (delta: number) => {
-    const curH = parsed ? parsed.hour12 : defaultTime.hour;
-    const curM = parsed ? parsed.minute : defaultTime.minute;
-    const curAp = parsed ? parsed.ampm : defaultTime.ampm;
-    let next = curM + delta;
-    if (next >= 60) next = 0;
-    else if (next < 0) next = 55;
-    commit(parsed?.dateStr || '', curH, next, curAp);
-  };
-
-  const setAmpm = (newAp: 'AM' | 'PM') => {
-    const curH = parsed ? parsed.hour12 : defaultTime.hour;
-    const curM = parsed ? parsed.minute : defaultTime.minute;
-    commit(parsed?.dateStr || '', curH, curM, newAp);
-  };
-
-  const handleHourInput = (text: string) => {
-    const num = parseInt(text, 10);
-    if (!isNaN(num) && num >= 1 && num <= 12) {
-      commit(parsed?.dateStr || '', num, parsed ? parsed.minute : defaultTime.minute, parsed ? parsed.ampm : defaultTime.ampm);
-    }
-  };
-
-  const handleMinuteInput = (text: string) => {
-    const num = parseInt(text, 10);
-    if (!isNaN(num) && num >= 0 && num <= 59) {
-      commit(parsed?.dateStr || '', parsed ? parsed.hour12 : defaultTime.hour, num, parsed ? parsed.ampm : defaultTime.ampm);
-    }
-  };
-
-  const handleNativeTime = (h24Str: string) => {
-    if (!h24Str) return;
-    const [h, m] = h24Str.split(':').map((v) => parseInt(v, 10));
-    if (isNaN(h) || isNaN(m)) return;
-    const ap: 'AM' | 'PM' = h >= 12 ? 'PM' : 'AM';
-    const h12 = h % 12 || 12;
-    commit(parsed?.dateStr || '', h12, m, ap);
-  };
-
   const currentHour = parsed ? parsed.hour12 : defaultTime.hour;
   const currentMinute = parsed ? parsed.minute : defaultTime.minute;
   const currentAmpm = parsed ? parsed.ampm : defaultTime.ampm;
-  const currentH24 = parsed ? parsed.h24 : (defaultTime.ampm === 'PM' ? (defaultTime.hour % 12) + 12 : defaultTime.hour % 12);
 
   return (
     <div className="p-3 sm:p-3.5 rounded-2xl bg-slate-50/90 border border-slate-200/90 space-y-2.5">
       {/* Header Row */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
+        <div
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex items-center space-x-2 cursor-pointer select-none"
+        >
           <div className={`w-5 h-5 rounded-md flex items-center justify-center font-bold text-xs ${iconBg}`}>
             {icon}
           </div>
@@ -203,6 +433,9 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
             <span className="text-xs font-black text-slate-900">{label}</span>
             {sublabel && <span className="text-[11px] text-slate-400 font-medium">{sublabel}</span>}
           </div>
+          <span className="text-slate-400 hover:text-slate-600 transition-colors">
+            {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </span>
         </div>
 
         <div className="flex items-center space-x-1.5">
@@ -233,179 +466,95 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
         </div>
       </div>
 
-      {/* 2-Column: Calendar for Date & Adjustable Clock for Time */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-        {/* Column 1: Calendar for Date */}
-        <div>
-          <label className="block text-[10.5px] font-bold text-slate-700 mb-1 flex items-center justify-between">
-            <span className="flex items-center space-x-1">
-              <Calendar className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Calendar (Date)</span>
-            </span>
-            <span className="text-[9.5px] text-slate-400 font-normal">Click to pick</span>
-          </label>
-          <div className="relative">
-            <input
-              type="date"
-              value={parsed?.dateStr || ''}
-              onChange={(e) => handleDateChange(e.target.value)}
-              onClick={(e) => {
-                try {
-                  e.currentTarget.showPicker?.();
-                } catch (err) {}
-              }}
-              className="w-full px-3 py-1.5 bg-white border border-slate-300 hover:border-indigo-400 focus:border-indigo-500 rounded-xl text-xs font-bold text-slate-800 shadow-2xs cursor-pointer outline-none transition-all h-9.5"
-            />
-          </div>
+      {/* Collapsed View Summary */}
+      {!isExpanded && (
+        <div
+          onClick={() => setIsExpanded(true)}
+          className="px-3 py-2 bg-white rounded-xl border border-slate-200 flex items-center justify-between text-xs cursor-pointer hover:border-indigo-300 transition-colors"
+        >
+          <span className="text-slate-600 font-medium truncate">
+            {value ? formatScheduleDisplay(value) : 'Not scheduled (Click to set)'}
+          </span>
+          <span className="text-indigo-600 font-bold text-[11px] shrink-0 ml-2">
+            Open Clock ▾
+          </span>
         </div>
+      )}
 
-        {/* Column 2: Adjustable Clock for Time with AM/PM */}
-        <div>
-          <label className="block text-[10.5px] font-bold text-slate-700 mb-1 flex items-center justify-between">
-            <span className="flex items-center space-x-1">
-              <Clock className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Adjustable Clock (Time)</span>
-            </span>
-            <span className="text-[9.5px] text-slate-400 font-normal">Adjust or click 🕒</span>
-          </label>
-
-          <div className="flex items-center space-x-1.5">
-            {/* Hour Stepper */}
-            <div className="flex items-center bg-white border border-slate-300 rounded-xl overflow-hidden shadow-2xs h-9.5 flex-1 min-w-0">
-              <button
-                type="button"
-                onClick={() => stepHour(-1)}
-                className="w-6 sm:w-7 h-full flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-slate-100 font-bold text-sm transition-colors cursor-pointer select-none shrink-0"
-                title="Decrease Hour"
-              >
-                −
-              </button>
+      {/* Expanded 2-Column: Calendar for Date & Circular Clock Dial for Time */}
+      {isExpanded && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+          {/* Column 1: Calendar for Date & Presets */}
+          <div className="space-y-3">
+            <div>
+              <label className="block text-[10.5px] font-bold text-slate-700 mb-1 flex items-center justify-between">
+                <span className="flex items-center space-x-1">
+                  <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Calendar (Date)</span>
+                </span>
+                <span className="text-[9.5px] text-slate-400 font-normal">Tap to pick date</span>
+              </label>
               <input
-                type="text"
-                inputMode="numeric"
-                value={String(currentHour).padStart(2, '0')}
-                onChange={(e) => handleHourInput(e.target.value)}
-                className="w-full text-center text-xs font-black text-slate-900 outline-none bg-transparent"
-              />
-              <button
-                type="button"
-                onClick={() => stepHour(1)}
-                className="w-6 sm:w-7 h-full flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-slate-100 font-bold text-sm transition-colors cursor-pointer select-none shrink-0"
-                title="Increase Hour"
-              >
-                +
-              </button>
-            </div>
-
-            <span className="font-extrabold text-slate-400 text-sm select-none">:</span>
-
-            {/* Minute Stepper */}
-            <div className="flex items-center bg-white border border-slate-300 rounded-xl overflow-hidden shadow-2xs h-9.5 flex-1 min-w-0">
-              <button
-                type="button"
-                onClick={() => stepMinute(-5)}
-                className="w-6 sm:w-7 h-full flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-slate-100 font-bold text-sm transition-colors cursor-pointer select-none shrink-0"
-                title="Decrease 5 mins"
-              >
-                −
-              </button>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={String(currentMinute).padStart(2, '0')}
-                onChange={(e) => handleMinuteInput(e.target.value)}
-                className="w-full text-center text-xs font-black text-slate-900 outline-none bg-transparent"
-              />
-              <button
-                type="button"
-                onClick={() => stepMinute(5)}
-                className="w-6 sm:w-7 h-full flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-slate-100 font-bold text-sm transition-colors cursor-pointer select-none shrink-0"
-                title="Increase 5 mins"
-              >
-                +
-              </button>
-            </div>
-
-            {/* AM / PM Toggle Pill */}
-            <div className="flex items-center bg-slate-200/80 p-0.5 rounded-xl h-9.5 shrink-0">
-              <button
-                type="button"
-                onClick={() => setAmpm('AM')}
-                className={`px-2.5 h-full rounded-lg text-xs font-black transition-all cursor-pointer ${
-                  currentAmpm === 'AM'
-                    ? 'bg-white text-indigo-700 shadow-xs ring-1 ring-slate-200'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                AM
-              </button>
-              <button
-                type="button"
-                onClick={() => setAmpm('PM')}
-                className={`px-2.5 h-full rounded-lg text-xs font-black transition-all cursor-pointer ${
-                  currentAmpm === 'PM'
-                    ? 'bg-white text-indigo-700 shadow-xs ring-1 ring-slate-200'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                PM
-              </button>
-            </div>
-
-            {/* Native Clock Popup Trigger Button */}
-            <div className="relative shrink-0">
-              <button
-                type="button"
-                onClick={() => {
+                type="date"
+                value={parsed?.dateStr || ''}
+                onChange={(e) => handleDateChange(e.target.value)}
+                onClick={(e) => {
                   try {
-                    timeInputRef.current?.showPicker?.();
+                    e.currentTarget.showPicker?.();
                   } catch (err) {}
                 }}
-                title="Open clock picker popup"
-                className="w-9.5 h-9.5 flex items-center justify-center rounded-xl bg-white border border-slate-300 hover:border-indigo-400 hover:text-indigo-600 text-slate-600 shadow-2xs transition-colors cursor-pointer"
-              >
-                <Clock className="w-4 h-4" />
-              </button>
-              <input
-                ref={timeInputRef}
-                type="time"
-                value={`${String(currentH24).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`}
-                onChange={(e) => handleNativeTime(e.target.value)}
-                className="absolute inset-0 opacity-0 pointer-events-none w-0 h-0"
+                className="w-full px-3 py-2 bg-white border border-slate-300 hover:border-indigo-400 focus:border-indigo-500 rounded-xl text-xs sm:text-sm font-bold text-slate-800 shadow-2xs cursor-pointer outline-none transition-all"
               />
             </div>
+
+            {/* Presets */}
+            {presets && presets.length > 0 && (
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold text-slate-400">Quick Presets:</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {presets.map((p, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={p.onClick}
+                      className="px-2.5 py-1 rounded-lg bg-white hover:bg-indigo-50 hover:border-indigo-300 text-slate-700 hover:text-indigo-700 text-[11px] font-semibold border border-slate-200 cursor-pointer shadow-2xs transition-all"
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Selected preview */}
+            {value && (
+              <div className="p-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 shadow-2xs">
+                <span className="text-slate-400 text-[10.5px] block mb-0.5">Selected Schedule:</span>
+                <span className="text-slate-900 font-extrabold text-[11.5px] block truncate">
+                  ✓ {formatScheduleDisplay(value)}
+                </span>
+              </div>
+            )}
+
+            {note && !value && (
+              <p className="text-[10.5px] text-slate-400 italic">
+                {note}
+              </p>
+            )}
           </div>
-        </div>
-      </div>
 
-      {/* Footer bar: Presets / Note / Selected Badge */}
-      {(note || (presets && presets.length > 0) || value) && (
-        <div className="flex flex-wrap items-center justify-between gap-1.5 pt-1 text-[10.5px]">
-          {note && !value && (
-            <span className="text-slate-400 italic truncate">{note}</span>
-          )}
-
-          {presets && presets.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1">
-              <span className="text-[10px] font-bold text-slate-400">Presets:</span>
-              {presets.map((p, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={p.onClick}
-                  className="px-2 py-0.5 rounded-md bg-white hover:bg-indigo-50 hover:border-indigo-300 text-slate-700 hover:text-indigo-700 text-[10.5px] font-semibold border border-slate-200 cursor-pointer shadow-2xs transition-all"
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {value && (
-            <span className="font-mono font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 px-2 py-0.5 rounded-md ml-auto text-[10.5px]">
-              ✓ {formatScheduleDisplay(value)}
-            </span>
-          )}
+          {/* Column 2: Actual Circular Clock Style */}
+          <div className="bg-slate-100/60 p-2.5 rounded-2xl border border-slate-200/80 flex flex-col items-center">
+            <CircularClockDial
+              hour12={currentHour}
+              minute={currentMinute}
+              ampm={currentAmpm}
+              onChangeHour={(h) => commit(parsed?.dateStr || '', h, currentMinute, currentAmpm)}
+              onChangeMinute={(m) => commit(parsed?.dateStr || '', currentHour, m, currentAmpm)}
+              onChangeAmpm={(ap) => commit(parsed?.dateStr || '', currentHour, currentMinute, ap)}
+              theme={themeColor}
+            />
+          </div>
         </div>
       )}
     </div>
@@ -1584,7 +1733,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* Schedule Intake Modal */}
       {isScheduleModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200 overflow-y-auto">
-          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200/90 relative overflow-hidden my-auto animate-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200/90 relative overflow-hidden my-auto animate-in zoom-in-95 duration-150">
             <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-amber-500 shrink-0 z-20" />
 
             {/* Modal Header (Pinned at top) */}
@@ -1702,13 +1851,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               className="flex flex-col flex-1 overflow-hidden"
             >
               {/* Scrollable Form Body */}
-              <div className="overflow-y-auto px-5 py-3.5 space-y-2.5 flex-1">
+              <div className="overflow-y-auto px-5 py-3.5 space-y-3 flex-1">
                 {/* Card 1: Auto-Open Time (Orders Start) */}
                 <DateTimePicker
                   label="Auto-Open Time"
                   sublabel="(Orders start)"
                   icon={<Power className="w-3 h-3" />}
                   iconBg="bg-emerald-100 text-emerald-700"
+                  themeColor="emerald"
+                  defaultExpanded={scheduleStart ? true : true}
                   value={scheduleStart}
                   onChange={(val) => {
                     setScheduleStart(val);
@@ -1740,6 +1891,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   sublabel="(Orders halt)"
                   icon={<Clock className="w-3 h-3" />}
                   iconBg="bg-rose-100 text-rose-700"
+                  themeColor="rose"
+                  defaultExpanded={true}
                   value={scheduleEnd}
                   onChange={(val) => {
                     setScheduleEnd(val);
