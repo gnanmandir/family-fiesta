@@ -11,10 +11,12 @@ interface LoginPageProps {
   onAdminLogin: (role?: 'super' | 'admin') => void;
   ordersOpen?: boolean;
   intakePhase: import('../types').IntakePhase;
+  guests?: import('../types').GuestCredential[];
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({
   students,
+  guests = [],
   onStudentLogin,
   onAdminLogin,
   ordersOpen = true,
@@ -61,8 +63,25 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       });
     }
 
+    // Merge guests as pseudo-students
+    if (Array.isArray(guests) && guests.length > 0) {
+      guests.forEach((g) => {
+        const pseudoStudent: Student = {
+          id: g.id,
+          fullName: g.guestName,
+          firstName: g.guestName,
+          lastName: '',
+          parentName: 'Guest',
+          gmNo: 0,
+          grade: 'Guest',
+          birthDate: g.password, // We store the guest password here to simplify matching
+        };
+        map.set(normalize(g.guestName), pseudoStudent);
+      });
+    }
+
     return Array.from(map.values());
-  }, [students]);
+  }, [students, guests]);
 
   // Prevent browser password manager from dumping saved admin credentials into student login
   useEffect(() => {
@@ -164,35 +183,43 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       let isPasswordCorrect = false;
       let role: import('../types').IntakePhase = 'parent';
 
-      // Check Parent (Birth Date with Slashes)
-      if (inputClean.includes('/') && effectiveBirthDate) {
-        if (inputClean.toLowerCase() === effectiveBirthDate.toLowerCase()) {
+      // Check Guest
+      if (matchedStudent.grade === 'Guest') {
+        if (cleanPwd === effectiveBirthDate) {
           isPasswordCorrect = true;
-          role = 'parent';
-        } else {
-          const parts = effectiveBirthDate.split('/');
-          const inputParts = inputClean.split('/');
-          if (parts.length === 3 && inputParts.length === 3) {
-            const expD = parseInt(parts[0], 10);
-            const expM = parseInt(parts[1], 10);
-            const expY = parseInt(parts[2], 10);
+          role = 'guest';
+        }
+      } else {
+        // Check Parent (Birth Date with Slashes)
+        if (inputClean.includes('/') && effectiveBirthDate) {
+          if (inputClean.toLowerCase() === effectiveBirthDate.toLowerCase()) {
+            isPasswordCorrect = true;
+            role = 'parent';
+          } else {
+            const parts = effectiveBirthDate.split('/');
+            const inputParts = inputClean.split('/');
+            if (parts.length === 3 && inputParts.length === 3) {
+              const expD = parseInt(parts[0], 10);
+              const expM = parseInt(parts[1], 10);
+              const expY = parseInt(parts[2], 10);
 
-            const inD = parseInt(inputParts[0], 10);
-            const inM = parseInt(inputParts[1], 10);
-            const inY = parseInt(inputParts[2], 10);
+              const inD = parseInt(inputParts[0], 10);
+              const inM = parseInt(inputParts[1], 10);
+              const inY = parseInt(inputParts[2], 10);
 
-            if (expD === inD && expM === inM && expY === inY) {
-              isPasswordCorrect = true;
-              role = 'parent';
+              if (expD === inD && expM === inM && expY === inY) {
+                isPasswordCorrect = true;
+                role = 'parent';
+              }
             }
           }
         }
-      }
 
-      // Check Student (GM Number)
-      if (!isPasswordCorrect && String(effectiveGmNo) === cleanPwd) {
-        isPasswordCorrect = true;
-        role = 'student';
+        // Check Student (GM Number)
+        if (!isPasswordCorrect && String(effectiveGmNo) === cleanPwd) {
+          isPasswordCorrect = true;
+          role = 'student';
+        }
       }
 
       if (!isPasswordCorrect) {

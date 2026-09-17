@@ -39,6 +39,7 @@ import {
 import { AnalyticsCharts } from './AnalyticsCharts';
 import { OrderTable } from './OrderTable';
 import { StudentManager } from './StudentManager';
+import { GuestManager } from './GuestManager';
 import { FoodManager } from './FoodManager';
 import { PricingManager } from './PricingManager';
 
@@ -967,6 +968,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             { id: 'overview', label: 'Analytics & Charts', icon: <LayoutDashboard className="w-4 h-4" /> },
             { id: 'orders', label: `Live Orders (${totalOrders})`, icon: <ShoppingBag className="w-4 h-4" /> },
             { id: 'students', label: `Students (${studentsOrdered}/${totalStudents})`, icon: <Users className="w-4 h-4" /> },
+            { id: 'guests', label: 'Guests', icon: <Users className="w-4 h-4" /> },
             { id: 'food', label: `Menu Catalog (${menuItems.length})`, icon: <UtensilsCrossed className="w-4 h-4" /> },
             { id: 'pricing', label: 'Pricing & Tiers', icon: <IndianRupee className="w-4 h-4" /> },
             ...(isSuper ? [
@@ -1072,6 +1074,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               onDeleteOrder={onDeleteOrder}
               onWipeStudentOrder={onWipeStudentOrder}
             />
+          </div>
+        )}
+
+        {/* Tab: Guests */}
+        {activeTab === 'guests' && (
+          <div className="rounded-2xl bg-white border border-stone-200 p-6 shadow-xs">
+            <GuestManager />
           </div>
         )}
 

@@ -1105,6 +1105,7 @@ export default function App() {
         {currentView === 'login' && (
           <LoginPage
             students={students}
+            guests={guests}
             onStudentLogin={handleStudentLogin}
             onAdminLogin={handleAdminLogin}
             ordersOpen={ordersOpen}
