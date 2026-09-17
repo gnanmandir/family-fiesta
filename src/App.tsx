@@ -68,6 +68,9 @@ export default function App() {
   const [rawOrdersOpen, setRawOrdersOpen] = useState<boolean>(true);
   const [orderSchedule, setOrderSchedule] = useState<OrderSchedule>(DEFAULT_SCHEDULE);
   const [intakePhase, setIntakePhase] = useState<import('./types').IntakePhase>('parent');
+  const [activeRole, setActiveRole] = useState<import('./types').IntakePhase>(() => {
+    return (localStorage.getItem('active_login_role') as import('./types').IntakePhase) || 'parent';
+  });
 
   // Selection & Cart States
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(() => {
@@ -187,21 +190,26 @@ export default function App() {
     // Asynchronously fetch fresh data from backend
     const loadBackendData = async () => {
       try {
-        const [stList, menuList, orderList, isOpen, dynamicTiers, schedule, currentPhase, guestsList] = await Promise.all([
+        const [stList, menuList, orderList, isOpen, schedule, currentPhase, guestsList, parentTiers, studentTiers, guestTiers] = await Promise.all([
           fetchStudents(),
           fetchMenuItems(),
           fetchOrders(),
           api.getOrderingStatus(),
-          api.getGuestTiers(),
           api.getOrderSchedule(),
           api.getIntakePhase(),
           api.getGuests(),
+          api.getRoleTiers('parent'),
+          api.getRoleTiers('student'),
+          api.getRoleTiers('guest'),
         ]);
         setStudents(stList);
         setGuests(guestsList);
         setMenuItems(menuList);
         setOrders(orderList);
         setIntakePhase(currentPhase);
+        if (parentTiers) localStorage.setItem('app_parent_tiers', JSON.stringify(parentTiers));
+        if (studentTiers) localStorage.setItem('app_student_tiers', JSON.stringify(studentTiers));
+        if (guestTiers) localStorage.setItem('app_guest_tiers', JSON.stringify(guestTiers));
 
         // Check if schedule is already completed/done in real time
         if (schedule && schedule.enabled && isScheduleDone(schedule)) {
@@ -729,7 +737,7 @@ export default function App() {
       const updatedOrder: Order = {
         ...existingToUpdate,
         peopleCount,
-        allowedBudget: calculateAllowedBudget(peopleCount),
+        allowedBudget: calculateAllowedBudget(peopleCount, undefined, activeRole),
         items: orderItems,
         totalAmount,
         dateDisplay: newDateDisplay,
@@ -762,7 +770,7 @@ export default function App() {
       fullName: currentStudent.fullName,
       deviceId: devId,
       peopleCount,
-      allowedBudget: calculateAllowedBudget(peopleCount),
+      allowedBudget: calculateAllowedBudget(peopleCount, undefined, activeRole),
       items: orderItems,
       totalAmount,
       status: 'Pending',
@@ -813,6 +821,11 @@ export default function App() {
     setSelectedStudent(student);
     localStorage.setItem('active_student_id', student.id);
     localStorage.setItem('active_login_role', role);
+    setActiveRole(role);
+    if (role === 'student') {
+      setPeopleCount(1);
+      localStorage.setItem('active_people_count', '1');
+    }
 
     // Fetch latest fresh menu items from backend
     fetchMenuItems().then((m) => m && m.length > 0 && setMenuItems(m)).catch(() => {});
@@ -891,8 +904,10 @@ export default function App() {
     localStorage.removeItem('active_cart');
     localStorage.removeItem('active_people_count');
     localStorage.removeItem('active_order_number');
+    localStorage.removeItem('active_login_role');
     setSelectedStudent(null);
     setActiveOrder(null);
+    setActiveRole('parent');
     setIsAdminLoggedIn(false);
     setAdminRole(null);
     setCart([]);
@@ -1124,6 +1139,7 @@ export default function App() {
             onOpenAdmin={() => setIsAdminLoginModalOpen(true)}
             onSignOut={handleSignOut}
             ordersOpen={ordersOpen}
+            role={activeRole}
           />
         )}
 

@@ -88,25 +88,30 @@ export const api = {
     }
   },
 
-  getGuestTiers: async (): Promise<number[]> => {
+  getRoleTiers: async (role: 'parent' | 'student' | 'guest'): Promise<number[]> => {
     if (isTursoConfigured) {
-      return await tursoService.getGuestTiers();
+      try {
+        return await tursoService.getRoleTiers(role);
+      } catch (e) {
+        console.warn(`[Turso] Failed to get ${role} tiers:`, e);
+      }
     }
-    if (isSupabaseConfigured) {
-      return await supabaseService.getGuestTiers();
+    if (role === 'parent') return [230, 230, 140, 80];
+    return [230];
+  },
+
+  setRoleTiers: async (role: 'parent' | 'student' | 'guest', tiers: number[]): Promise<void> => {
+    if (isTursoConfigured) {
+      await tursoService.setRoleTiers(role, tiers);
     }
-    return [230, 230, 140, 80];
+  },
+
+  getGuestTiers: async (): Promise<number[]> => {
+    return await api.getRoleTiers('parent');
   },
 
   setGuestTiers: async (tiers: number[]) => {
-    if (isTursoConfigured) {
-      await tursoService.setGuestTiers(tiers);
-      return;
-    }
-    if (isSupabaseConfigured) {
-      await supabaseService.setGuestTiers(tiers);
-      return;
-    }
+    await api.setRoleTiers('parent', tiers);
   },
 
   getStudentById: async (id: string): Promise<Student> => {

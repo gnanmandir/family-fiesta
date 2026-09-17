@@ -1,17 +1,33 @@
 // Tiered budget configuration for Family Fiesta
-export const getDynamicTiers = (): number[] => {
+export const getDynamicTiers = (role?: string, customTiers?: number[]): number[] => {
+  if (Array.isArray(customTiers) && customTiers.length > 0) {
+    return customTiers;
+  }
+  const effectiveRole = role || (typeof window !== 'undefined' ? localStorage.getItem('active_login_role') : null) || 'parent';
   try {
-    const raw = localStorage.getItem('app_guest_tiers');
+    const roleKey = `app_${effectiveRole}_tiers`;
+    const raw = localStorage.getItem(roleKey);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
+    // Fallback for parent to check legacy app_guest_tiers
+    if (effectiveRole === 'parent') {
+      const legacyRaw = localStorage.getItem('app_guest_tiers');
+      if (legacyRaw) {
+        const parsed = JSON.parse(legacyRaw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    }
   } catch (e) {}
-  return [230, 230, 140, 80]; // Default fallback
+
+  if (effectiveRole === 'student') return [230];
+  if (effectiveRole === 'guest') return [230];
+  return [230, 230, 140, 80]; // Default fallback for parent
 };
 
-export const calculateAllowedBudget = (peopleCount: number): number => {
-  const tiers = getDynamicTiers();
+export const calculateAllowedBudget = (peopleCount: number, customTiers?: number[], role?: string): number => {
+  const tiers = getDynamicTiers(role, customTiers);
   const maxGuests = tiers.length;
   const count = Math.max(1, Math.min(maxGuests, Number(peopleCount) || 1));
   
@@ -22,8 +38,8 @@ export const calculateAllowedBudget = (peopleCount: number): number => {
   return total;
 };
 
-export const getBudgetFormulaDisplay = (peopleCount: number): string => {
-  const tiers = getDynamicTiers();
+export const getBudgetFormulaDisplay = (peopleCount: number, customTiers?: number[], role?: string): string => {
+  const tiers = getDynamicTiers(role, customTiers);
   const maxGuests = tiers.length;
   const count = Math.max(1, Math.min(maxGuests, Number(peopleCount) || 1));
   

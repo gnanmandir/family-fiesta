@@ -448,22 +448,52 @@ export const tursoService = {
     );
   },
 
-  // --- Guest Tiers ---
-  getGuestTiers: async (): Promise<number[]> => {
-    const rows = await tursoQuery("SELECT value FROM app_settings WHERE key = 'guest_tiers'");
-    if (rows && rows.length > 0) {
+  // --- Role Tiers (Parent, Student, Guest) ---
+  getRoleTiers: async (role: 'parent' | 'student' | 'guest'): Promise<number[]> => {
+    const key = `${role}_tiers`;
+    const rows = await tursoQuery(`SELECT value FROM app_settings WHERE key = ?`, [key]);
+    if (rows && rows.length > 0 && rows[0].value) {
       try {
-        return JSON.parse(rows[0].value);
+        const parsed = JSON.parse(rows[0].value);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       } catch (e) {}
     }
-    return [230, 230, 140, 80];
+    // Fallbacks
+    if (role === 'parent') {
+      const legacy = await tursoQuery("SELECT value FROM app_settings WHERE key = 'guest_tiers'");
+      if (legacy && legacy.length > 0 && legacy[0].value) {
+        try {
+          const parsed = JSON.parse(legacy[0].value);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        } catch (e) {}
+      }
+      return [230, 230, 140, 80];
+    }
+    if (role === 'student') return [230];
+    if (role === 'guest') return [230];
+    return [230];
+  },
+
+  setRoleTiers: async (role: 'parent' | 'student' | 'guest', tiers: number[]): Promise<void> => {
+    const key = `${role}_tiers`;
+    await tursoQuery(
+      `INSERT INTO app_settings (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+      [key, JSON.stringify(tiers), new Date().toISOString()]
+    );
+    if (role === 'parent') {
+      await tursoQuery(
+        `INSERT INTO app_settings (key, value, updated_at) VALUES ('guest_tiers', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+        [JSON.stringify(tiers), new Date().toISOString()]
+      );
+    }
+  },
+
+  getGuestTiers: async (): Promise<number[]> => {
+    return await tursoService.getRoleTiers('parent');
   },
 
   setGuestTiers: async (tiers: number[]): Promise<void> => {
-    await tursoQuery(
-      `INSERT INTO app_settings (key, value, updated_at) VALUES ('guest_tiers', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
-      [JSON.stringify(tiers), new Date().toISOString()]
-    );
+    await tursoService.setRoleTiers('parent', tiers);
   },
 
   // --- Save Student ---

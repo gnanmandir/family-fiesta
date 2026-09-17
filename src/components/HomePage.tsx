@@ -1,11 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Student } from '../types';
-import { Check, Users, User, ArrowRight, ShieldCheck, Sparkles, Lock } from 'lucide-react';
+import { Check, Users, User, ArrowRight, ShieldCheck, Lock, GraduationCap, UserCheck } from 'lucide-react';
 import { formatNameDisplay } from '../utils/nameFormatter';
 
 import { 
   calculateAllowedBudget, 
-  getBudgetFormulaDisplay,
   getDynamicTiers
 } from '../utils/budget';
 
@@ -19,6 +18,8 @@ interface HomePageProps {
   onOpenAdmin?: () => void;
   onSignOut?: () => void;
   ordersOpen?: boolean;
+  role?: import('../types').IntakePhase;
+  roleTiers?: number[];
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -27,13 +28,29 @@ export const HomePage: React.FC<HomePageProps> = ({
   onChangePeopleCount,
   onStartOrdering,
   ordersOpen = true,
+  role,
+  roleTiers,
 }) => {
-  const allowedBudget = calculateAllowedBudget(peopleCount);
-  const dynamicTiers = getDynamicTiers();
+  const effectiveRole = role || (typeof window !== 'undefined' ? (localStorage.getItem('active_login_role') as any) : null) || 'parent';
+  const dynamicTiers = getDynamicTiers(effectiveRole, roleTiers);
+  const allowedBudget = calculateAllowedBudget(peopleCount, dynamicTiers, effectiveRole);
+
+  useEffect(() => {
+    if (peopleCount > dynamicTiers.length || peopleCount < 1) {
+      onChangePeopleCount(1);
+    }
+  }, [dynamicTiers.length, peopleCount, onChangePeopleCount]);
 
   const getTierIncrementText = (num: number) => {
     if (num === 1) return 'BASE TIER';
     return `+₹${dynamicTiers[num - 1]} ADDED`;
+  };
+
+  const getMemberLabel = (count: number) => {
+    if (effectiveRole === 'student') {
+      return count === 1 ? 'Student' : 'Students';
+    }
+    return count === 1 ? 'Guest' : 'Guests';
   };
 
   // If ordering is closed, show a notice instead of the normal page
@@ -56,15 +73,23 @@ export const HomePage: React.FC<HomePageProps> = ({
     );
   }
 
+  const isSingleTier = dynamicTiers.length === 1;
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-4 sm:py-6 animate-in fade-in duration-500">
       
-      {/* Student Pill */}
+      {/* Student/User Pill */}
       {selectedStudent && (
         <div className="flex mb-4">
           <div className="inline-flex items-center space-x-2 px-4 py-2 bg-white border border-slate-200 rounded-full shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)]">
-            <User className="w-4 h-4 text-orange-500 stroke-[2.5]" />
-            <span className="text-sm font-medium text-slate-400">Student:</span>
+            {effectiveRole === 'student' ? (
+              <GraduationCap className="w-4 h-4 text-indigo-600 stroke-[2.5]" />
+            ) : effectiveRole === 'guest' ? (
+              <UserCheck className="w-4 h-4 text-amber-600 stroke-[2.5]" />
+            ) : (
+              <User className="w-4 h-4 text-orange-500 stroke-[2.5]" />
+            )}
+            <span className="text-sm font-medium text-slate-400 capitalize">{effectiveRole}:</span>
             <span className="text-sm font-bold text-slate-700">{formatNameDisplay(selectedStudent.fullName)}</span>
           </div>
         </div>
@@ -77,20 +102,24 @@ export const HomePage: React.FC<HomePageProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-5 gap-2">
           <div className="flex items-center space-x-3">
             <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-              Select Number of Attendees
+              {isSingleTier ? 'Authorized Meal Allowance' : 'Select Number of Attendees'}
             </h2>
           </div>
           <div className="bg-slate-100 text-slate-500 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full self-start sm:self-auto">
-            Max {dynamicTiers.length} Guests
+            {isSingleTier ? `1 ${getMemberLabel(1)} Tier` : `Max ${dynamicTiers.length} ${getMemberLabel(dynamicTiers.length)}`}
           </div>
         </div>
 
         {/* Cards Grid */}
-        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${Math.min(4, dynamicTiers.length)} gap-3 sm:gap-4 mb-5`}>
+        <div className={
+          isSingleTier
+            ? "max-w-sm mb-5"
+            : `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${Math.min(4, dynamicTiers.length)} gap-3 sm:gap-4 mb-5`
+        }>
           {dynamicTiers.map((_, index) => {
             const num = index + 1;
             const isSelected = peopleCount === num;
-            const budget = calculateAllowedBudget(num);
+            const budget = calculateAllowedBudget(num, dynamicTiers, effectiveRole);
 
             return (
               <button
@@ -120,7 +149,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                       {num}
                     </span>
                     <span className={`text-xs font-bold ${isSelected ? 'text-blue-100' : 'text-slate-600'}`}>
-                      {num === 1 ? 'Guest' : 'Guests'}
+                      {getMemberLabel(num)}
                     </span>
                   </div>
                   <div className={`text-[9px] font-bold tracking-widest uppercase mt-0.5 ${isSelected ? 'text-blue-200' : 'text-slate-400'}`}>
@@ -142,7 +171,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           })}
         </div>
 
-        {/* Bottom Action Bar (Row 1) */}
+        {/* Bottom Action Bar */}
         <div className="border-t border-slate-100 pt-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex-shrink-0">
