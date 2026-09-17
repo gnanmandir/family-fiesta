@@ -44,6 +44,44 @@ export function isScheduleWithinWindow(
 }
 
 /**
+ * Determines whether a schedule has completed its lifecycle and should be removed.
+ * - Start-only schedule: completed once now >= startTime (portal has opened).
+ * - End-only schedule: completed once now >= endTime (portal has halted).
+ * - Window schedule: completed once now >= endTime (window has concluded).
+ */
+export function isScheduleDone(
+  schedule: OrderSchedule | null | undefined,
+  now: Date = new Date()
+): boolean {
+  if (!schedule || !schedule.enabled) {
+    return false;
+  }
+
+  const currentMs = now.getTime();
+  const startMs = schedule.startTime ? new Date(schedule.startTime).getTime() : NaN;
+  const endMs = schedule.endTime ? new Date(schedule.endTime).getTime() : NaN;
+
+  const hasStart = !isNaN(startMs);
+  const hasEnd = !isNaN(endMs);
+
+  if (!hasStart && !hasEnd) {
+    return false;
+  }
+
+  // 1. Start-only schedule: once startTime is reached/passed, auto-open has triggered and schedule is done
+  if (hasStart && !hasEnd) {
+    return currentMs >= startMs;
+  }
+
+  // 2. End-only or Window schedule: once endTime is reached/passed, auto-halt has triggered and schedule is done
+  if (hasEnd) {
+    return currentMs >= endMs;
+  }
+
+  return false;
+}
+
+/**
  * Computes whether the food portal is effectively open given manual toggle + schedule.
  */
 export function evaluateSchedule(
@@ -59,7 +97,7 @@ export function evaluateSchedule(
   headline: string;
   subtext: string;
 } {
-  if (!schedule || !schedule.enabled) {
+  if (!schedule || !schedule.enabled || isScheduleDone(schedule, now)) {
     return {
       isOpen: manualOpen,
       scheduleActive: false,

@@ -42,7 +42,7 @@ import { AdminDashboard } from './components/admin/AdminDashboard';
 import { AdminLoginModal } from './components/admin/AdminLoginModal';
 import { LoginPage } from './components/LoginPage';
 import { calculateAllowedBudget } from './utils/budget';
-import { evaluateSchedule, DEFAULT_SCHEDULE } from './utils/schedule';
+import { evaluateSchedule, isScheduleDone, DEFAULT_SCHEDULE } from './utils/schedule';
 
 export default function App() {
   // Navigation & Core States
@@ -196,10 +196,22 @@ export default function App() {
         setStudents(stList);
         setMenuItems(menuList);
         setOrders(orderList);
-        setRawOrdersOpen(isOpen);
-        setOrderSchedule(schedule);
-        const effective = evaluateSchedule(schedule, isOpen);
-        setOrdersOpen(effective.isOpen);
+
+        // Check if schedule is already completed/done in real time
+        if (schedule && schedule.enabled && isScheduleDone(schedule)) {
+          const isStartOnly = schedule.startTime && !schedule.endTime;
+          const targetOpen = isStartOnly ? true : false;
+          api.setOrderSchedule(DEFAULT_SCHEDULE).catch(() => {});
+          api.setOrderingStatus(targetOpen).catch(() => {});
+          setRawOrdersOpen(targetOpen);
+          setOrderSchedule(DEFAULT_SCHEDULE);
+          setOrdersOpen(targetOpen);
+        } else {
+          setRawOrdersOpen(isOpen);
+          setOrderSchedule(schedule);
+          const effective = evaluateSchedule(schedule, isOpen);
+          setOrdersOpen(effective.isOpen);
+        }
         localStorage.setItem('app_guest_tiers', JSON.stringify(dynamicTiers));
 
         const currentAdminToken = localStorage.getItem('admin_token');
@@ -327,20 +339,31 @@ export default function App() {
           if (freshOrders) {
             setOrders(freshOrders);
           }
-          setRawOrdersOpen((prev) => (prev === isOpen ? prev : isOpen));
-          setOrderSchedule((prev) => {
-            if (
-              prev &&
-              prev.enabled === schedule.enabled &&
-              prev.startTime === schedule.startTime &&
-              prev.endTime === schedule.endTime
-            ) {
-              return prev;
-            }
-            return schedule;
-          });
-          const effective = evaluateSchedule(schedule, isOpen);
-          setOrdersOpen((prev) => (prev === effective.isOpen ? prev : effective.isOpen));
+
+          if (schedule && schedule.enabled && isScheduleDone(schedule)) {
+            const isStartOnly = schedule.startTime && !schedule.endTime;
+            const targetOpen = isStartOnly ? true : false;
+            api.setOrderSchedule(DEFAULT_SCHEDULE).catch(() => {});
+            api.setOrderingStatus(targetOpen).catch(() => {});
+            setRawOrdersOpen(targetOpen);
+            setOrderSchedule(DEFAULT_SCHEDULE);
+            setOrdersOpen(targetOpen);
+          } else {
+            setRawOrdersOpen((prev) => (prev === isOpen ? prev : isOpen));
+            setOrderSchedule((prev) => {
+              if (
+                prev &&
+                prev.enabled === schedule.enabled &&
+                prev.startTime === schedule.startTime &&
+                prev.endTime === schedule.endTime
+              ) {
+                return prev;
+              }
+              return schedule;
+            });
+            const effective = evaluateSchedule(schedule, isOpen);
+            setOrdersOpen((prev) => (prev === effective.isOpen ? prev : effective.isOpen));
+          }
         } else {
           // 3. For student views: NEVER download the full orders database!
           // Only check ordering open/closed status at a relaxed interval
@@ -348,20 +371,31 @@ export default function App() {
             api.getOrderingStatus(),
             api.getOrderSchedule(),
           ]);
-          setRawOrdersOpen((prev) => (prev === isOpen ? prev : isOpen));
-          setOrderSchedule((prev) => {
-            if (
-              prev &&
-              prev.enabled === schedule.enabled &&
-              prev.startTime === schedule.startTime &&
-              prev.endTime === schedule.endTime
-            ) {
-              return prev;
-            }
-            return schedule;
-          });
-          const effective = evaluateSchedule(schedule, isOpen);
-          setOrdersOpen((prev) => (prev === effective.isOpen ? prev : effective.isOpen));
+
+          if (schedule && schedule.enabled && isScheduleDone(schedule)) {
+            const isStartOnly = schedule.startTime && !schedule.endTime;
+            const targetOpen = isStartOnly ? true : false;
+            api.setOrderSchedule(DEFAULT_SCHEDULE).catch(() => {});
+            api.setOrderingStatus(targetOpen).catch(() => {});
+            setRawOrdersOpen(targetOpen);
+            setOrderSchedule(DEFAULT_SCHEDULE);
+            setOrdersOpen(targetOpen);
+          } else {
+            setRawOrdersOpen((prev) => (prev === isOpen ? prev : isOpen));
+            setOrderSchedule((prev) => {
+              if (
+                prev &&
+                prev.enabled === schedule.enabled &&
+                prev.startTime === schedule.startTime &&
+                prev.endTime === schedule.endTime
+              ) {
+                return prev;
+              }
+              return schedule;
+            });
+            const effective = evaluateSchedule(schedule, isOpen);
+            setOrdersOpen((prev) => (prev === effective.isOpen ? prev : effective.isOpen));
+          }
         }
       } catch (e) {
         // Silent
@@ -390,13 +424,31 @@ export default function App() {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [currentView]);
 
-  // 6. Keep effective ordersOpen updated if clock ticks past schedule start or end time
+  // 6. Keep effective ordersOpen updated and auto-remove completed schedule
   useEffect(() => {
-    const updateEffective = () => {
-      const effective = evaluateSchedule(orderSchedule, rawOrdersOpen);
-      setOrdersOpen(effective.isOpen);
+    const updateEffective = async () => {
+      if (!orderSchedule || !orderSchedule.enabled) return;
+
+      if (isScheduleDone(orderSchedule)) {
+        const isStartOnly = orderSchedule.startTime && !orderSchedule.endTime;
+        const targetOpen = isStartOnly ? true : false;
+        try {
+          await api.setOrderSchedule(DEFAULT_SCHEDULE);
+          await api.setOrderingStatus(targetOpen);
+        } catch (e) {
+          // Silent
+        }
+        setOrderSchedule(DEFAULT_SCHEDULE);
+        setRawOrdersOpen(targetOpen);
+        setOrdersOpen(targetOpen);
+      } else {
+        const effective = evaluateSchedule(orderSchedule, rawOrdersOpen);
+        setOrdersOpen(effective.isOpen);
+      }
     };
-    const ticker = setInterval(updateEffective, 10000);
+
+    updateEffective();
+    const ticker = setInterval(updateEffective, 4000);
     return () => clearInterval(ticker);
   }, [orderSchedule, rawOrdersOpen]);
 

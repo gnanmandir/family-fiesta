@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import {
   evaluateSchedule,
+  isScheduleDone,
   formatScheduleDisplay,
   toDateTimeLocalString,
 } from '../../utils/schedule';
@@ -149,19 +150,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [sysPassError, setSysPassError] = useState('');
   const [isSavingSysPass, setIsSavingSysPass] = useState(false);
 
+  // Check if schedule is genuinely active (not done/expired)
+  const isScheduleActuallyActive = Boolean(orderSchedule?.enabled && !isScheduleDone(orderSchedule));
+
   // Schedule Intake Modal State
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
-  const [scheduleEnabled, setScheduleEnabled] = useState(orderSchedule?.enabled ?? false);
-  const [scheduleStart, setScheduleStart] = useState(orderSchedule?.startTime ?? '');
-  const [scheduleEnd, setScheduleEnd] = useState(orderSchedule?.endTime ?? '');
+  const [scheduleEnabled, setScheduleEnabled] = useState(isScheduleActuallyActive);
+  const [scheduleStart, setScheduleStart] = useState(isScheduleActuallyActive ? (orderSchedule?.startTime ?? '') : '');
+  const [scheduleEnd, setScheduleEnd] = useState(isScheduleActuallyActive ? (orderSchedule?.endTime ?? '') : '');
   const [scheduleError, setScheduleError] = useState('');
   const [isSavingSchedule, setIsSavingSchedule] = useState(false);
 
   useEffect(() => {
     if (orderSchedule && !isScheduleModalOpen) {
-      setScheduleEnabled(orderSchedule.enabled);
-      setScheduleStart(orderSchedule.startTime || '');
-      setScheduleEnd(orderSchedule.endTime || '');
+      const active = orderSchedule.enabled && !isScheduleDone(orderSchedule);
+      if (active) {
+        setScheduleEnabled(orderSchedule.enabled);
+        setScheduleStart(orderSchedule.startTime || '');
+        setScheduleEnd(orderSchedule.endTime || '');
+      } else {
+        setScheduleEnabled(false);
+        setScheduleStart('');
+        setScheduleEnd('');
+      }
     }
   }, [orderSchedule, isScheduleModalOpen]);
 
@@ -539,19 +550,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <div className="bg-slate-50/80 border border-slate-200/80 rounded-xl p-3.5 space-y-2">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
-                            <Calendar className="w-4 h-4 text-indigo-600" />
+                            <Calendar className={`w-4 h-4 ${isScheduleActuallyActive ? 'text-indigo-600' : 'text-slate-400'}`} />
                             <span className="text-xs font-bold text-slate-800">Automated Intake Schedule</span>
                           </div>
                           <span className={`px-2.5 py-0.5 rounded-full text-[10.5px] font-bold border ${
-                            orderSchedule?.enabled
+                            isScheduleActuallyActive
                               ? 'bg-indigo-50 text-indigo-700 border-indigo-200/90'
                               : 'bg-white text-slate-500 border-slate-200'
                           }`}>
-                            {orderSchedule?.enabled ? 'Calendar Active' : 'Manual Mode'}
+                            {isScheduleActuallyActive ? 'Calendar Active' : 'Schedule Off'}
                           </span>
                         </div>
 
-                        {orderSchedule?.enabled && (orderSchedule.startTime || orderSchedule.endTime) ? (
+                        {isScheduleActuallyActive && orderSchedule && (orderSchedule.startTime || orderSchedule.endTime) ? (
                           <div className="flex items-center space-x-2 text-xs font-semibold text-indigo-900 bg-indigo-100/60 border border-indigo-200/70 px-3 py-1.5 rounded-lg">
                             <Clock className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
                             <span>
@@ -559,14 +570,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 ? `Auto-Halts on: ${formatScheduleDisplay(orderSchedule.endTime)}`
                                 : orderSchedule.startTime && !orderSchedule.endTime
                                 ? `Auto-Opens on: ${formatScheduleDisplay(orderSchedule.startTime)}`
-                                : `Window: ${formatScheduleDisplay(orderSchedule.startTime)} → ${formatScheduleDisplay(orderSchedule.endTime)}`}
+                                : `Active: Auto-Halts on ${formatScheduleDisplay(orderSchedule.endTime)}`}
                             </span>
                           </div>
                         ) : (
                           <p className="text-[11.5px] text-slate-500 font-medium">
-                            {orderSchedule?.enabled
-                              ? 'Schedule is enabled but no dates are set. Orders follow manual switch.'
-                              : 'No automated calendar schedule set. Ordering runs via manual toggle.'}
+                            No active automated schedule. Ordering runs via manual toggle.
                           </p>
                         )}
                       </div>
@@ -577,21 +586,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         type="button"
                         onClick={() => {
                           setScheduleError('');
-                          if (orderSchedule) {
+                          if (isScheduleActuallyActive && orderSchedule) {
                             setScheduleEnabled(orderSchedule.enabled);
                             setScheduleStart(orderSchedule.startTime || '');
                             setScheduleEnd(orderSchedule.endTime || '');
+                          } else {
+                            setScheduleEnabled(false);
+                            setScheduleStart('');
+                            setScheduleEnd('');
                           }
                           setIsScheduleModalOpen(true);
                         }}
                         className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold cursor-pointer transition-all shadow-2xs flex items-center justify-center space-x-2 active:scale-95 border ${
-                          orderSchedule?.enabled
+                          isScheduleActuallyActive
                             ? 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200/90 shadow-xs'
                             : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
                         }`}
                       >
                         <Calendar className="w-4 h-4 text-indigo-600" />
-                        <span>{orderSchedule?.enabled ? 'Edit Schedule' : 'Schedule Calendar'}</span>
+                        <span>{isScheduleActuallyActive ? 'Edit Schedule' : 'Schedule Calendar'}</span>
                       </button>
 
                       <button
