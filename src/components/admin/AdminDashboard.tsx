@@ -104,6 +104,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     confirmText?: string;
     isDanger?: boolean;
     onSuccess: () => void | Promise<void>;
+    onCancel?: () => void;
   }>({
     isOpen: false,
     title: '',
@@ -169,7 +170,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     description: string,
     action: () => void | Promise<void>,
     isDanger: boolean = false,
-    confirmText: string = 'Confirm'
+    confirmText: string = 'Confirm',
+    onCancel?: () => void
   ) => {
     setSystemPassword('');
     setSystemPasswordError('');
@@ -181,7 +183,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       confirmText,
       isDanger,
       onSuccess: action,
+      onCancel,
     });
+  };
+
+  const handleCloseProtectedModal = () => {
+    if (protectedModal.onCancel) {
+      protectedModal.onCancel();
+    }
+    setProtectedModal((prev) => ({ ...prev, isOpen: false }));
   };
 
   const handleVerifyProtectedPassword = async (e: React.FormEvent) => {
@@ -734,7 +744,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       {/* 1. In-app System Password Modal */}
       {protectedModal.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-slate-200 animate-in zoom-in-95 duration-150">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center space-x-3">
@@ -750,8 +760,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
               <button
                 type="button"
-                onClick={() => setProtectedModal((prev) => ({ ...prev, isOpen: false }))}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                onClick={handleCloseProtectedModal}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -802,8 +812,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <div className="flex items-center justify-end space-x-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setProtectedModal((prev) => ({ ...prev, isOpen: false }))}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-50 transition-colors"
+                  onClick={handleCloseProtectedModal}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-50 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1233,6 +1243,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   endTime: scheduleEnd,
                 };
 
+                // Immediately close the schedule modal so it does not block the authentication box
+                setIsScheduleModalOpen(false);
+
                 openProtectedAction(
                   'Save Intake Schedule',
                   'Enter system master password to apply the automated order intake schedule.',
@@ -1242,15 +1255,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       if (onSaveSchedule) {
                         await onSaveSchedule(newSched);
                       }
-                      setIsScheduleModalOpen(false);
                     } catch (err: any) {
-                      setScheduleError(err?.message || 'Failed to save schedule');
+                      alert('Failed to save schedule: ' + (err?.message || err));
                     } finally {
                       setIsSavingSchedule(false);
                     }
                   },
                   false,
-                  'Confirm & Save Schedule'
+                  'Confirm & Save Schedule',
+                  () => {
+                    // If user cancels out of password prompt, re-open schedule modal with inputs preserved
+                    setIsScheduleModalOpen(true);
+                  }
                 );
               }}
               className="space-y-4"
