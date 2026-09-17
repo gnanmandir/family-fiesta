@@ -76,46 +76,20 @@ interface DateTimePickerProps {
   note?: string;
 }
 
-const MONTHS = [
-  { value: 1, label: '01 - Jan' },
-  { value: 2, label: '02 - Feb' },
-  { value: 3, label: '03 - Mar' },
-  { value: 4, label: '04 - Apr' },
-  { value: 5, label: '05 - May' },
-  { value: 6, label: '06 - Jun' },
-  { value: 7, label: '07 - Jul' },
-  { value: 8, label: '08 - Aug' },
-  { value: 9, label: '09 - Sep' },
-  { value: 10, label: '10 - Oct' },
-  { value: 11, label: '11 - Nov' },
-  { value: 12, label: '12 - Dec' },
-];
-
-const HOURS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-
-const MINUTES = [
-  0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 59,
-];
-
-function parseIso(val: string) {
+function parseDateTimeParts(val: string) {
   if (!val) return null;
-  const d = new Date(val);
-  if (isNaN(d.getTime())) return null;
-  const day = d.getDate();
-  const month = d.getMonth() + 1;
-  const year = d.getFullYear();
-  const h24 = d.getHours();
+  const parts = val.split('T');
+  if (parts.length < 2) return null;
+  const dateStr = parts[0];
+  const timeStr = parts[1];
+  const timeParts = timeStr.split(':');
+  if (timeParts.length < 2) return null;
+  const h24 = parseInt(timeParts[0], 10);
+  const min = parseInt(timeParts[1], 10);
+  if (isNaN(h24) || isNaN(min)) return null;
   const ampm: 'AM' | 'PM' = h24 >= 12 ? 'PM' : 'AM';
   const hour12 = h24 % 12 || 12;
-  const minute = d.getMinutes();
-  return { day, month, year, hour12, minute, ampm };
-}
-
-function buildIso(day: number, month: number, year: number, hour12: number, minute: number, ampm: 'AM' | 'PM') {
-  let h = hour12 % 12;
-  if (ampm === 'PM') h += 12;
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${year}-${pad(month)}-${pad(day)}T${pad(h)}:${pad(minute)}`;
+  return { dateStr, hour12, minute: min, ampm, h24 };
 }
 
 const DateTimePicker: React.FC<DateTimePickerProps> = ({
@@ -130,49 +104,95 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   presets,
   note,
 }) => {
-  const parsed = parseIso(value);
+  const parsed = parseDateTimeParts(value);
+  const timeInputRef = useRef<HTMLInputElement>(null);
 
-  const currentMonth = parsed?.month || new Date().getMonth() + 1;
-  const currentYear = parsed?.year || new Date().getFullYear();
-  const maxDays = new Date(currentYear, currentMonth, 0).getDate();
-  const daysList = Array.from({ length: maxDays }, (_, i) => i + 1);
+  const commit = (dateStr: string, hour12: number, minute: number, ampm: 'AM' | 'PM') => {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    let targetDate = dateStr;
+    if (!targetDate) {
+      const now = new Date();
+      targetDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    }
+    let h24 = hour12 % 12;
+    if (ampm === 'PM') h24 += 12;
+    onChange(`${targetDate}T${pad(h24)}:${pad(minute)}`);
+  };
 
-  const minuteOptions = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 59];
-  if (parsed && !minuteOptions.includes(parsed.minute)) {
-    minuteOptions.push(parsed.minute);
-    minuteOptions.sort((a, b) => a - b);
-  }
-
-  const update = (
-    newDay?: number,
-    newMonth?: number,
-    newYear?: number,
-    newHour?: number,
-    newMin?: number,
-    newAmpm?: 'AM' | 'PM'
-  ) => {
-    const now = new Date();
-    const d = newDay ?? parsed?.day ?? now.getDate();
-    const m = newMonth ?? parsed?.month ?? (now.getMonth() + 1);
-    const y = newYear ?? parsed?.year ?? now.getFullYear();
-    const h = newHour ?? parsed?.hour12 ?? defaultTime.hour;
-    const min = newMin ?? parsed?.minute ?? defaultTime.minute;
-    const ap = newAmpm ?? parsed?.ampm ?? defaultTime.ampm;
-
-    const validMaxDays = new Date(y, m, 0).getDate();
-    const safeDay = Math.min(d, validMaxDays);
-
-    onChange(buildIso(safeDay, m, y, h, min, ap));
+  const handleDateChange = (newDate: string) => {
+    if (!newDate) {
+      onClear?.();
+      return;
+    }
+    const h = parsed ? parsed.hour12 : defaultTime.hour;
+    const m = parsed ? parsed.minute : defaultTime.minute;
+    const ap = parsed ? parsed.ampm : defaultTime.ampm;
+    commit(newDate, h, m, ap);
   };
 
   const setQuickDayOffset = (offsetDays: number) => {
     const target = new Date();
     target.setDate(target.getDate() + offsetDays);
-    update(target.getDate(), target.getMonth() + 1, target.getFullYear());
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const dateStr = `${target.getFullYear()}-${pad(target.getMonth() + 1)}-${pad(target.getDate())}`;
+    handleDateChange(dateStr);
   };
 
+  const stepHour = (delta: number) => {
+    const curH = parsed ? parsed.hour12 : defaultTime.hour;
+    const curM = parsed ? parsed.minute : defaultTime.minute;
+    const curAp = parsed ? parsed.ampm : defaultTime.ampm;
+    let next = (curH + delta) % 12;
+    if (next <= 0) next += 12;
+    commit(parsed?.dateStr || '', next, curM, curAp);
+  };
+
+  const stepMinute = (delta: number) => {
+    const curH = parsed ? parsed.hour12 : defaultTime.hour;
+    const curM = parsed ? parsed.minute : defaultTime.minute;
+    const curAp = parsed ? parsed.ampm : defaultTime.ampm;
+    let next = curM + delta;
+    if (next >= 60) next = 0;
+    else if (next < 0) next = 55;
+    commit(parsed?.dateStr || '', curH, next, curAp);
+  };
+
+  const setAmpm = (newAp: 'AM' | 'PM') => {
+    const curH = parsed ? parsed.hour12 : defaultTime.hour;
+    const curM = parsed ? parsed.minute : defaultTime.minute;
+    commit(parsed?.dateStr || '', curH, curM, newAp);
+  };
+
+  const handleHourInput = (text: string) => {
+    const num = parseInt(text, 10);
+    if (!isNaN(num) && num >= 1 && num <= 12) {
+      commit(parsed?.dateStr || '', num, parsed ? parsed.minute : defaultTime.minute, parsed ? parsed.ampm : defaultTime.ampm);
+    }
+  };
+
+  const handleMinuteInput = (text: string) => {
+    const num = parseInt(text, 10);
+    if (!isNaN(num) && num >= 0 && num <= 59) {
+      commit(parsed?.dateStr || '', parsed ? parsed.hour12 : defaultTime.hour, num, parsed ? parsed.ampm : defaultTime.ampm);
+    }
+  };
+
+  const handleNativeTime = (h24Str: string) => {
+    if (!h24Str) return;
+    const [h, m] = h24Str.split(':').map((v) => parseInt(v, 10));
+    if (isNaN(h) || isNaN(m)) return;
+    const ap: 'AM' | 'PM' = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 || 12;
+    commit(parsed?.dateStr || '', h12, m, ap);
+  };
+
+  const currentHour = parsed ? parsed.hour12 : defaultTime.hour;
+  const currentMinute = parsed ? parsed.minute : defaultTime.minute;
+  const currentAmpm = parsed ? parsed.ampm : defaultTime.ampm;
+  const currentH24 = parsed ? parsed.h24 : (defaultTime.ampm === 'PM' ? (defaultTime.hour % 12) + 12 : defaultTime.hour % 12);
+
   return (
-    <div className="p-3 sm:p-3.5 rounded-2xl bg-slate-50/90 border border-slate-200/90 space-y-2">
+    <div className="p-3 sm:p-3.5 rounded-2xl bg-slate-50/90 border border-slate-200/90 space-y-2.5">
       {/* Header Row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
@@ -186,7 +206,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
         </div>
 
         <div className="flex items-center space-x-1.5">
-          {/* Quick Date Chips in Header */}
+          {/* Quick Date Chips */}
           <button
             type="button"
             onClick={() => setQuickDayOffset(0)}
@@ -213,97 +233,107 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
         </div>
       </div>
 
-      {/* Date & Time Grid: 2 columns on tablet/desktop, stacked on mobile */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
-        {/* Date Column: DD / MM / YYYY */}
+      {/* 2-Column: Calendar for Date & Adjustable Clock for Time */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        {/* Column 1: Calendar for Date */}
         <div>
-          <span className="block text-[10.5px] font-bold text-slate-600 mb-1 flex items-center space-x-1">
-            <Calendar className="w-3 h-3 text-slate-400" />
-            <span>Date (DD / MM / YYYY)</span>
-          </span>
-          <div className="grid grid-cols-12 gap-1.5">
-            {/* Day */}
-            <select
-              value={parsed?.day ?? ''}
-              onChange={(e) => update(Number(e.target.value))}
-              aria-label="Day"
-              className="col-span-3 px-1 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-2xs cursor-pointer text-center"
-            >
-              <option value="" disabled>DD</option>
-              {daysList.map((d) => (
-                <option key={d} value={d}>{String(d).padStart(2, '0')}</option>
-              ))}
-            </select>
-
-            {/* Month */}
-            <select
-              value={parsed?.month ?? ''}
-              onChange={(e) => update(undefined, Number(e.target.value))}
-              aria-label="Month"
-              className="col-span-5 px-1.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-2xs cursor-pointer truncate"
-            >
-              <option value="" disabled>MM</option>
-              {MONTHS.map((m) => (
-                <option key={m.value} value={m.value}>{m.label}</option>
-              ))}
-            </select>
-
-            {/* Year */}
-            <select
-              value={parsed?.year ?? ''}
-              onChange={(e) => update(undefined, undefined, Number(e.target.value))}
-              aria-label="Year"
-              className="col-span-4 px-1 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-2xs cursor-pointer text-center"
-            >
-              <option value="" disabled>YYYY</option>
-              <option value={2026}>2026</option>
-              <option value={2027}>2027</option>
-              <option value={2028}>2028</option>
-            </select>
+          <label className="block text-[10.5px] font-bold text-slate-700 mb-1 flex items-center justify-between">
+            <span className="flex items-center space-x-1">
+              <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Calendar (Date)</span>
+            </span>
+            <span className="text-[9.5px] text-slate-400 font-normal">Click to pick</span>
+          </label>
+          <div className="relative">
+            <input
+              type="date"
+              value={parsed?.dateStr || ''}
+              onChange={(e) => handleDateChange(e.target.value)}
+              onClick={(e) => {
+                try {
+                  e.currentTarget.showPicker?.();
+                } catch (err) {}
+              }}
+              className="w-full px-3 py-1.5 bg-white border border-slate-300 hover:border-indigo-400 focus:border-indigo-500 rounded-xl text-xs font-bold text-slate-800 shadow-2xs cursor-pointer outline-none transition-all h-9.5"
+            />
           </div>
         </div>
 
-        {/* Time Column: Hour : Min AM/PM */}
+        {/* Column 2: Adjustable Clock for Time with AM/PM */}
         <div>
-          <span className="block text-[10.5px] font-bold text-slate-600 mb-1 flex items-center space-x-1">
-            <Clock className="w-3 h-3 text-slate-400" />
-            <span>Time (12-Hour AM/PM)</span>
-          </span>
-          <div className="grid grid-cols-12 gap-1.5">
-            {/* Hour */}
-            <select
-              value={parsed?.hour12 ?? ''}
-              onChange={(e) => update(undefined, undefined, undefined, Number(e.target.value))}
-              aria-label="Hour"
-              className="col-span-4 px-1.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-2xs cursor-pointer text-center"
-            >
-              <option value="" disabled>HH</option>
-              {HOURS.map((h) => (
-                <option key={h} value={h}>{String(h).padStart(2, '0')}</option>
-              ))}
-            </select>
+          <label className="block text-[10.5px] font-bold text-slate-700 mb-1 flex items-center justify-between">
+            <span className="flex items-center space-x-1">
+              <Clock className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Adjustable Clock (Time)</span>
+            </span>
+            <span className="text-[9.5px] text-slate-400 font-normal">Adjust or click 🕒</span>
+          </label>
 
-            {/* Minute */}
-            <select
-              value={parsed ? String(parsed.minute) : ''}
-              onChange={(e) => update(undefined, undefined, undefined, undefined, Number(e.target.value))}
-              aria-label="Minute"
-              className="col-span-4 px-1.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-2xs cursor-pointer text-center"
-            >
-              <option value="" disabled>MM</option>
-              {minuteOptions.map((m) => (
-                <option key={m} value={m}>{String(m).padStart(2, '0')}</option>
-              ))}
-            </select>
-
-            {/* AM / PM Segmented Control */}
-            <div className="col-span-4 flex items-center bg-slate-200/80 p-0.5 rounded-lg h-[31px]">
+          <div className="flex items-center space-x-1.5">
+            {/* Hour Stepper */}
+            <div className="flex items-center bg-white border border-slate-300 rounded-xl overflow-hidden shadow-2xs h-9.5 flex-1 min-w-0">
               <button
                 type="button"
-                onClick={() => update(undefined, undefined, undefined, undefined, undefined, 'AM')}
-                className={`flex-1 h-full rounded text-[11px] font-black transition-all cursor-pointer ${
-                  parsed?.ampm === 'AM'
-                    ? 'bg-white text-indigo-700 shadow-xs'
+                onClick={() => stepHour(-1)}
+                className="w-6 sm:w-7 h-full flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-slate-100 font-bold text-sm transition-colors cursor-pointer select-none shrink-0"
+                title="Decrease Hour"
+              >
+                −
+              </button>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={String(currentHour).padStart(2, '0')}
+                onChange={(e) => handleHourInput(e.target.value)}
+                className="w-full text-center text-xs font-black text-slate-900 outline-none bg-transparent"
+              />
+              <button
+                type="button"
+                onClick={() => stepHour(1)}
+                className="w-6 sm:w-7 h-full flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-slate-100 font-bold text-sm transition-colors cursor-pointer select-none shrink-0"
+                title="Increase Hour"
+              >
+                +
+              </button>
+            </div>
+
+            <span className="font-extrabold text-slate-400 text-sm select-none">:</span>
+
+            {/* Minute Stepper */}
+            <div className="flex items-center bg-white border border-slate-300 rounded-xl overflow-hidden shadow-2xs h-9.5 flex-1 min-w-0">
+              <button
+                type="button"
+                onClick={() => stepMinute(-5)}
+                className="w-6 sm:w-7 h-full flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-slate-100 font-bold text-sm transition-colors cursor-pointer select-none shrink-0"
+                title="Decrease 5 mins"
+              >
+                −
+              </button>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={String(currentMinute).padStart(2, '0')}
+                onChange={(e) => handleMinuteInput(e.target.value)}
+                className="w-full text-center text-xs font-black text-slate-900 outline-none bg-transparent"
+              />
+              <button
+                type="button"
+                onClick={() => stepMinute(5)}
+                className="w-6 sm:w-7 h-full flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-slate-100 font-bold text-sm transition-colors cursor-pointer select-none shrink-0"
+                title="Increase 5 mins"
+              >
+                +
+              </button>
+            </div>
+
+            {/* AM / PM Toggle Pill */}
+            <div className="flex items-center bg-slate-200/80 p-0.5 rounded-xl h-9.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setAmpm('AM')}
+                className={`px-2.5 h-full rounded-lg text-xs font-black transition-all cursor-pointer ${
+                  currentAmpm === 'AM'
+                    ? 'bg-white text-indigo-700 shadow-xs ring-1 ring-slate-200'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -311,15 +341,38 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
               </button>
               <button
                 type="button"
-                onClick={() => update(undefined, undefined, undefined, undefined, undefined, 'PM')}
-                className={`flex-1 h-full rounded text-[11px] font-black transition-all cursor-pointer ${
-                  parsed?.ampm === 'PM'
-                    ? 'bg-white text-indigo-700 shadow-xs'
+                onClick={() => setAmpm('PM')}
+                className={`px-2.5 h-full rounded-lg text-xs font-black transition-all cursor-pointer ${
+                  currentAmpm === 'PM'
+                    ? 'bg-white text-indigo-700 shadow-xs ring-1 ring-slate-200'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 PM
               </button>
+            </div>
+
+            {/* Native Clock Popup Trigger Button */}
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    timeInputRef.current?.showPicker?.();
+                  } catch (err) {}
+                }}
+                title="Open clock picker popup"
+                className="w-9.5 h-9.5 flex items-center justify-center rounded-xl bg-white border border-slate-300 hover:border-indigo-400 hover:text-indigo-600 text-slate-600 shadow-2xs transition-colors cursor-pointer"
+              >
+                <Clock className="w-4 h-4" />
+              </button>
+              <input
+                ref={timeInputRef}
+                type="time"
+                value={`${String(currentH24).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`}
+                onChange={(e) => handleNativeTime(e.target.value)}
+                className="absolute inset-0 opacity-0 pointer-events-none w-0 h-0"
+              />
             </div>
           </div>
         </div>
@@ -350,7 +403,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 
           {value && (
             <span className="font-mono font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 px-2 py-0.5 rounded-md ml-auto text-[10.5px]">
-              ✓ {String(parsed?.day).padStart(2, '0')}/{String(parsed?.month).padStart(2, '0')}/{parsed?.year} {String(parsed?.hour12).padStart(2, '0')}:{String(parsed?.minute).padStart(2, '0')} {parsed?.ampm}
+              ✓ {formatScheduleDisplay(value)}
             </span>
           )}
         </div>
