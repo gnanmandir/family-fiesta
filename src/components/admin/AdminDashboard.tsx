@@ -455,88 +455,105 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="space-y-8 animate-in fade-in duration-200">
             
             {/* Header Banner */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-2xs">
+            <div className="relative overflow-hidden bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 shadow-xs">
+              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-amber-500" />
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="flex items-start space-x-3.5">
-                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 shadow-2xs">
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-500/25 flex items-center justify-center shrink-0">
                     <RotateCcw className="w-6 h-6" />
                   </div>
                   <div>
                     <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                       System Controls & Operations
                     </h2>
-                    <p className="text-slate-500 mt-1 text-xs sm:text-sm">
+                    <p className="text-slate-500 mt-1 text-xs sm:text-sm font-medium">
                       Master switches, order registers, database resets, and administrative access controls.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center space-x-2 shrink-0">
-                  <span className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold inline-flex items-center space-x-1.5 shadow-2xs">
-                    <span>👑</span>
+                  <span className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-900 border border-indigo-200/80 text-xs font-bold inline-flex items-center space-x-2 shadow-2xs">
+                    <Crown className="w-4 h-4 text-indigo-600" />
                     <span>Super Admin Authorized</span>
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* PANEL 1: Festival Operations & Live Controls */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                <div className="flex items-center space-x-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
-                    <Power className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900">Festival Operations</h3>
-                    <p className="text-[11px] text-slate-500 font-medium">Live intake status and coupon token sequence</p>
-                  </div>
+            {/* SECTION 1: Festival Operations & Live Controls */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2.5 px-1">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200/60 flex items-center justify-center shadow-2xs">
+                  <Power className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Festival Operations & Live Intake</h3>
+                  <p className="text-[11px] text-slate-500 font-medium">Live ordering portal status, intake calendar schedule, and token register</p>
                 </div>
               </div>
 
-              <div className="divide-y divide-slate-100">
-                {/* Row 1: Master Ordering Switch & Automated Calendar Schedule */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Card 1: Master Ordering Switch & Automated Calendar Schedule */}
                 {onToggleOrdering && (
-                  <div className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-slate-50/40 transition-colors">
-                    <div className="flex items-start space-x-3.5 min-w-0">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
-                        ordersOpen ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'
-                      }`}>
-                        <Power className="w-4 h-4" />
-                      </div>
-                      <div className="space-y-1 min-w-0">
-                        <div className="flex items-center space-x-2 flex-wrap gap-y-1.5">
-                          <h4 className="text-sm font-bold text-slate-900">Online Food Ordering Portal</h4>
-                          <span className={`inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold ${
-                            ordersOpen
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                              : 'bg-rose-50 text-rose-700 border border-rose-200'
-                          }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${ordersOpen ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
-                            <span>{ordersOpen ? 'Active & Taking Orders' : 'Ordering Halted / Concluded'}</span>
-                          </span>
+                  <div className={`bg-white border rounded-2xl shadow-xs hover:shadow-md transition-all p-6 flex flex-col justify-between relative overflow-hidden ${
+                    ordersOpen ? 'border-emerald-200/90' : 'border-rose-200/90'
+                  }`}>
+                    <div className={`absolute top-0 inset-x-0 h-1.5 ${
+                      ordersOpen ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 'bg-gradient-to-r from-rose-500 to-red-500'
+                    }`} />
 
-                          {orderSchedule?.enabled && (
-                            <span className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold ${
-                              ordersOpen
-                                ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                                : 'bg-amber-50 text-amber-700 border border-amber-200'
-                            }`}>
-                              <Calendar className="w-3 h-3 text-indigo-600" />
-                              <span>{ordersOpen ? 'Calendar Active' : 'Schedule Set (Closed)'}</span>
-                            </span>
-                          )}
+                    <div className="space-y-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-2xs border ${
+                            ordersOpen
+                              ? 'bg-emerald-50 text-emerald-600 border-emerald-200/80'
+                              : 'bg-rose-50 text-rose-600 border-rose-200/80'
+                          }`}>
+                            <Power className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h4 className="text-base font-bold text-slate-900">Food Ordering Portal</h4>
+                            <p className="text-xs text-slate-500 font-medium mt-0.5">Live student order intake portal</p>
+                          </div>
                         </div>
 
-                        <p className="text-xs text-slate-500 leading-relaxed max-w-2xl">
-                          {ordersOpen
-                            ? 'Students can select attendees, browse menu stalls, and submit orders.'
-                            : 'Ordering is closed. The conclusion notice is shown. Students can only view and download receipts.'}
-                        </p>
+                        <span className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11px] font-bold shadow-2xs shrink-0 ${
+                          ordersOpen
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/90'
+                            : 'bg-rose-50 text-rose-700 border border-rose-200/90'
+                        }`}>
+                          <span className={`w-2 h-2 rounded-full ${ordersOpen ? 'bg-emerald-500 animate-pulse ring-4 ring-emerald-500/20' : 'bg-rose-500'}`} />
+                          <span>{ordersOpen ? 'Active & Taking Orders' : 'Ordering Halted'}</span>
+                        </span>
+                      </div>
 
-                        {orderSchedule?.enabled && (orderSchedule.startTime || orderSchedule.endTime) && (
-                          <div className="mt-1 flex items-center space-x-2 text-[11px] text-indigo-700 font-medium bg-indigo-50/70 border border-indigo-100/90 px-2.5 py-1 rounded-lg w-fit">
-                            <Clock className="w-3.5 h-3.5 shrink-0 text-indigo-500" />
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        {ordersOpen
+                          ? 'Students can select attendees, browse menu stalls, and submit live food orders.'
+                          : 'Ordering is closed. The conclusion notice is shown. Students can only view and download existing receipts.'}
+                      </p>
+
+                      {/* Schedule Subcard */}
+                      <div className="bg-slate-50/80 border border-slate-200/80 rounded-xl p-3.5 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <Calendar className="w-4 h-4 text-indigo-600" />
+                            <span className="text-xs font-bold text-slate-800">Automated Intake Schedule</span>
+                          </div>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10.5px] font-bold border ${
+                            orderSchedule?.enabled
+                              ? 'bg-indigo-50 text-indigo-700 border-indigo-200/90'
+                              : 'bg-white text-slate-500 border-slate-200'
+                          }`}>
+                            {orderSchedule?.enabled ? 'Calendar Active' : 'Manual Mode'}
+                          </span>
+                        </div>
+
+                        {orderSchedule?.enabled && (orderSchedule.startTime || orderSchedule.endTime) ? (
+                          <div className="flex items-center space-x-2 text-xs font-semibold text-indigo-900 bg-indigo-100/60 border border-indigo-200/70 px-3 py-1.5 rounded-lg">
+                            <Clock className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
                             <span>
                               {!orderSchedule.startTime && orderSchedule.endTime
                                 ? `Auto-Halts on: ${formatScheduleDisplay(orderSchedule.endTime)}`
@@ -545,12 +562,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 : `Window: ${formatScheduleDisplay(orderSchedule.startTime)} → ${formatScheduleDisplay(orderSchedule.endTime)}`}
                             </span>
                           </div>
+                        ) : (
+                          <p className="text-[11.5px] text-slate-500 font-medium">
+                            {orderSchedule?.enabled
+                              ? 'Schedule is enabled but no dates are set. Orders follow manual switch.'
+                              : 'No automated calendar schedule set. Ordering runs via manual toggle.'}
+                          </p>
                         )}
                       </div>
                     </div>
 
-                    <div className="shrink-0 flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
-                      {/* Schedule Intake Button */}
+                    <div className="pt-4 mt-5 border-t border-slate-100 flex items-center justify-between gap-2.5 flex-wrap sm:flex-nowrap">
                       <button
                         type="button"
                         onClick={() => {
@@ -562,18 +584,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           }
                           setIsScheduleModalOpen(true);
                         }}
-                        className={`w-full sm:w-auto px-3.5 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-2xs flex items-center justify-center space-x-1.5 active:scale-95 border ${
+                        className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold cursor-pointer transition-all shadow-2xs flex items-center justify-center space-x-2 active:scale-95 border ${
                           orderSchedule?.enabled
-                            ? 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200 shadow-xs'
+                            ? 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200/90 shadow-xs'
                             : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
                         }`}
-                        title="Configure automated opening and concluding schedule"
                       >
-                        <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+                        <Calendar className="w-4 h-4 text-indigo-600" />
                         <span>{orderSchedule?.enabled ? 'Edit Schedule' : 'Schedule Calendar'}</span>
                       </button>
 
-                      {/* Manual Override Button */}
                       <button
                         type="button"
                         onClick={() => {
@@ -588,39 +608,57 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             newState ? 'Open Ordering' : 'Close Ordering'
                           );
                         }}
-                        className={`w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-2xs flex items-center justify-center space-x-1.5 active:scale-95 ${
+                        className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold cursor-pointer transition-all shadow-2xs flex items-center justify-center space-x-2 active:scale-95 ${
                           ordersOpen
-                            ? 'bg-white hover:bg-rose-50 text-rose-600 hover:text-rose-700 border border-rose-200'
-                            : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                            ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 hover:border-rose-300'
+                            : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/25'
                         }`}
                       >
-                        <Power className="w-3.5 h-3.5" />
+                        <Power className="w-4 h-4" />
                         <span>{ordersOpen ? 'Halt Ordering' : 'Re-Open Ordering'}</span>
                       </button>
                     </div>
                   </div>
                 )}
 
-                {/* Row 2: Wipe Order Register */}
-                <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/40 transition-colors">
-                  <div className="flex items-start space-x-3.5">
-                    <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 flex items-center justify-center shrink-0 mt-0.5">
-                      <Trash2 className="w-4 h-4 text-slate-600" />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-                        <h4 className="text-sm font-bold text-slate-900">Wipe Order Register</h4>
-                        <span className="text-[10px] font-semibold text-rose-600 uppercase tracking-wide bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-md">
-                          Requires Auth
-                        </span>
+                {/* Card 2: Wipe Order Register (Danger Zone) */}
+                <div className="bg-gradient-to-b from-white via-white to-rose-50/25 border border-rose-200/90 rounded-2xl shadow-xs hover:shadow-md transition-all p-6 flex flex-col justify-between relative overflow-hidden">
+                  <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-rose-500 to-red-600" />
+
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 border border-rose-200/80 flex items-center justify-center shrink-0 shadow-2xs">
+                          <Trash2 className="w-5 h-5 text-rose-600" />
+                        </div>
+                        <div>
+                          <h4 className="text-base font-bold text-slate-900">Wipe Order Register</h4>
+                          <p className="text-xs text-slate-500 font-medium mt-0.5">Reset token sequence and order database</p>
+                        </div>
                       </div>
-                      <p className="text-xs text-slate-500 leading-relaxed max-w-xl">
-                        Permanently wipe all submitted food orders and reset the festival coupon token sequence back to #1.
+
+                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10.5px] font-bold tracking-wide uppercase bg-rose-100 text-rose-800 border border-rose-200/80 shadow-2xs shrink-0">
+                        <AlertTriangle className="w-3 h-3 text-rose-600" />
+                        <span>Requires Auth</span>
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Permanently wipe all submitted food orders and reset the festival coupon token sequence back to #1.
+                    </p>
+
+                    <div className="bg-rose-50/80 border border-rose-200/80 rounded-xl p-3.5 flex items-start space-x-2.5 text-rose-900">
+                      <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                      <p className="text-xs font-medium leading-relaxed">
+                        Critical action: Irreversible once completed. Protected by Master System Authorization Key.
                       </p>
                     </div>
                   </div>
 
-                  <div className="sm:shrink-0 flex items-center">
+                  <div className="pt-4 mt-5 border-t border-rose-100/80 flex items-center justify-between gap-2.5">
+                    <span className="text-[11px] font-semibold text-rose-600/90 uppercase tracking-wider hidden sm:inline">
+                      Irreversible Reset
+                    </span>
                     <button
                       type="button"
                       onClick={() => {
@@ -635,9 +673,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           'Wipe All Orders'
                         );
                       }}
-                      className="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:text-white bg-white hover:bg-rose-600 border border-slate-200 hover:border-rose-600 cursor-pointer transition-all shadow-2xs flex items-center justify-center space-x-1.5 active:scale-95"
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-sm shadow-rose-600/25 flex items-center justify-center space-x-2 cursor-pointer transition-all active:scale-95"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-4 h-4" />
                       <span>Wipe Order Register</span>
                     </button>
                   </div>
@@ -645,41 +683,66 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
             </div>
 
-            {/* PANEL 2: Access Control & Security Credentials */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                <div className="flex items-center space-x-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
-                    <ShieldAlert className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900">Security & Credentials</h3>
-                    <p className="text-[11px] text-slate-500 font-medium">Administrative login accounts and master authorization key</p>
-                  </div>
+            {/* SECTION 2: Access Control & Security Credentials */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2.5 px-1">
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200/60 flex items-center justify-center shadow-2xs">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Access Control & Security Credentials</h3>
+                  <p className="text-[11px] text-slate-500 font-medium">Administrative login accounts and master authorization key</p>
                 </div>
               </div>
 
-              <div className="divide-y divide-slate-100">
-                {/* Row 1: Account Credentials */}
-                <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/40 transition-colors">
-                  <div className="flex items-start space-x-3.5">
-                    <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 flex items-center justify-center shrink-0 mt-0.5">
-                      <KeyRound className="w-4 h-4 text-slate-600" />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-                        <h4 className="text-sm font-bold text-slate-900">Administrative Credentials</h4>
-                        <span className="text-[10px] font-medium text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">
-                          Super Admin & Stall Admin
-                        </span>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Card 3: Account Credentials */}
+                <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs hover:shadow-md transition-all p-6 flex flex-col justify-between relative overflow-hidden">
+                  <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-indigo-500 to-blue-600" />
+
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center shrink-0 shadow-2xs">
+                          <KeyRound className="w-5 h-5 text-indigo-600" />
+                        </div>
+                        <div>
+                          <h4 className="text-base font-bold text-slate-900">Administrative Credentials</h4>
+                          <p className="text-xs text-slate-500 font-medium mt-0.5">Manage operator and super admin accounts</p>
+                        </div>
                       </div>
-                      <p className="text-xs text-slate-500 leading-relaxed max-w-xl">
-                        Update usernames and passwords for either Super Admin (full system access) or Stall Admin (counter operations).
-                      </p>
+
+                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/70 shadow-2xs shrink-0">
+                        <span>Super & Stall Admin</span>
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Update usernames and passwords for either Super Admin (full system access) or Stall Admin (counter operations).
+                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-200/80 flex items-center space-x-2.5">
+                        <span className="text-lg">👑</span>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-slate-900">Super Admin</p>
+                          <p className="text-[10.5px] text-slate-500 font-medium truncate">Root control & resets</p>
+                        </div>
+                      </div>
+                      <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-200/80 flex items-center space-x-2.5">
+                        <span className="text-lg">🛡️</span>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-slate-900">Stall Admin</p>
+                          <p className="text-[10.5px] text-slate-500 font-medium truncate">Fulfillment & reports</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="sm:shrink-0 flex items-center">
+                  <div className="pt-4 mt-5 border-t border-slate-100 flex items-center justify-between gap-2.5">
+                    <span className="text-[11px] font-medium text-slate-500 hidden sm:inline">
+                      Protected by Master Key
+                    </span>
                     <button
                       type="button"
                       onClick={() => {
@@ -690,34 +753,52 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         setCredError('');
                         setCredModalOpen(true);
                       }}
-                      className="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 cursor-pointer transition-all shadow-2xs flex items-center justify-center space-x-1.5 active:scale-95"
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold text-slate-800 hover:text-slate-950 bg-slate-100 hover:bg-slate-200 border border-slate-200/90 shadow-2xs flex items-center justify-center space-x-2 cursor-pointer transition-all active:scale-95"
                     >
-                      <KeyRound className="w-3.5 h-3.5" />
+                      <KeyRound className="w-4 h-4 text-slate-700" />
                       <span>Update Credentials</span>
                     </button>
                   </div>
                 </div>
 
-                {/* Row 2: Master System Authorization Key */}
-                <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/40 transition-colors">
-                  <div className="flex items-start space-x-3.5">
-                    <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 flex items-center justify-center shrink-0 mt-0.5">
-                      <ShieldAlert className="w-4 h-4 text-slate-600" />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-                        <h4 className="text-sm font-bold text-slate-900">System Authorization Key</h4>
-                        <span className="text-[10px] font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
-                          Master Key
-                        </span>
+                {/* Card 4: Master System Authorization Key */}
+                <div className="bg-gradient-to-b from-white via-white to-amber-50/25 border border-amber-200/90 rounded-2xl shadow-xs hover:shadow-md transition-all p-6 flex flex-col justify-between relative overflow-hidden">
+                  <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-amber-500 to-yellow-500" />
+
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 border border-amber-200/80 flex items-center justify-center shrink-0 shadow-2xs">
+                          <ShieldAlert className="w-5 h-5 text-amber-600" />
+                        </div>
+                        <div>
+                          <h4 className="text-base font-bold text-slate-900">System Authorization Key</h4>
+                          <p className="text-xs text-slate-500 font-medium mt-0.5">Root verification password for high-impact actions</p>
+                        </div>
                       </div>
-                      <p className="text-xs text-slate-500 leading-relaxed max-w-xl">
-                        Master authorization password required to verify high-impact actions, wipe student orders, and confirm security changes.
+
+                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-amber-100 text-amber-900 border border-amber-200/80 shadow-2xs shrink-0">
+                        <Lock className="w-3 h-3 text-amber-700" />
+                        <span>Master Key</span>
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Master authorization password required to verify high-impact actions, wipe student orders, and confirm security changes.
+                    </p>
+
+                    <div className="bg-amber-50/80 border border-amber-200/80 rounded-xl p-3.5 flex items-start space-x-2.5 text-amber-900">
+                      <Lock className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                      <p className="text-xs font-medium leading-relaxed">
+                        Keep this master key confidential. It authorizes sensitive operations across the entire festival database.
                       </p>
                     </div>
                   </div>
 
-                  <div className="sm:shrink-0 flex items-center">
+                  <div className="pt-4 mt-5 border-t border-amber-100/80 flex items-center justify-between gap-2.5">
+                    <span className="text-[11px] font-semibold text-amber-800 uppercase tracking-wider hidden sm:inline">
+                      Root Access Guard
+                    </span>
                     <button
                       type="button"
                       onClick={() => {
@@ -727,9 +808,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         setSysPassError('');
                         setSysPassModalOpen(true);
                       }}
-                      className="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 cursor-pointer transition-all shadow-2xs flex items-center justify-center space-x-1.5 active:scale-95"
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 shadow-sm shadow-amber-600/25 flex items-center justify-center space-x-2 cursor-pointer transition-all active:scale-95"
                     >
-                      <ShieldAlert className="w-3.5 h-3.5" />
+                      <ShieldAlert className="w-4 h-4" />
                       <span>Update Master Key</span>
                     </button>
                   </div>
