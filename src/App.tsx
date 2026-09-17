@@ -502,18 +502,27 @@ export default function App() {
     localStorage.setItem('active_student_id', student.id);
 
     // Check if student already placed an order on any device / browser
+    const currentRole = localStorage.getItem('active_login_role') || 'parent';
     let existing =
       orders.find(
         (o) =>
-          (o.studentId && o.studentId.toLowerCase() === student.id.toLowerCase()) ||
+          ((o.studentId && o.studentId.toLowerCase() === student.id.toLowerCase()) ||
           (o.fullName && o.fullName.toLowerCase() === student.fullName.toLowerCase()) ||
-          (o.studentName && o.studentName.toLowerCase() === student.fullName.toLowerCase())
-      ) || getStudentExistingOrder(student.id, orders, student.fullName);
+          (o.studentName && o.studentName.toLowerCase() === student.fullName.toLowerCase())) &&
+          (o.orderType || 'parent') === currentRole
+      );
+
+    if (!existing) {
+      const fallback = getStudentExistingOrder(student.id, orders, student.fullName);
+      if (fallback && (fallback.orderType || 'parent') === currentRole) {
+        existing = fallback;
+      }
+    }
 
     if (!existing) {
       try {
         const onlineOrder = await api.getOrderByStudent(student.id);
-        if (onlineOrder) existing = onlineOrder;
+        if (onlineOrder && (onlineOrder.orderType || 'parent') === currentRole) existing = onlineOrder;
       } catch (e) {}
     }
 
@@ -537,18 +546,27 @@ export default function App() {
     }
 
     // Safety check before entering menu: verify student has no existing order
+    const currentRole = localStorage.getItem('active_login_role') || 'parent';
     let existing =
       orders.find(
         (o) =>
-          (o.studentId && o.studentId.toLowerCase() === selectedStudent.id.toLowerCase()) ||
+          ((o.studentId && o.studentId.toLowerCase() === selectedStudent.id.toLowerCase()) ||
           (o.fullName && o.fullName.toLowerCase() === selectedStudent.fullName.toLowerCase()) ||
-          (o.studentName && o.studentName.toLowerCase() === selectedStudent.fullName.toLowerCase())
-      ) || getStudentExistingOrder(selectedStudent.id, orders, selectedStudent.fullName);
+          (o.studentName && o.studentName.toLowerCase() === selectedStudent.fullName.toLowerCase())) &&
+          (o.orderType || 'parent') === currentRole
+      );
+
+    if (!existing) {
+      const fallback = getStudentExistingOrder(selectedStudent.id, orders, selectedStudent.fullName);
+      if (fallback && (fallback.orderType || 'parent') === currentRole) {
+        existing = fallback;
+      }
+    }
 
     if (!existing) {
       try {
         const onlineOrder = await api.getOrderByStudent(selectedStudent.id);
-        if (onlineOrder) existing = onlineOrder;
+        if (onlineOrder && (onlineOrder.orderType || 'parent') === currentRole) existing = onlineOrder;
       } catch (e) {}
     }
 
@@ -806,27 +824,35 @@ export default function App() {
     }
 
     // 1. Check in currently loaded orders state
+    const currentRole = role || 'parent';
     let existing =
       orders.find(
         (o) =>
           ((o.studentId && o.studentId.toLowerCase() === student.id.toLowerCase()) ||
           (o.fullName && o.fullName.toLowerCase() === student.fullName.toLowerCase()) ||
           (o.studentName && o.studentName.toLowerCase() === student.fullName.toLowerCase())) && 
-          o.orderType === role
-      ) || getStudentExistingOrder(student.id, orders, student.fullName); // this fallback might find parent orders if role is student, but that's ok
+          (o.orderType || 'parent') === currentRole
+      );
+
+    if (!existing) {
+      const fallback = getStudentExistingOrder(student.id, orders, student.fullName);
+      if (fallback && (fallback.orderType || 'parent') === currentRole) {
+        existing = fallback;
+      }
+    }
 
     // 2. Query backend directly (handles new browser / incognito window)
     if (!existing) {
       try {
-        const onlineOrder = await api.getOrderByStudent(student.id); // Note: might need to pass role here later if needed
-        if (onlineOrder && onlineOrder.orderType === role) existing = onlineOrder;
+        const onlineOrder = await api.getOrderByStudent(student.id);
+        if (onlineOrder && (onlineOrder.orderType || 'parent') === currentRole) existing = onlineOrder;
       } catch (e) {}
     }
 
     if (existing) {
       setActiveOrder(existing);
       setCurrentView('submitted');
-    } else if (intakePhase !== role && intakePhase !== 'closed') {
+    } else if (intakePhase !== currentRole && intakePhase !== 'closed') {
       // If they haven't ordered, and the phase is not theirs, they are blocked!
       setSelectedStudent(null);
       localStorage.removeItem('active_student_id');
