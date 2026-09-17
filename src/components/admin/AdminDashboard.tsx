@@ -157,12 +157,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [isSavingSchedule, setIsSavingSchedule] = useState(false);
 
   useEffect(() => {
-    if (orderSchedule) {
+    if (orderSchedule && !isScheduleModalOpen) {
       setScheduleEnabled(orderSchedule.enabled);
       setScheduleStart(orderSchedule.startTime || '');
       setScheduleEnd(orderSchedule.endTime || '');
     }
-  }, [orderSchedule]);
+  }, [orderSchedule, isScheduleModalOpen]);
 
   const openProtectedAction = (
     title: string,
@@ -528,7 +528,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           <div className="mt-1 flex items-center space-x-2 text-[11px] text-indigo-700 font-medium bg-indigo-50/70 border border-indigo-100/90 px-2.5 py-1 rounded-lg w-fit">
                             <Clock className="w-3.5 h-3.5 shrink-0 text-indigo-500" />
                             <span>
-                              Window: {orderSchedule.startTime ? formatScheduleDisplay(orderSchedule.startTime) : 'Immediate'} → {orderSchedule.endTime ? formatScheduleDisplay(orderSchedule.endTime) : 'Continuous'}
+                              {!orderSchedule.startTime && orderSchedule.endTime
+                                ? `Auto-Halts on: ${formatScheduleDisplay(orderSchedule.endTime)}`
+                                : orderSchedule.startTime && !orderSchedule.endTime
+                                ? `Auto-Opens on: ${formatScheduleDisplay(orderSchedule.startTime)}`
+                                : `Window: ${formatScheduleDisplay(orderSchedule.startTime)} → ${formatScheduleDisplay(orderSchedule.endTime)}`}
                             </span>
                           </div>
                         )}
@@ -1218,6 +1222,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   }
                 }
 
+                if (scheduleEnabled && !scheduleStart && !scheduleEnd) {
+                  setScheduleError('Please enter an Auto-Stop date (to halt ordering at a future time) or an Auto-Start date.');
+                  return;
+                }
+
                 const newSched: OrderSchedule = {
                   enabled: scheduleEnabled,
                   startTime: scheduleStart,
@@ -1268,7 +1277,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
                   <p className="text-[11.5px] text-slate-500 leading-relaxed">
                     {scheduleEnabled
-                      ? 'Portal will automatically open and halt according to the times below.'
+                      ? 'Portal will automatically open and halt according to the schedule set below.'
                       : 'Disabled. Intake is controlled exclusively via manual Halt/Re-Open.'}
                   </p>
                 </div>
@@ -1284,9 +1293,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <div className={`space-y-3.5 transition-opacity ${scheduleEnabled ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
                 {/* Start Date & Time */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Auto-Start Intake Date & Time
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-slate-700">
+                      Auto-Start Date & Time <span className="font-normal text-slate-400 text-[11px]">(Optional)</span>
+                    </label>
+                    {scheduleStart && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setScheduleStart('');
+                          setScheduleError('');
+                        }}
+                        className="text-[11px] text-rose-500 hover:text-rose-700 font-semibold cursor-pointer"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
                   <div className="relative">
                     <input
                       type="datetime-local"
@@ -1299,15 +1322,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     />
                   </div>
                   <p className="text-[11px] text-slate-400 mt-1">
-                    Leave blank to open immediately when enabled.
+                    Leave blank if ordering is already open right now. Orders stay open until the Auto-Stop date.
                   </p>
                 </div>
 
                 {/* End Date & Time */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Auto-Stop / Conclude Date & Time
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-slate-700">
+                      Auto-Stop / Conclude Date & Time <span className="font-normal text-slate-400 text-[11px]">(Optional)</span>
+                    </label>
+                    {scheduleEnd && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setScheduleEnd('');
+                          setScheduleError('');
+                        }}
+                        className="text-[11px] text-rose-500 hover:text-rose-700 font-semibold cursor-pointer"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
                   <div className="relative">
                     <input
                       type="datetime-local"
@@ -1331,28 +1368,44 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <button
                       type="button"
                       onClick={() => {
-                        const now = new Date();
-                        const end = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-                        setScheduleStart(toDateTimeLocalString(now));
-                        setScheduleEnd(toDateTimeLocalString(end));
+                        const tonight = new Date();
+                        tonight.setHours(23, 59, 0, 0);
+                        setScheduleStart('');
+                        setScheduleEnd(toDateTimeLocalString(tonight));
                         setScheduleError('');
                       }}
-                      className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 text-[11px] font-medium border border-slate-200 cursor-pointer transition-colors"
+                      className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-semibold border border-indigo-200 cursor-pointer transition-colors"
+                      title="Keep open now, auto-halt tonight at 11:59 PM"
                     >
-                      Next 24 Hours
+                      Close Tonight (11:59 PM)
                     </button>
                     <button
                       type="button"
                       onClick={() => {
-                        const now = new Date();
-                        const end = new Date(now.getTime() + 48 * 60 * 60 * 1000);
-                        setScheduleStart(toDateTimeLocalString(now));
-                        setScheduleEnd(toDateTimeLocalString(end));
+                        const tomorrow = new Date();
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        tomorrow.setHours(23, 59, 0, 0);
+                        setScheduleStart('');
+                        setScheduleEnd(toDateTimeLocalString(tomorrow));
                         setScheduleError('');
                       }}
                       className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 text-[11px] font-medium border border-slate-200 cursor-pointer transition-colors"
+                      title="Keep open now, auto-halt tomorrow at 11:59 PM"
                     >
-                      Next 48 Hours
+                      Close Tomorrow (11:59 PM)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const twoHours = new Date(Date.now() + 2 * 60 * 60 * 1000);
+                        setScheduleStart('');
+                        setScheduleEnd(toDateTimeLocalString(twoHours));
+                        setScheduleError('');
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 text-[11px] font-medium border border-slate-200 cursor-pointer transition-colors"
+                      title="Keep open now, auto-halt in 2 hours"
+                    >
+                      Close in 2 Hours
                     </button>
                     <button
                       type="button"
@@ -1374,7 +1427,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       }}
                       className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 text-[11px] font-medium border border-slate-200 cursor-pointer transition-colors"
                     >
-                      Festival Weekend (Fri-Sun)
+                      Festival Weekend (Fri–Sun)
                     </button>
                     <button
                       type="button"
@@ -1385,7 +1438,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       }}
                       className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-600 text-[11px] font-medium border border-slate-200 cursor-pointer transition-colors"
                     >
-                      Clear Dates
+                      Clear All
                     </button>
                   </div>
                 </div>
@@ -1407,14 +1460,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       };
                       const ev = evaluateSchedule(tempSched, true);
                       if (ev.isBeforeStart) {
-                        return `⏳ Waiting: Intake will open automatically on ${formatScheduleDisplay(scheduleStart)}. Until then, ordering remains closed.`;
+                        return `⏳ Waiting to Open: Intake will open automatically on ${formatScheduleDisplay(scheduleStart)}. Until then, ordering remains closed.`;
                       } else if (ev.isAfterEnd) {
                         return `⏹️ Ended: Schedule has concluded as of ${formatScheduleDisplay(scheduleEnd)}. Portal will remain closed.`;
                       } else {
-                        return `🟢 Active: Current time is within schedule window. Portal will be open and taking orders until ${scheduleEnd ? formatScheduleDisplay(scheduleEnd) : 'concluded'}.`;
+                        if (!scheduleStart && scheduleEnd) {
+                          return `🟢 Active Now: Order taking is currently open and will automatically halt on ${formatScheduleDisplay(scheduleEnd)}.`;
+                        }
+                        if (scheduleStart && !scheduleEnd) {
+                          return `🟢 Active: Order intake opened on ${formatScheduleDisplay(scheduleStart)} and remains open.`;
+                        }
+                        return `🟢 Active: Current time is within schedule window. Portal will be open and taking orders until ${formatScheduleDisplay(scheduleEnd)}.`;
                       }
                     })()}
                   </div>
+                </div>
+              )}
+
+              {/* Helper tip when enabled but no dates entered yet */}
+              {scheduleEnabled && !scheduleStart && !scheduleEnd && (
+                <div className="p-3 bg-indigo-50/70 border border-indigo-200 rounded-xl text-indigo-800 text-xs flex items-center space-x-2 font-medium">
+                  <Clock className="w-4 h-4 shrink-0 text-indigo-600" />
+                  <span>Tip: Order taking is currently open! You can just set the Auto-Stop date above (or click a quick preset) to automatically conclude ordering at that time.</span>
                 </div>
               )}
 

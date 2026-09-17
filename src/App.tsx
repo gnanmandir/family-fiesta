@@ -327,10 +327,20 @@ export default function App() {
           if (freshOrders) {
             setOrders(freshOrders);
           }
-          setRawOrdersOpen(isOpen);
-          setOrderSchedule(schedule);
+          setRawOrdersOpen((prev) => (prev === isOpen ? prev : isOpen));
+          setOrderSchedule((prev) => {
+            if (
+              prev &&
+              prev.enabled === schedule.enabled &&
+              prev.startTime === schedule.startTime &&
+              prev.endTime === schedule.endTime
+            ) {
+              return prev;
+            }
+            return schedule;
+          });
           const effective = evaluateSchedule(schedule, isOpen);
-          setOrdersOpen(effective.isOpen);
+          setOrdersOpen((prev) => (prev === effective.isOpen ? prev : effective.isOpen));
         } else {
           // 3. For student views: NEVER download the full orders database!
           // Only check ordering open/closed status at a relaxed interval
@@ -338,10 +348,20 @@ export default function App() {
             api.getOrderingStatus(),
             api.getOrderSchedule(),
           ]);
-          setRawOrdersOpen(isOpen);
-          setOrderSchedule(schedule);
+          setRawOrdersOpen((prev) => (prev === isOpen ? prev : isOpen));
+          setOrderSchedule((prev) => {
+            if (
+              prev &&
+              prev.enabled === schedule.enabled &&
+              prev.startTime === schedule.startTime &&
+              prev.endTime === schedule.endTime
+            ) {
+              return prev;
+            }
+            return schedule;
+          });
           const effective = evaluateSchedule(schedule, isOpen);
-          setOrdersOpen(effective.isOpen);
+          setOrdersOpen((prev) => (prev === effective.isOpen ? prev : effective.isOpen));
         }
       } catch (e) {
         // Silent

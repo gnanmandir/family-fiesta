@@ -101,6 +101,15 @@ export function evaluateSchedule(
 
   // Inside schedule window
   const effectiveOpen = isWithin && manualOpen;
+  let activeSubtext = 'Automated schedule is taking orders.';
+  if (!schedule.startTime && schedule.endTime) {
+    activeSubtext = `Automated schedule is taking orders until ${formatScheduleDisplay(schedule.endTime)}.`;
+  } else if (schedule.startTime && !schedule.endTime) {
+    activeSubtext = `Automated schedule is taking orders from ${formatScheduleDisplay(schedule.startTime)} onwards.`;
+  } else if (schedule.startTime && schedule.endTime) {
+    activeSubtext = `Automated schedule is taking orders until ${formatScheduleDisplay(schedule.endTime)}.`;
+  }
+
   return {
     isOpen: effectiveOpen,
     scheduleActive: true,
@@ -109,7 +118,7 @@ export function evaluateSchedule(
     isWithinWindow: true,
     headline: effectiveOpen ? 'Active (Schedule Window)' : 'Halted (Manual Override)',
     subtext: effectiveOpen
-      ? `Automated schedule is taking orders until ${schedule.endTime ? formatScheduleDisplay(schedule.endTime) : 'concluded'}.`
+      ? activeSubtext
       : 'Intake is temporarily halted by manual override despite schedule window.',
   };
 }
