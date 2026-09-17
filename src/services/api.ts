@@ -1,4 +1,4 @@
-import { FoodItem, Order, OrderStatus, Student } from '../types';
+import { FoodItem, Order, OrderStatus, Student, OrderSchedule } from '../types';
 import { tursoService, isTursoConfigured } from './turso';
 import { supabaseService, isSupabaseConfigured } from './supabase';
 
@@ -505,6 +505,51 @@ export const api = {
     if (isSupabaseConfigured) {
       await supabaseService.setOrderingStatus(isOpen);
       return;
+    }
+  },
+
+  // --- Order Schedule ---
+  getOrderSchedule: async (): Promise<OrderSchedule> => {
+    if (isTursoConfigured) {
+      try {
+        return await tursoService.getOrderSchedule();
+      } catch (e) {
+        console.warn('[Turso] Failed to fetch order schedule:', e);
+      }
+    }
+    if (isSupabaseConfigured) {
+      try {
+        return await supabaseService.getOrderSchedule();
+      } catch (e) {
+        console.warn('[Supabase] Failed to fetch order schedule:', e);
+      }
+    }
+    const saved = localStorage.getItem('order_intake_schedule');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return { enabled: false, startTime: '', endTime: '' };
+  },
+
+  setOrderSchedule: async (schedule: OrderSchedule): Promise<void> => {
+    localStorage.setItem('order_intake_schedule', JSON.stringify(schedule));
+    if (isTursoConfigured) {
+      try {
+        await tursoService.setOrderSchedule(schedule);
+        return;
+      } catch (e) {
+        console.warn('[Turso] Failed to save order schedule:', e);
+      }
+    }
+    if (isSupabaseConfigured) {
+      try {
+        await supabaseService.setOrderSchedule(schedule);
+        return;
+      } catch (e) {
+        console.warn('[Supabase] Failed to save order schedule:', e);
+      }
     }
   },
 

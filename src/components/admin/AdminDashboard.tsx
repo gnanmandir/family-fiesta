@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Order, Student, FoodItem, OrderStatus } from '../../types';
+import { Order, Student, FoodItem, OrderStatus, OrderSchedule } from '../../types';
 import { Logo } from '../Logo';
 import {
   LayoutDashboard,
@@ -25,7 +25,14 @@ import {
   Crown,
   ShieldCheck,
   Check,
+  Calendar,
+  Clock,
 } from 'lucide-react';
+import {
+  evaluateSchedule,
+  formatScheduleDisplay,
+  toDateTimeLocalString,
+} from '../../utils/schedule';
 import { AnalyticsCharts } from './AnalyticsCharts';
 import { OrderTable } from './OrderTable';
 import { StudentManager } from './StudentManager';
@@ -49,7 +56,9 @@ interface AdminDashboardProps {
   onExitAdmin: () => void;
   onLogoutAdmin: () => void;
   ordersOpen?: boolean;
+  orderSchedule?: OrderSchedule;
   onToggleOrdering?: (isOpen: boolean) => void;
+  onSaveSchedule?: (schedule: OrderSchedule) => Promise<void> | void;
   onRefreshOrders?: () => Promise<void> | void;
 }
 
@@ -70,7 +79,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onExitAdmin,
   onLogoutAdmin,
   ordersOpen = true,
+  orderSchedule,
   onToggleOrdering,
+  onSaveSchedule,
   onRefreshOrders,
 }) => {
   const isSuper = adminRole === 'super';
@@ -136,6 +147,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [confirmSysPass, setConfirmSysPass] = useState('');
   const [sysPassError, setSysPassError] = useState('');
   const [isSavingSysPass, setIsSavingSysPass] = useState(false);
+
+  // Schedule Intake Modal State
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [scheduleEnabled, setScheduleEnabled] = useState(orderSchedule?.enabled ?? false);
+  const [scheduleStart, setScheduleStart] = useState(orderSchedule?.startTime ?? '');
+  const [scheduleEnd, setScheduleEnd] = useState(orderSchedule?.endTime ?? '');
+  const [scheduleError, setScheduleError] = useState('');
+  const [isSavingSchedule, setIsSavingSchedule] = useState(false);
+
+  useEffect(() => {
+    if (orderSchedule) {
+      setScheduleEnabled(orderSchedule.enabled);
+      setScheduleStart(orderSchedule.startTime || '');
+      setScheduleEnd(orderSchedule.endTime || '');
+    }
+  }, [orderSchedule]);
 
   const openProtectedAction = (
     title: string,
@@ -458,19 +485,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
 
               <div className="divide-y divide-slate-100">
-                {/* Row 1: Master Ordering Switch */}
+                {/* Row 1: Master Ordering Switch & Automated Calendar Schedule */}
                 {onToggleOrdering && (
-                  <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/40 transition-colors">
-                    <div className="flex items-start space-x-3.5">
+                  <div className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-slate-50/40 transition-colors">
+                    <div className="flex items-start space-x-3.5 min-w-0">
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
                         ordersOpen ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'
                       }`}>
                         <Power className="w-4 h-4" />
                       </div>
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center space-x-2 flex-wrap gap-y-1.5">
                           <h4 className="text-sm font-bold text-slate-900">Online Food Ordering Portal</h4>
-                          <span className={`inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full text-[10.5px] font-semibold ${
+                          <span className={`inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold ${
                             ordersOpen
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                               : 'bg-rose-50 text-rose-700 border border-rose-200'
@@ -478,16 +505,61 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <span className={`w-1.5 h-1.5 rounded-full ${ordersOpen ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
                             <span>{ordersOpen ? 'Active & Taking Orders' : 'Ordering Halted / Concluded'}</span>
                           </span>
+
+                          {orderSchedule?.enabled && (
+                            <span className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold ${
+                              ordersOpen
+                                ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                                : 'bg-amber-50 text-amber-700 border border-amber-200'
+                            }`}>
+                              <Calendar className="w-3 h-3 text-indigo-600" />
+                              <span>{ordersOpen ? 'Calendar Active' : 'Schedule Set (Closed)'}</span>
+                            </span>
+                          )}
                         </div>
-                        <p className="text-xs text-slate-500 leading-relaxed max-w-xl">
+
+                        <p className="text-xs text-slate-500 leading-relaxed max-w-2xl">
                           {ordersOpen
                             ? 'Students can select attendees, browse menu stalls, and submit orders.'
                             : 'Ordering is closed. The conclusion notice is shown. Students can only view and download receipts.'}
                         </p>
+
+                        {orderSchedule?.enabled && (orderSchedule.startTime || orderSchedule.endTime) && (
+                          <div className="mt-1 flex items-center space-x-2 text-[11px] text-indigo-700 font-medium bg-indigo-50/70 border border-indigo-100/90 px-2.5 py-1 rounded-lg w-fit">
+                            <Clock className="w-3.5 h-3.5 shrink-0 text-indigo-500" />
+                            <span>
+                              Window: {orderSchedule.startTime ? formatScheduleDisplay(orderSchedule.startTime) : 'Immediate'} → {orderSchedule.endTime ? formatScheduleDisplay(orderSchedule.endTime) : 'Continuous'}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    <div className="sm:shrink-0 flex items-center">
+                    <div className="shrink-0 flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+                      {/* Schedule Intake Button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setScheduleError('');
+                          if (orderSchedule) {
+                            setScheduleEnabled(orderSchedule.enabled);
+                            setScheduleStart(orderSchedule.startTime || '');
+                            setScheduleEnd(orderSchedule.endTime || '');
+                          }
+                          setIsScheduleModalOpen(true);
+                        }}
+                        className={`w-full sm:w-auto px-3.5 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-2xs flex items-center justify-center space-x-1.5 active:scale-95 border ${
+                          orderSchedule?.enabled
+                            ? 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200 shadow-xs'
+                            : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
+                        }`}
+                        title="Configure automated opening and concluding schedule"
+                      >
+                        <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>{orderSchedule?.enabled ? 'Edit Schedule' : 'Schedule Calendar'}</span>
+                      </button>
+
+                      {/* Manual Override Button */}
                       <button
                         type="button"
                         onClick={() => {
@@ -1100,6 +1172,276 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
                 >
                   {isSavingSysPass ? 'Saving...' : 'Save New Password'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Schedule Intake Modal */}
+      {isScheduleModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5 animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100">
+                  <Calendar className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">Schedule Order Intake</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Automate food ordering start and stop dates</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsScheduleModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                setScheduleError('');
+
+                if (scheduleEnabled && scheduleStart && scheduleEnd) {
+                  const startMs = new Date(scheduleStart).getTime();
+                  const endMs = new Date(scheduleEnd).getTime();
+                  if (!isNaN(startMs) && !isNaN(endMs) && endMs <= startMs) {
+                    setScheduleError('Conclude date & time must be after the start date & time.');
+                    return;
+                  }
+                }
+
+                const newSched: OrderSchedule = {
+                  enabled: scheduleEnabled,
+                  startTime: scheduleStart,
+                  endTime: scheduleEnd,
+                };
+
+                openProtectedAction(
+                  'Save Intake Schedule',
+                  'Enter system master password to apply the automated order intake schedule.',
+                  async () => {
+                    setIsSavingSchedule(true);
+                    try {
+                      if (onSaveSchedule) {
+                        await onSaveSchedule(newSched);
+                      }
+                      setIsScheduleModalOpen(false);
+                    } catch (err: any) {
+                      setScheduleError(err?.message || 'Failed to save schedule');
+                    } finally {
+                      setIsSavingSchedule(false);
+                    }
+                  },
+                  false,
+                  'Confirm & Save Schedule'
+                );
+              }}
+              className="space-y-4"
+            >
+              {/* Toggle Switch Card */}
+              <div
+                onClick={() => setScheduleEnabled(!scheduleEnabled)}
+                className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                  scheduleEnabled
+                    ? 'bg-indigo-50/70 border-indigo-200 ring-1 ring-indigo-500/20'
+                    : 'bg-slate-50 border-slate-200 hover:bg-slate-100/70'
+                }`}
+              >
+                <div className="space-y-0.5">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs font-bold text-slate-900">
+                      Automate with Schedule Calendar
+                    </span>
+                    {scheduleEnabled && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-600 text-white uppercase tracking-wider">
+                        ON
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11.5px] text-slate-500 leading-relaxed">
+                    {scheduleEnabled
+                      ? 'Portal will automatically open and halt according to the times below.'
+                      : 'Disabled. Intake is controlled exclusively via manual Halt/Re-Open.'}
+                  </p>
+                </div>
+
+                <div className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors shrink-0 ${
+                  scheduleEnabled ? 'bg-indigo-600 justify-end' : 'bg-slate-300 justify-start'
+                }`}>
+                  <div className="w-4 h-4 rounded-full bg-white shadow-xs transition-transform" />
+                </div>
+              </div>
+
+              {/* Date & Time Fields */}
+              <div className={`space-y-3.5 transition-opacity ${scheduleEnabled ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
+                {/* Start Date & Time */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Auto-Start Intake Date & Time
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="datetime-local"
+                      value={scheduleStart}
+                      onChange={(e) => {
+                        setScheduleStart(e.target.value);
+                        setScheduleError('');
+                      }}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-900 font-medium"
+                    />
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Leave blank to open immediately when enabled.
+                  </p>
+                </div>
+
+                {/* End Date & Time */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Auto-Stop / Conclude Date & Time
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="datetime-local"
+                      value={scheduleEnd}
+                      onChange={(e) => {
+                        setScheduleEnd(e.target.value);
+                        setScheduleError('');
+                      }}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-900 font-medium"
+                    />
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Intake will automatically conclude and stop accepting orders at this time.
+                  </p>
+                </div>
+
+                {/* Quick Presets */}
+                <div className="pt-1">
+                  <div className="text-[11px] font-semibold text-slate-500 mb-1.5">Quick Presets:</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const now = new Date();
+                        const end = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+                        setScheduleStart(toDateTimeLocalString(now));
+                        setScheduleEnd(toDateTimeLocalString(end));
+                        setScheduleError('');
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 text-[11px] font-medium border border-slate-200 cursor-pointer transition-colors"
+                    >
+                      Next 24 Hours
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const now = new Date();
+                        const end = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+                        setScheduleStart(toDateTimeLocalString(now));
+                        setScheduleEnd(toDateTimeLocalString(end));
+                        setScheduleError('');
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 text-[11px] font-medium border border-slate-200 cursor-pointer transition-colors"
+                    >
+                      Next 48 Hours
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const now = new Date();
+                        const friday = new Date(now);
+                        const day = now.getDay();
+                        const diffToFri = (5 - day + 7) % 7;
+                        friday.setDate(now.getDate() + diffToFri);
+                        friday.setHours(9, 0, 0, 0);
+
+                        const sunday = new Date(friday);
+                        sunday.setDate(friday.getDate() + 2);
+                        sunday.setHours(23, 59, 0, 0);
+
+                        setScheduleStart(toDateTimeLocalString(friday));
+                        setScheduleEnd(toDateTimeLocalString(sunday));
+                        setScheduleError('');
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 text-[11px] font-medium border border-slate-200 cursor-pointer transition-colors"
+                    >
+                      Festival Weekend (Fri-Sun)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setScheduleStart('');
+                        setScheduleEnd('');
+                        setScheduleError('');
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-600 text-[11px] font-medium border border-slate-200 cursor-pointer transition-colors"
+                    >
+                      Clear Dates
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status Preview Card */}
+              {scheduleEnabled && (scheduleStart || scheduleEnd) && (
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1 text-xs">
+                  <div className="font-bold text-slate-700 flex items-center space-x-1.5">
+                    <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Intake Preview:</span>
+                  </div>
+                  <div className="text-slate-600 text-[11.5px] leading-relaxed">
+                    {(() => {
+                      const tempSched: OrderSchedule = {
+                        enabled: true,
+                        startTime: scheduleStart,
+                        endTime: scheduleEnd,
+                      };
+                      const ev = evaluateSchedule(tempSched, true);
+                      if (ev.isBeforeStart) {
+                        return `⏳ Waiting: Intake will open automatically on ${formatScheduleDisplay(scheduleStart)}. Until then, ordering remains closed.`;
+                      } else if (ev.isAfterEnd) {
+                        return `⏹️ Ended: Schedule has concluded as of ${formatScheduleDisplay(scheduleEnd)}. Portal will remain closed.`;
+                      } else {
+                        return `🟢 Active: Current time is within schedule window. Portal will be open and taking orders until ${scheduleEnd ? formatScheduleDisplay(scheduleEnd) : 'concluded'}.`;
+                      }
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {scheduleError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-center space-x-1.5 font-medium">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>{scheduleError}</span>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsScheduleModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingSchedule}
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-colors shadow-sm disabled:opacity-50 cursor-pointer flex items-center space-x-1.5"
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>{isSavingSchedule ? 'Saving...' : 'Save Schedule'}</span>
                 </button>
               </div>
             </form>

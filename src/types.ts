@@ -64,3 +64,9 @@ export interface DeviceLockInfo {
   orderNumber: string;
   orderDate: string;
 }
+
+export interface OrderSchedule {
+  enabled: boolean;
+  startTime: string; // ISO or YYYY-MM-DDTHH:mm
+  endTime: string;   // ISO or YYYY-MM-DDTHH:mm
+}

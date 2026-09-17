@@ -1,4 +1,4 @@
-import { FoodItem, Order, OrderStatus, Student } from '../types';
+import { FoodItem, Order, OrderStatus, Student, OrderSchedule } from '../types';
 
 let TURSO_URL = (import.meta.env.VITE_TURSO_DATABASE_URL || '').trim();
 if (TURSO_URL.startsWith('libsql://')) {
@@ -495,6 +495,46 @@ export const tursoService = {
     await tursoQuery(
       `INSERT INTO app_settings (key, value, updated_at) VALUES ('orders_open', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
       [isOpen ? 'true' : 'false', new Date().toISOString()]
+    );
+  },
+
+  // --- Order Schedule ---
+  getOrderSchedule: async (): Promise<OrderSchedule> => {
+    const rows = await tursoQuery<{ key: string; value: string }>(
+      "SELECT key, value FROM app_settings WHERE key IN ('order_schedule_enabled', 'order_schedule_start', 'order_schedule_end')"
+    );
+    const schedule: OrderSchedule = {
+      enabled: false,
+      startTime: '',
+      endTime: '',
+    };
+    if (rows && rows.length > 0) {
+      rows.forEach((r) => {
+        if (r.key === 'order_schedule_enabled') {
+          schedule.enabled = r.value === 'true' || r.value === '1';
+        } else if (r.key === 'order_schedule_start') {
+          schedule.startTime = r.value || '';
+        } else if (r.key === 'order_schedule_end') {
+          schedule.endTime = r.value || '';
+        }
+      });
+    }
+    return schedule;
+  },
+
+  setOrderSchedule: async (schedule: OrderSchedule): Promise<void> => {
+    const now = new Date().toISOString();
+    await tursoQuery(
+      `INSERT INTO app_settings (key, value, updated_at) VALUES ('order_schedule_enabled', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+      [schedule.enabled ? 'true' : 'false', now]
+    );
+    await tursoQuery(
+      `INSERT INTO app_settings (key, value, updated_at) VALUES ('order_schedule_start', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+      [schedule.startTime || '', now]
+    );
+    await tursoQuery(
+      `INSERT INTO app_settings (key, value, updated_at) VALUES ('order_schedule_end', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+      [schedule.endTime || '', now]
     );
   },
 

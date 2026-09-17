@@ -5,6 +5,7 @@ import {
   CartItem,
   Order,
   OrderStatus,
+  OrderSchedule,
 } from './types';
 import { getStudentDisplayName } from './data/students';
 import {
@@ -41,6 +42,7 @@ import { AdminDashboard } from './components/admin/AdminDashboard';
 import { AdminLoginModal } from './components/admin/AdminLoginModal';
 import { LoginPage } from './components/LoginPage';
 import { calculateAllowedBudget } from './utils/budget';
+import { evaluateSchedule, DEFAULT_SCHEDULE } from './utils/schedule';
 
 export default function App() {
   // Navigation & Core States
@@ -62,6 +64,8 @@ export default function App() {
   const [menuItems, setMenuItems] = useState<FoodItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersOpen, setOrdersOpen] = useState<boolean>(true);
+  const [rawOrdersOpen, setRawOrdersOpen] = useState<boolean>(true);
+  const [orderSchedule, setOrderSchedule] = useState<OrderSchedule>(DEFAULT_SCHEDULE);
 
   // Selection & Cart States
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(() => {
@@ -181,17 +185,21 @@ export default function App() {
     // Asynchronously fetch fresh data from backend
     const loadBackendData = async () => {
       try {
-        const [stList, menuList, orderList, isOpen, dynamicTiers] = await Promise.all([
+        const [stList, menuList, orderList, isOpen, dynamicTiers, schedule] = await Promise.all([
           fetchStudents(),
           fetchMenuItems(),
           fetchOrders(),
           api.getOrderingStatus(),
           api.getGuestTiers(),
+          api.getOrderSchedule(),
         ]);
         setStudents(stList);
         setMenuItems(menuList);
         setOrders(orderList);
-        setOrdersOpen(isOpen);
+        setRawOrdersOpen(isOpen);
+        setOrderSchedule(schedule);
+        const effective = evaluateSchedule(schedule, isOpen);
+        setOrdersOpen(effective.isOpen);
         localStorage.setItem('app_guest_tiers', JSON.stringify(dynamicTiers));
 
         const currentAdminToken = localStorage.getItem('admin_token');
@@ -311,19 +319,29 @@ export default function App() {
       try {
         // 2. Fast background sync when user is viewing the Admin Dashboard
         if (currentView === 'admin') {
-          const [freshOrders, isOpen] = await Promise.all([
+          const [freshOrders, isOpen, schedule] = await Promise.all([
             fetchOrders(),
             api.getOrderingStatus(),
+            api.getOrderSchedule(),
           ]);
           if (freshOrders) {
             setOrders(freshOrders);
           }
-          setOrdersOpen(isOpen);
+          setRawOrdersOpen(isOpen);
+          setOrderSchedule(schedule);
+          const effective = evaluateSchedule(schedule, isOpen);
+          setOrdersOpen(effective.isOpen);
         } else {
           // 3. For student views: NEVER download the full orders database!
           // Only check ordering open/closed status at a relaxed interval
-          const isOpen = await api.getOrderingStatus();
-          setOrdersOpen(isOpen);
+          const [isOpen, schedule] = await Promise.all([
+            api.getOrderingStatus(),
+            api.getOrderSchedule(),
+          ]);
+          setRawOrdersOpen(isOpen);
+          setOrderSchedule(schedule);
+          const effective = evaluateSchedule(schedule, isOpen);
+          setOrdersOpen(effective.isOpen);
         }
       } catch (e) {
         // Silent
@@ -351,6 +369,16 @@ export default function App() {
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [currentView]);
+
+  // 6. Keep effective ordersOpen updated if clock ticks past schedule start or end time
+  useEffect(() => {
+    const updateEffective = () => {
+      const effective = evaluateSchedule(orderSchedule, rawOrdersOpen);
+      setOrdersOpen(effective.isOpen);
+    };
+    const ticker = setInterval(updateEffective, 10000);
+    return () => clearInterval(ticker);
+  }, [orderSchedule, rawOrdersOpen]);
 
   // Persist session navigation state to localStorage so refresh keeps current view
   useEffect(() => {
@@ -781,10 +809,16 @@ export default function App() {
 
   const handleRefreshOrders = async () => {
     try {
-      const fresh = await fetchOrders();
+      const [fresh, isOpen, schedule] = await Promise.all([
+        fetchOrders(),
+        api.getOrderingStatus(),
+        api.getOrderSchedule(),
+      ]);
       if (fresh) setOrders(fresh);
-      const isOpen = await api.getOrderingStatus();
-      setOrdersOpen(isOpen);
+      setRawOrdersOpen(isOpen);
+      setOrderSchedule(schedule);
+      const effective = evaluateSchedule(schedule, isOpen);
+      setOrdersOpen(effective.isOpen);
     } catch (e) {
       console.error('Failed to refresh orders:', e);
     }
@@ -878,10 +912,29 @@ export default function App() {
   const handleToggleOrdering = async (isOpen: boolean) => {
     try {
       await api.setOrderingStatus(isOpen);
-      setOrdersOpen(isOpen);
+      setRawOrdersOpen(isOpen);
+      const effective = evaluateSchedule(orderSchedule, isOpen);
+      setOrdersOpen(effective.isOpen);
     } catch (e) {
       console.error('Error toggling ordering status:', e);
       alert('Failed to update ordering status. Please try again.');
+    }
+  };
+
+  const handleSaveSchedule = async (newSchedule: OrderSchedule) => {
+    try {
+      await api.setOrderSchedule(newSchedule);
+      setOrderSchedule(newSchedule);
+      if (newSchedule.enabled) {
+        await api.setOrderingStatus(true);
+        setRawOrdersOpen(true);
+      }
+      const effective = evaluateSchedule(newSchedule, true);
+      setOrdersOpen(effective.isOpen);
+    } catch (e) {
+      console.error('Error saving order schedule:', e);
+      alert('Failed to update intake schedule. Please try again.');
+      throw e;
     }
   };
 
@@ -994,7 +1047,9 @@ export default function App() {
             onExitAdmin={handleAdminLogout}
             onLogoutAdmin={handleAdminLogout}
             ordersOpen={ordersOpen}
+            orderSchedule={orderSchedule}
             onToggleOrdering={handleToggleOrdering}
+            onSaveSchedule={handleSaveSchedule}
             onRefreshOrders={handleRefreshOrders}
           />
         )}

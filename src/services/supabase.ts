@@ -1,4 +1,4 @@
-import { FoodItem, Order, OrderStatus, Student } from '../types';
+import { FoodItem, Order, OrderStatus, Student, OrderSchedule } from '../types';
 
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '')
   .replace(/\/+$/, '')
@@ -499,6 +499,47 @@ export const supabaseService = {
       headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
       body: JSON.stringify({ key: 'orders_open', value: String(isOpen) }),
     });
+  },
+
+  // --- Order Schedule ---
+  getOrderSchedule: async (): Promise<OrderSchedule> => {
+    const schedule: OrderSchedule = {
+      enabled: false,
+      startTime: '',
+      endTime: '',
+    };
+    try {
+      const rows = await supabaseFetch<any[]>('app_settings?key=in.(order_schedule_enabled,order_schedule_start,order_schedule_end)&select=*');
+      if (rows && rows.length > 0) {
+        rows.forEach((r) => {
+          if (r.key === 'order_schedule_enabled') {
+            schedule.enabled = r.value === 'true' || r.value === '1';
+          } else if (r.key === 'order_schedule_start') {
+            schedule.startTime = r.value || '';
+          } else if (r.key === 'order_schedule_end') {
+            schedule.endTime = r.value || '';
+          }
+        });
+      }
+    } catch (e) {
+      // ignore
+    }
+    return schedule;
+  },
+
+  setOrderSchedule: async (schedule: OrderSchedule): Promise<void> => {
+    const items = [
+      { key: 'order_schedule_enabled', value: schedule.enabled ? 'true' : 'false' },
+      { key: 'order_schedule_start', value: schedule.startTime || '' },
+      { key: 'order_schedule_end', value: schedule.endTime || '' },
+    ];
+    for (const item of items) {
+      await supabaseFetch<any[]>('app_settings?on_conflict=key', {
+        method: 'POST',
+        headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+        body: JSON.stringify(item),
+      }).catch(() => {});
+    }
   },
 
   getAdminCredentials: async (): Promise<{username: string, password: string}> => {
