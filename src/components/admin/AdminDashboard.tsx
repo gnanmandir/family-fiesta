@@ -87,6 +87,24 @@ const CircularClockDial: React.FC<CircularClockDialProps> = ({
   const dialRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
 
+  // Editable numeric inputs
+  const [editingHour, setEditingHour] = useState(false);
+  const [tempHour, setTempHour] = useState(String(hour12));
+  const [editingMinute, setEditingMinute] = useState(false);
+  const [tempMinute, setTempMinute] = useState(String(minute).padStart(2, '0'));
+
+  useEffect(() => {
+    if (!editingHour) {
+      setTempHour(String(hour12).padStart(2, '0'));
+    }
+  }, [hour12, editingHour]);
+
+  useEffect(() => {
+    if (!editingMinute) {
+      setTempMinute(String(minute).padStart(2, '0'));
+    }
+  }, [minute, editingMinute]);
+
   const themeConfig = {
     indigo: {
       bg: 'bg-indigo-600',
@@ -127,6 +145,7 @@ const CircularClockDial: React.FC<CircularClockDialProps> = ({
       if (h === 0) h = 12;
       onChangeHour(h);
     } else {
+      // Exact minute 0-59 (each 6 degrees is 1 minute)
       let m = Math.round(angle / 6) % 60;
       onChangeMinute(m);
     }
@@ -168,29 +187,81 @@ const CircularClockDial: React.FC<CircularClockDialProps> = ({
       {/* Digital Readout & Unit Switcher */}
       <div className="flex items-center space-x-2 mb-1.5">
         <div className="flex items-center bg-slate-200/80 p-0.5 rounded-xl shadow-2xs">
-          <button
-            type="button"
-            onClick={() => setMode('hours')}
-            className={`px-3 py-1 rounded-lg text-xs sm:text-sm font-black transition-all cursor-pointer ${
+          {/* Hour Input / Button */}
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={2}
+            value={editingHour ? tempHour : String(hour12).padStart(2, '0')}
+            onFocus={() => {
+              setMode('hours');
+              setEditingHour(true);
+              setTempHour(String(hour12));
+            }}
+            onChange={(e) => {
+              const val = e.target.value.replace(/\D/g, '').slice(0, 2);
+              setTempHour(val);
+              const num = parseInt(val, 10);
+              if (!isNaN(num) && num >= 1 && num <= 12) {
+                onChangeHour(num);
+              }
+            }}
+            onBlur={() => {
+              setEditingHour(false);
+              const num = parseInt(tempHour, 10);
+              if (isNaN(num) || num < 1 || num > 12) {
+                setTempHour(String(hour12).padStart(2, '0'));
+              } else {
+                onChangeHour(num);
+              }
+            }}
+            className={`w-9 h-7 text-center rounded-lg text-xs sm:text-sm font-black transition-all cursor-pointer outline-none ${
               mode === 'hours'
                 ? `${themeConfig.bg} text-white shadow-xs`
-                : 'text-slate-700 hover:text-slate-900'
+                : 'text-slate-700 hover:text-slate-900 bg-transparent'
             }`}
-          >
-            {String(hour12).padStart(2, '0')}
-          </button>
+            title="Click to type exact hour (1-12)"
+          />
+
           <span className="px-0.5 text-slate-400 font-bold text-xs sm:text-sm">:</span>
-          <button
-            type="button"
-            onClick={() => setMode('minutes')}
-            className={`px-3 py-1 rounded-lg text-xs sm:text-sm font-black transition-all cursor-pointer ${
+
+          {/* Minute Input / Button */}
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={2}
+            value={editingMinute ? tempMinute : String(minute).padStart(2, '0')}
+            onFocus={() => {
+              setMode('minutes');
+              setEditingMinute(true);
+              setTempMinute(String(minute));
+            }}
+            onChange={(e) => {
+              const val = e.target.value.replace(/\D/g, '').slice(0, 2);
+              setTempMinute(val);
+              const num = parseInt(val, 10);
+              if (!isNaN(num) && num >= 0 && num <= 59) {
+                onChangeMinute(num);
+              }
+            }}
+            onBlur={() => {
+              setEditingMinute(false);
+              const num = parseInt(tempMinute, 10);
+              if (isNaN(num) || num < 0 || num > 59) {
+                setTempMinute(String(minute).padStart(2, '0'));
+              } else {
+                onChangeMinute(num);
+              }
+            }}
+            className={`w-9 h-7 text-center rounded-lg text-xs sm:text-sm font-black transition-all cursor-pointer outline-none ${
               mode === 'minutes'
                 ? `${themeConfig.bg} text-white shadow-xs`
-                : 'text-slate-700 hover:text-slate-900'
+                : 'text-slate-700 hover:text-slate-900 bg-transparent'
             }`}
-          >
-            {String(minute).padStart(2, '0')}
-          </button>
+            title="Click to type exact minute (0-59)"
+          />
         </div>
 
         {/* AM / PM Segmented Control */}
@@ -223,7 +294,11 @@ const CircularClockDial: React.FC<CircularClockDialProps> = ({
       {/* Mode Subtitle Guide */}
       <span className="text-[10px] font-bold text-slate-400 mb-1 tracking-wide flex items-center space-x-1">
         <Clock className="w-3 h-3 text-slate-400" />
-        <span>{mode === 'hours' ? 'Tap hour on circular clock' : 'Tap minute on circular clock'}</span>
+        <span>
+          {mode === 'hours'
+            ? 'Tap or drag hour on circular clock'
+            : 'Tap, drag or use +1m to set exact minute'}
+        </span>
       </span>
 
       {/* Circular Clock Dial */}
@@ -233,18 +308,26 @@ const CircularClockDial: React.FC<CircularClockDialProps> = ({
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         className="w-[180px] h-[180px] rounded-full bg-white border-2 border-slate-200/90 relative shadow-inner flex items-center justify-center select-none cursor-pointer touch-none"
-        title="Tap or drag anywhere to set time"
+        title="Tap or drag anywhere to set exact time"
       >
-        {/* Minute ticks */}
+        {/* All 60 Minute Ticks */}
         {Array.from({ length: 60 }, (_, i) => i).map((i) => {
-          if (i % 5 === 0) return null;
+          const isFiveMin = i % 5 === 0;
+          const isCurrent = mode === 'minutes' && i === minute;
           const ang = (i * 6 - 90) * (Math.PI / 180);
-          const x = cx + (rNum + 7) * Math.cos(ang);
-          const y = cy + (rNum + 7) * Math.sin(ang);
+          const dist = isFiveMin ? rNum + 10 : rNum + 8;
+          const x = cx + dist * Math.cos(ang);
+          const y = cy + dist * Math.sin(ang);
           return (
             <div
               key={i}
-              className="absolute w-1 h-1 rounded-full bg-slate-300 pointer-events-none -translate-x-1/2 -translate-y-1/2"
+              className={`absolute rounded-full pointer-events-none -translate-x-1/2 -translate-y-1/2 transition-all ${
+                isCurrent
+                  ? `w-2.5 h-2.5 ${themeConfig.bg} ring-2 ring-white shadow-xs z-20`
+                  : isFiveMin
+                  ? 'w-1.5 h-1.5 bg-slate-400'
+                  : 'w-1 h-1 bg-slate-300'
+              }`}
               style={{ left: `${x}px`, top: `${y}px` }}
             />
           );
@@ -269,7 +352,7 @@ const CircularClockDial: React.FC<CircularClockDialProps> = ({
           style={{ left: `${cx}px`, top: `${cy}px`, transform: 'translate(-50%, -50%)' }}
         />
 
-        {/* Selected Pointer Bubble */}
+        {/* Selected Pointer Bubble (displays exact hour or minute) */}
         <div
           className={`absolute w-6.5 h-6.5 rounded-full ${themeConfig.bg} text-white font-black text-[11px] flex items-center justify-center z-15 pointer-events-none shadow-md`}
           style={{ left: `${handX}px`, top: `${handY}px`, transform: 'translate(-50%, -50%)' }}
@@ -277,7 +360,7 @@ const CircularClockDial: React.FC<CircularClockDialProps> = ({
           {mode === 'hours' ? hour12 : String(minute).padStart(2, '0')}
         </div>
 
-        {/* Clock Numbers */}
+        {/* Clock Numbers (pointer-events-none so dial pointer drag/tap is continuous and exact) */}
         {mode === 'hours'
           ? hoursList.map((h) => {
               const ang = (h * 30 - 90) * (Math.PI / 180);
@@ -287,13 +370,8 @@ const CircularClockDial: React.FC<CircularClockDialProps> = ({
               return (
                 <div
                   key={h}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onChangeHour(h);
-                    setTimeout(() => setMode('minutes'), 250);
-                  }}
-                  className={`absolute w-6.5 h-6.5 rounded-full flex items-center justify-center text-xs font-black transition-colors cursor-pointer ${
-                    isSelected ? 'text-white' : 'text-slate-700 hover:text-indigo-600'
+                  className={`absolute w-6.5 h-6.5 rounded-full flex items-center justify-center text-xs font-black transition-colors pointer-events-none ${
+                    isSelected ? 'text-white' : 'text-slate-700'
                   }`}
                   style={{
                     left: `${x}px`,
@@ -313,12 +391,8 @@ const CircularClockDial: React.FC<CircularClockDialProps> = ({
               return (
                 <div
                   key={m}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onChangeMinute(m);
-                  }}
-                  className={`absolute w-6.5 h-6.5 rounded-full flex items-center justify-center text-[10.5px] font-black transition-colors cursor-pointer ${
-                    isSelected ? 'text-white' : 'text-slate-700 hover:text-indigo-600'
+                  className={`absolute w-6.5 h-6.5 rounded-full flex items-center justify-center text-[10.5px] font-black transition-colors pointer-events-none ${
+                    isSelected ? 'text-white' : 'text-slate-700'
                   }`}
                   style={{
                     left: `${x}px`,
@@ -330,6 +404,83 @@ const CircularClockDial: React.FC<CircularClockDialProps> = ({
                 </div>
               );
             })}
+      </div>
+
+      {/* Fine-Tuning Stepper Controls Below Clock */}
+      <div className="w-full max-w-[210px] mt-2 flex items-center justify-between px-1">
+        {mode === 'minutes' ? (
+          <>
+            <div className="flex items-center space-x-1">
+              <button
+                type="button"
+                onClick={() => onChangeMinute((minute - 5 + 60) % 60)}
+                className="px-2 py-1 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-[10.5px] font-bold shadow-2xs transition-all cursor-pointer"
+                title="Minus 5 minutes"
+              >
+                -5m
+              </button>
+              <button
+                type="button"
+                onClick={() => onChangeMinute((minute - 1 + 60) % 60)}
+                className="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 text-[11px] font-extrabold shadow-2xs transition-all cursor-pointer"
+                title="Minus 1 minute"
+              >
+                −1m
+              </button>
+            </div>
+
+            <div className="text-center px-2 py-0.5 rounded-md bg-white border border-slate-200 shadow-2xs">
+              <span className="text-[11.5px] font-black text-slate-900 font-mono">
+                :{String(minute).padStart(2, '0')}
+              </span>
+            </div>
+
+            <div className="flex items-center space-x-1">
+              <button
+                type="button"
+                onClick={() => onChangeMinute((minute + 1) % 60)}
+                className={`px-2.5 py-1 rounded-lg text-white font-extrabold text-[11px] shadow-2xs transition-all cursor-pointer ${themeConfig.bg}`}
+                title="Plus 1 minute"
+              >
+                +1m
+              </button>
+              <button
+                type="button"
+                onClick={() => onChangeMinute((minute + 5) % 60)}
+                className="px-2 py-1 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-[10.5px] font-bold shadow-2xs transition-all cursor-pointer"
+                title="Plus 5 minutes"
+              >
+                +5m
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={() => onChangeHour(hour12 === 1 ? 12 : hour12 - 1)}
+              className="px-3 py-1 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 text-[11px] font-extrabold shadow-2xs transition-all cursor-pointer"
+              title="Minus 1 hour"
+            >
+              −1 hr
+            </button>
+
+            <div className="text-center px-2.5 py-0.5 rounded-md bg-white border border-slate-200 shadow-2xs">
+              <span className="text-[11.5px] font-black text-slate-900 font-mono">
+                {String(hour12).padStart(2, '0')} hr
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => onChangeHour(hour12 === 12 ? 1 : hour12 + 1)}
+              className={`px-3 py-1 rounded-lg text-white font-extrabold text-[11px] shadow-2xs transition-all cursor-pointer ${themeConfig.bg}`}
+              title="Plus 1 hour"
+            >
+              +1 hr
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
