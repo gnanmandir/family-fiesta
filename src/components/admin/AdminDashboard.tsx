@@ -63,6 +63,312 @@ interface AdminDashboardProps {
   onRefreshOrders?: () => Promise<void> | void;
 }
 
+interface DateTimePickerProps {
+  label: string;
+  sublabel?: string;
+  icon: React.ReactNode;
+  iconBg: string;
+  value: string; // "YYYY-MM-DDTHH:mm" or ""
+  onChange: (isoString: string) => void;
+  onClear?: () => void;
+  defaultTime?: { hour: number; minute: number; ampm: 'AM' | 'PM' };
+  presets?: { label: string; onClick: () => void }[];
+  note?: string;
+}
+
+const MONTHS = [
+  { value: 1, label: '01 - Jan' },
+  { value: 2, label: '02 - Feb' },
+  { value: 3, label: '03 - Mar' },
+  { value: 4, label: '04 - Apr' },
+  { value: 5, label: '05 - May' },
+  { value: 6, label: '06 - Jun' },
+  { value: 7, label: '07 - Jul' },
+  { value: 8, label: '08 - Aug' },
+  { value: 9, label: '09 - Sep' },
+  { value: 10, label: '10 - Oct' },
+  { value: 11, label: '11 - Nov' },
+  { value: 12, label: '12 - Dec' },
+];
+
+const HOURS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+const MINUTES = [
+  0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 59,
+];
+
+function parseIso(val: string) {
+  if (!val) return null;
+  const d = new Date(val);
+  if (isNaN(d.getTime())) return null;
+  const day = d.getDate();
+  const month = d.getMonth() + 1;
+  const year = d.getFullYear();
+  const h24 = d.getHours();
+  const ampm: 'AM' | 'PM' = h24 >= 12 ? 'PM' : 'AM';
+  const hour12 = h24 % 12 || 12;
+  const minute = d.getMinutes();
+  return { day, month, year, hour12, minute, ampm };
+}
+
+function buildIso(day: number, month: number, year: number, hour12: number, minute: number, ampm: 'AM' | 'PM') {
+  let h = hour12 % 12;
+  if (ampm === 'PM') h += 12;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${year}-${pad(month)}-${pad(day)}T${pad(h)}:${pad(minute)}`;
+}
+
+const DateTimePicker: React.FC<DateTimePickerProps> = ({
+  label,
+  sublabel,
+  icon,
+  iconBg,
+  value,
+  onChange,
+  onClear,
+  defaultTime = { hour: 11, minute: 59, ampm: 'PM' },
+  presets,
+  note,
+}) => {
+  const parsed = parseIso(value);
+
+  const currentMonth = parsed?.month || new Date().getMonth() + 1;
+  const currentYear = parsed?.year || new Date().getFullYear();
+  const maxDays = new Date(currentYear, currentMonth, 0).getDate();
+  const daysList = Array.from({ length: maxDays }, (_, i) => i + 1);
+
+  const update = (
+    newDay?: number,
+    newMonth?: number,
+    newYear?: number,
+    newHour?: number,
+    newMin?: number,
+    newAmpm?: 'AM' | 'PM'
+  ) => {
+    const now = new Date();
+    const d = newDay ?? parsed?.day ?? now.getDate();
+    const m = newMonth ?? parsed?.month ?? (now.getMonth() + 1);
+    const y = newYear ?? parsed?.year ?? now.getFullYear();
+    const h = newHour ?? parsed?.hour12 ?? defaultTime.hour;
+    const min = newMin ?? parsed?.minute ?? defaultTime.minute;
+    const ap = newAmpm ?? parsed?.ampm ?? defaultTime.ampm;
+
+    const validMaxDays = new Date(y, m, 0).getDate();
+    const safeDay = Math.min(d, validMaxDays);
+
+    onChange(buildIso(safeDay, m, y, h, min, ap));
+  };
+
+  const setQuickDayOffset = (offsetDays: number) => {
+    const target = new Date();
+    target.setDate(target.getDate() + offsetDays);
+    update(target.getDate(), target.getMonth() + 1, target.getFullYear());
+  };
+
+  return (
+    <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50/90 border border-slate-200/90 space-y-3">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <div className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold text-xs ${iconBg}`}>
+            {icon}
+          </div>
+          <div>
+            <span className="text-xs font-extrabold text-slate-900">{label}</span>
+            {sublabel && <span className="text-[11px] text-slate-400 font-medium ml-1.5">{sublabel}</span>}
+          </div>
+        </div>
+        {value && onClear && (
+          <button
+            type="button"
+            onClick={onClear}
+            className="text-[11px] text-rose-500 hover:text-rose-700 font-bold cursor-pointer transition-colors"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      {/* Date Selector Row (DD / MM / YYYY) */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-bold text-slate-700 tracking-wide flex items-center space-x-1">
+            <Calendar className="w-3 h-3 text-slate-500" />
+            <span>Date (DD / MM / YYYY)</span>
+          </span>
+          {/* Quick Date Chips */}
+          <div className="flex items-center space-x-1">
+            <button
+              type="button"
+              onClick={() => setQuickDayOffset(0)}
+              className="text-[10.5px] px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 font-semibold cursor-pointer transition-all shadow-2xs"
+            >
+              Today
+            </button>
+            <button
+              type="button"
+              onClick={() => setQuickDayOffset(1)}
+              className="text-[10.5px] px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 font-semibold cursor-pointer transition-all shadow-2xs"
+            >
+              Tomorrow
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          {/* Day (DD) */}
+          <div>
+            <label className="block text-[10px] font-bold text-slate-500 mb-0.5">Day (DD)</label>
+            <select
+              value={parsed?.day ?? ''}
+              onChange={(e) => update(Number(e.target.value))}
+              className="w-full px-2.5 py-2 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-2xs cursor-pointer"
+            >
+              <option value="" disabled>DD</option>
+              {daysList.map((d) => (
+                <option key={d} value={d}>{String(d).padStart(2, '0')}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Month (MM) */}
+          <div>
+            <label className="block text-[10px] font-bold text-slate-500 mb-0.5">Month (MM)</label>
+            <select
+              value={parsed?.month ?? ''}
+              onChange={(e) => update(undefined, Number(e.target.value))}
+              className="w-full px-2 py-2 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-2xs cursor-pointer truncate"
+            >
+              <option value="" disabled>MM</option>
+              {MONTHS.map((m) => (
+                <option key={m.value} value={m.value}>{m.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Year (YYYY) */}
+          <div>
+            <label className="block text-[10px] font-bold text-slate-500 mb-0.5">Year (YYYY)</label>
+            <select
+              value={parsed?.year ?? ''}
+              onChange={(e) => update(undefined, undefined, Number(e.target.value))}
+              className="w-full px-2.5 py-2 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-2xs cursor-pointer"
+            >
+              <option value="" disabled>YYYY</option>
+              <option value={2026}>2026</option>
+              <option value={2027}>2027</option>
+              <option value={2028}>2028</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Time Selector Row (HH : MM AM/PM) */}
+      <div className="space-y-1.5 pt-1">
+        <span className="text-[11px] font-bold text-slate-700 tracking-wide flex items-center space-x-1">
+          <Clock className="w-3 h-3 text-slate-500" />
+          <span>Time (Hour : Minute : AM/PM)</span>
+        </span>
+
+        <div className="grid grid-cols-12 gap-2 items-end">
+          {/* Hour */}
+          <div className="col-span-4">
+            <label className="block text-[10px] font-bold text-slate-500 mb-0.5">Hour (1–12)</label>
+            <select
+              value={parsed?.hour12 ?? ''}
+              onChange={(e) => update(undefined, undefined, undefined, Number(e.target.value))}
+              className="w-full px-2.5 py-2 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-2xs cursor-pointer"
+            >
+              <option value="" disabled>HH</option>
+              {HOURS.map((h) => (
+                <option key={h} value={h}>{String(h).padStart(2, '0')}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Minute */}
+          <div className="col-span-4">
+            <label className="block text-[10px] font-bold text-slate-500 mb-0.5">Minute (00–59)</label>
+            <select
+              value={parsed ? String(parsed.minute) : ''}
+              onChange={(e) => update(undefined, undefined, undefined, undefined, Number(e.target.value))}
+              className="w-full px-2.5 py-2 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-2xs cursor-pointer"
+            >
+              <option value="" disabled>MM</option>
+              {MINUTES.map((m) => (
+                <option key={m} value={m}>{String(m).padStart(2, '0')}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* AM / PM Segmented Control */}
+          <div className="col-span-4 flex items-center bg-slate-200/80 p-1 rounded-xl h-[38px] sm:h-[42px]">
+            <button
+              type="button"
+              onClick={() => update(undefined, undefined, undefined, undefined, undefined, 'AM')}
+              className={`flex-1 h-full rounded-lg text-xs font-black transition-all cursor-pointer ${
+                parsed?.ampm === 'AM'
+                  ? 'bg-white text-indigo-700 shadow-xs ring-1 ring-slate-200'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              AM
+            </button>
+            <button
+              type="button"
+              onClick={() => update(undefined, undefined, undefined, undefined, undefined, 'PM')}
+              className={`flex-1 h-full rounded-lg text-xs font-black transition-all cursor-pointer ${
+                parsed?.ampm === 'PM'
+                  ? 'bg-white text-indigo-700 shadow-xs ring-1 ring-slate-200'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              PM
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Note / Helper Text */}
+      {note && (
+        <p className="text-[10.5px] text-slate-400 font-medium">
+          {note}
+        </p>
+      )}
+
+      {/* Formatted Date & Time Badge */}
+      {value && (
+        <div className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 flex items-center justify-between text-[11px] font-semibold text-slate-700 shadow-2xs">
+          <div className="flex items-center space-x-1.5 truncate">
+            <span className="text-slate-400">Selected:</span>
+            <span className="font-bold text-slate-900 truncate">{formatScheduleDisplay(value)}</span>
+          </div>
+          <span className="text-[10.5px] font-mono font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 px-2 py-0.5 rounded-md shrink-0 ml-2">
+            {String(parsed?.day).padStart(2, '0')}/{String(parsed?.month).padStart(2, '0')}/{parsed?.year} {String(parsed?.hour12).padStart(2, '0')}:{String(parsed?.minute).padStart(2, '0')} {parsed?.ampm}
+          </span>
+        </div>
+      )}
+
+      {/* Presets if provided */}
+      {presets && presets.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-200/60">
+          <span className="text-[10.5px] font-bold text-slate-400 mr-0.5">Presets:</span>
+          {presets.map((p, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={p.onClick}
+              className="px-2.5 py-1 rounded-lg bg-white hover:bg-indigo-50 hover:border-indigo-300 text-slate-700 hover:text-indigo-700 text-[11px] font-semibold border border-slate-200 cursor-pointer shadow-2xs transition-all"
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   orders,
   students,
@@ -1353,118 +1659,82 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               className="space-y-3.5"
             >
               {/* Card 1: Auto-Close Time (Orders Stop) */}
-              <div className="p-3.5 rounded-2xl bg-slate-50/90 border border-slate-200/90 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-extrabold text-slate-800 flex items-center space-x-1.5">
-                    <span className="w-5 h-5 rounded-md bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
-                      <Clock className="w-3 h-3" />
-                    </span>
-                    <span>Auto-Close Time</span>
-                    <span className="font-normal text-slate-400 text-[11px]">(Orders halt)</span>
-                  </label>
-                  {scheduleEnd && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setScheduleEnd('');
-                        setScheduleError('');
-                      }}
-                      className="text-[11px] text-rose-500 hover:text-rose-700 font-semibold cursor-pointer"
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-
-                <input
-                  type="datetime-local"
-                  value={scheduleEnd}
-                  onChange={(e) => {
-                    setScheduleEnd(e.target.value);
-                    setScheduleError('');
-                  }}
-                  className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-2xs transition-all"
-                />
-
-                {/* Quick Presets directly under Auto-Close */}
-                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                  <span className="text-[10.5px] font-bold text-slate-400 mr-0.5">Presets:</span>
-                  <button
-                    type="button"
-                    onClick={() => {
+              <DateTimePicker
+                label="Auto-Close Time"
+                sublabel="(Orders halt)"
+                icon={<Clock className="w-3 h-3" />}
+                iconBg="bg-rose-100 text-rose-700"
+                value={scheduleEnd}
+                onChange={(val) => {
+                  setScheduleEnd(val);
+                  setScheduleError('');
+                }}
+                onClear={() => {
+                  setScheduleEnd('');
+                  setScheduleError('');
+                }}
+                defaultTime={{ hour: 11, minute: 59, ampm: 'PM' }}
+                presets={[
+                  {
+                    label: 'Tonight 11:59 PM',
+                    onClick: () => {
                       const tonight = new Date();
                       tonight.setHours(23, 59, 0, 0);
                       setScheduleEnd(toDateTimeLocalString(tonight));
                       setScheduleError('');
-                    }}
-                    className="px-2.5 py-1 rounded-lg bg-white hover:bg-indigo-50 hover:border-indigo-300 text-slate-700 hover:text-indigo-700 text-[11px] font-semibold border border-slate-200 cursor-pointer shadow-2xs transition-all"
-                  >
-                    Tonight 11:59 PM
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
+                    },
+                  },
+                  {
+                    label: 'Tomorrow 11:59 PM',
+                    onClick: () => {
                       const tomorrow = new Date();
                       tomorrow.setDate(tomorrow.getDate() + 1);
                       tomorrow.setHours(23, 59, 0, 0);
                       setScheduleEnd(toDateTimeLocalString(tomorrow));
                       setScheduleError('');
-                    }}
-                    className="px-2.5 py-1 rounded-lg bg-white hover:bg-indigo-50 hover:border-indigo-300 text-slate-700 hover:text-indigo-700 text-[11px] font-semibold border border-slate-200 cursor-pointer shadow-2xs transition-all"
-                  >
-                    Tomorrow 11:59 PM
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
+                    },
+                  },
+                  {
+                    label: 'In 2 Hours',
+                    onClick: () => {
                       const twoHours = new Date(Date.now() + 2 * 60 * 60 * 1000);
                       setScheduleEnd(toDateTimeLocalString(twoHours));
                       setScheduleError('');
-                    }}
-                    className="px-2.5 py-1 rounded-lg bg-white hover:bg-indigo-50 hover:border-indigo-300 text-slate-700 hover:text-indigo-700 text-[11px] font-semibold border border-slate-200 cursor-pointer shadow-2xs transition-all"
-                  >
-                    In 2 Hours
-                  </button>
-                </div>
-              </div>
+                    },
+                  },
+                ]}
+              />
 
               {/* Card 2: Auto-Open Time (Orders Start) */}
-              <div className="p-3.5 rounded-2xl bg-slate-50/90 border border-slate-200/90 space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-extrabold text-slate-800 flex items-center space-x-1.5">
-                    <span className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
-                      <Power className="w-3 h-3" />
-                    </span>
-                    <span>Auto-Open Time</span>
-                    <span className="font-normal text-slate-400 text-[11px]">(Orders start)</span>
-                  </label>
-                  {scheduleStart && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setScheduleStart('');
-                        setScheduleError('');
-                      }}
-                      className="text-[11px] text-rose-500 hover:text-rose-700 font-semibold cursor-pointer"
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-
-                <input
-                  type="datetime-local"
-                  value={scheduleStart}
-                  onChange={(e) => {
-                    setScheduleStart(e.target.value);
-                    setScheduleError('');
-                  }}
-                  className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-2xs transition-all"
-                />
-                <p className="text-[10.5px] text-slate-400 font-medium">
-                  Leave blank if ordering is already open right now.
-                </p>
-              </div>
+              <DateTimePicker
+                label="Auto-Open Time"
+                sublabel="(Orders start)"
+                icon={<Power className="w-3 h-3" />}
+                iconBg="bg-emerald-100 text-emerald-700"
+                value={scheduleStart}
+                onChange={(val) => {
+                  setScheduleStart(val);
+                  setScheduleError('');
+                }}
+                onClear={() => {
+                  setScheduleStart('');
+                  setScheduleError('');
+                }}
+                defaultTime={{ hour: 9, minute: 0, ampm: 'AM' }}
+                note="Optional. Leave blank if ordering is already open right now."
+                presets={[
+                  {
+                    label: 'Tomorrow 9:00 AM',
+                    onClick: () => {
+                      const tomorrow = new Date();
+                      tomorrow.setDate(tomorrow.getDate() + 1);
+                      tomorrow.setHours(9, 0, 0, 0);
+                      setScheduleStart(toDateTimeLocalString(tomorrow));
+                      setScheduleError('');
+                    },
+                  },
+                ]}
+              />
 
               {/* Live Plain-English Timeline Preview */}
               <div className="px-3.5 py-2.5 rounded-xl bg-indigo-50/70 border border-indigo-200/70 flex items-center space-x-2 text-xs font-semibold text-indigo-950">
