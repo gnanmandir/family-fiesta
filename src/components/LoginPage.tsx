@@ -7,9 +7,10 @@ import { AlertCircle, User, Info, Calendar } from 'lucide-react';
 
 interface LoginPageProps {
   students: Student[];
-  onStudentLogin: (student: Student) => void;
+  onStudentLogin: (student: Student, role: import('../types').IntakePhase) => void;
   onAdminLogin: (role?: 'super' | 'admin') => void;
   ordersOpen?: boolean;
+  intakePhase: import('../types').IntakePhase;
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({
@@ -17,6 +18,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   onStudentLogin,
   onAdminLogin,
   ordersOpen = true,
+  intakePhase = 'parent',
 }) => {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -157,17 +159,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       const effectiveBirthDate = (matchedStudent.birthDate || initBackup?.birthDate || '').trim();
       const effectiveGmNo = matchedStudent.gmNo || initBackup?.gmNo || 0;
 
-      // Strict slash-only password validation (requires slash format e.g. 05/06/2004)
+      // 1. Role Detection (Traffic Cop)
       const inputClean = cleanPwd.replace(/\s+/g, '');
       let isPasswordCorrect = false;
+      let role: import('../types').IntakePhase = 'parent';
 
-      // Must strictly contain slash
+      // Check Parent (Birth Date with Slashes)
       if (inputClean.includes('/') && effectiveBirthDate) {
-        // Direct exact match (e.g. "05/06/2004")
         if (inputClean.toLowerCase() === effectiveBirthDate.toLowerCase()) {
           isPasswordCorrect = true;
+          role = 'parent';
         } else {
-          // In case single digit day/month entered with slashes: e.g. "5/6/2004" matching "05/06/2004"
           const parts = effectiveBirthDate.split('/');
           const inputParts = inputClean.split('/');
           if (parts.length === 3 && inputParts.length === 3) {
@@ -181,14 +183,38 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
             if (expD === inD && expM === inM && expY === inY) {
               isPasswordCorrect = true;
+              role = 'parent';
             }
           }
         }
       }
 
+      // Check Student (GM Number)
+      if (!isPasswordCorrect && String(effectiveGmNo) === cleanPwd) {
+        isPasswordCorrect = true;
+        role = 'student';
+      }
+
       if (!isPasswordCorrect) {
         setIsLoading(false);
-        setError('Incorrect password. Please enter your valid Birth Date (DD/MM/YYYY).');
+        setError('Incorrect password. Please enter your valid Birth Date or GM No.');
+        return;
+      }
+
+      // 2. Phase Blocking Rules
+      if (intakePhase === 'parent' && role === 'student') {
+        setIsLoading(false);
+        setError('Student ordering is not yet open.');
+        return;
+      }
+      if (intakePhase === 'parent' && role === 'guest') {
+        setIsLoading(false);
+        setError('Guest ordering is not yet open.');
+        return;
+      }
+      if (intakePhase === 'student' && role === 'guest') {
+        setIsLoading(false);
+        setError('Guest ordering is not yet open.');
         return;
       }
 
@@ -202,7 +228,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
       localStorage.setItem('active_student_id', finalStudent.id);
       setIsLoading(false);
-      onStudentLogin(finalStudent);
+      onStudentLogin(finalStudent, role);
     } else {
       setIsLoading(false);
       setError('Student not found. Please search and select your name from the suggestions.');

@@ -23,6 +23,7 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronUp,
+  Settings,
   Crown,
   ShieldCheck,
   Check,
@@ -62,6 +63,8 @@ interface AdminDashboardProps {
   onToggleOrdering?: (isOpen: boolean) => void;
   onSaveSchedule?: (schedule: OrderSchedule) => Promise<void> | void;
   onRefreshOrders?: () => Promise<void> | void;
+  intakePhase?: import('../types').IntakePhase;
+  onSetIntakePhase?: (phase: import('../types').IntakePhase) => void;
 }
 
 interface CircularClockDialProps {
@@ -712,6 +715,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onToggleOrdering,
   onSaveSchedule,
   onRefreshOrders,
+  intakePhase = 'parent',
+  onSetIntakePhase,
 }) => {
   const isSuper = adminRole === 'super';
   const [activeTab, setActiveTab] = useState<
@@ -1126,7 +1131,61 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <h3 className="text-sm font-bold text-slate-900">Festival Operations</h3>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                {/* Card 0: Master Intake Phase Switch */}
+                {onSetIntakePhase && (
+                  <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs hover:shadow-md transition-all p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden">
+                    <div className={`absolute top-0 inset-x-0 h-1.5 ${
+                      intakePhase === 'parent' ? 'bg-gradient-to-r from-blue-500 to-indigo-500' :
+                      intakePhase === 'student' ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500' :
+                      intakePhase === 'guest' ? 'bg-gradient-to-r from-amber-500 to-orange-500' :
+                      'bg-gradient-to-r from-slate-500 to-gray-500'
+                    }`} />
+                    
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center space-x-2.5 min-w-0">
+                          <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 shadow-2xs border bg-slate-50 text-slate-700 border-slate-200`}>
+                            <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
+                          </div>
+                          <h4 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                            Intake Phase
+                          </h4>
+                        </div>
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10.5px] sm:text-[11px] font-bold shadow-2xs shrink-0 bg-slate-50 text-slate-700 border border-slate-200 uppercase tracking-wide">
+                          {intakePhase}
+                        </span>
+                      </div>
+                      
+                      <div className="bg-slate-50/90 border border-slate-200/80 rounded-xl px-3 py-2.5 text-xs text-slate-600 font-medium">
+                        Controls who can login and place orders. Other roles will be read-only.
+                      </div>
+                    </div>
+                    
+                    <div className="pt-3.5 mt-4 border-t border-slate-100/80">
+                      <select
+                        value={intakePhase}
+                        onChange={(e) => {
+                          const newPhase = e.target.value as import('../types').IntakePhase;
+                          openProtectedAction(
+                            'Change Intake Phase',
+                            `Enter system password to change the intake phase to ${newPhase.toUpperCase()}.`,
+                            () => { onSetIntakePhase(newPhase); },
+                            false,
+                            'Confirm Phase Change'
+                          );
+                        }}
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs sm:text-sm rounded-xl px-3 py-2 sm:py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-bold outline-none cursor-pointer"
+                      >
+                        <option value="parent">Parent Phase</option>
+                        <option value="student">Student Phase</option>
+                        <option value="guest">Guest Phase</option>
+                        <option value="closed">Closed Phase</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+                
                 {/* Card 1: Master Ordering Switch & Automated Calendar Schedule */}
                 {onToggleOrdering && (
                   <div className={`bg-white border rounded-2xl shadow-xs hover:shadow-md transition-all p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden ${

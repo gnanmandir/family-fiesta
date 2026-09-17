@@ -508,6 +508,26 @@ export const api = {
     }
   },
 
+  // --- Intake Phase ---
+  getIntakePhase: async (): Promise<import('../types').IntakePhase> => {
+    if (isTursoConfigured) {
+      try {
+        return await tursoService.getIntakePhase();
+      } catch (e) {
+        console.warn('[Turso] Failed to fetch intake phase:', e);
+      }
+    }
+    // Supabase fallback not fully implemented for this yet, defaulting to parent
+    return 'parent';
+  },
+
+  setIntakePhase: async (phase: import('../types').IntakePhase): Promise<void> => {
+    if (isTursoConfigured) {
+      await tursoService.setIntakePhase(phase);
+      return;
+    }
+  },
+
   // --- Order Schedule ---
   getOrderSchedule: async (): Promise<OrderSchedule> => {
     if (isTursoConfigured) {
@@ -638,5 +658,35 @@ export const api = {
     } catch (e) {}
 
     return { success: false, role: null };
+  },
+
+  // --- Guests ---
+  getGuests: async (): Promise<import('../types').GuestCredential[]> => {
+    if (isTursoConfigured) {
+      try {
+        return await tursoService.getGuests();
+      } catch (e) {
+        console.warn('[Turso] Failed to fetch guests:', e);
+      }
+    }
+    return [];
+  },
+
+  addGuest: async (guest: import('../types').GuestCredential): Promise<void> => {
+    if (isTursoConfigured) {
+      await tursoService.addGuest(guest);
+    }
+  },
+
+  updateGuest: async (id: string, updates: Partial<import('../types').GuestCredential>): Promise<void> => {
+    if (isTursoConfigured) {
+      await tursoService.updateGuest(id, updates);
+    }
+  },
+
+  deleteGuest: async (id: string): Promise<void> => {
+    if (isTursoConfigured) {
+      await tursoService.deleteGuest(id);
+    }
   },
 };

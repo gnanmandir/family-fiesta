@@ -8,7 +8,14 @@ export interface Student {
   lastName?: string; // Optional if existing data lacks it
   fullName: string; // e.g. "Darsh Pradip Ramjiyani"
   grade: string; // e.g. "Std 10"
-  birthDate?: string; // Format DDMMYYYY e.g. 30042011
+  birthDate?: string; // used for auth
+}
+
+export interface GuestCredential {
+  id: string; // e.g. "guest-12345"
+  guestName: string;
+  password: string;
+  createdAt: string;
 }
 
 export interface FoodItem {
@@ -55,6 +62,7 @@ export interface Order {
   dateDisplay: string;
   timeDisplay: string;
   isEdited?: boolean;
+  orderType?: 'parent' | 'student' | 'guest';
 }
 
 export interface DeviceLockInfo {
@@ -70,3 +78,5 @@ export interface OrderSchedule {
   startTime: string; // ISO or YYYY-MM-DDTHH:mm
   endTime: string;   // ISO or YYYY-MM-DDTHH:mm
 }
+
+export type IntakePhase = 'parent' | 'student' | 'guest' | 'closed';

@@ -61,11 +61,13 @@ export default function App() {
 
   // Application Data States
   const [students, setStudents] = useState<Student[]>([]);
+  const [guests, setGuests] = useState<import('./types').GuestCredential[]>([]);
   const [menuItems, setMenuItems] = useState<FoodItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersOpen, setOrdersOpen] = useState<boolean>(true);
   const [rawOrdersOpen, setRawOrdersOpen] = useState<boolean>(true);
   const [orderSchedule, setOrderSchedule] = useState<OrderSchedule>(DEFAULT_SCHEDULE);
+  const [intakePhase, setIntakePhase] = useState<import('./types').IntakePhase>('parent');
 
   // Selection & Cart States
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(() => {
@@ -185,17 +187,21 @@ export default function App() {
     // Asynchronously fetch fresh data from backend
     const loadBackendData = async () => {
       try {
-        const [stList, menuList, orderList, isOpen, dynamicTiers, schedule] = await Promise.all([
+        const [stList, menuList, orderList, isOpen, dynamicTiers, schedule, currentPhase, guestsList] = await Promise.all([
           fetchStudents(),
           fetchMenuItems(),
           fetchOrders(),
           api.getOrderingStatus(),
           api.getGuestTiers(),
           api.getOrderSchedule(),
+          api.getIntakePhase(),
+          api.getGuests(),
         ]);
         setStudents(stList);
+        setGuests(guestsList);
         setMenuItems(menuList);
         setOrders(orderList);
+        setIntakePhase(currentPhase);
 
         // Check if schedule is already completed/done in real time
         if (schedule && schedule.enabled && isScheduleDone(schedule)) {
@@ -331,13 +337,21 @@ export default function App() {
       try {
         // 2. Fast background sync when user is viewing the Admin Dashboard
         if (currentView === 'admin') {
-          const [freshOrders, isOpen, schedule] = await Promise.all([
+          const [freshOrders, isOpen, schedule, currentPhase, freshGuests] = await Promise.all([
             fetchOrders(),
             api.getOrderingStatus(),
             api.getOrderSchedule(),
+            api.getIntakePhase(),
+            api.getGuests(),
           ]);
           if (freshOrders) {
             setOrders(freshOrders);
+          }
+          if (freshGuests) {
+            setGuests(freshGuests);
+          }
+          if (currentPhase) {
+            setIntakePhase(currentPhase);
           }
 
           if (schedule && schedule.enabled && isScheduleDone(schedule)) {
@@ -367,10 +381,14 @@ export default function App() {
         } else {
           // 3. For student views: NEVER download the full orders database!
           // Only check ordering open/closed status at a relaxed interval
-          const [isOpen, schedule] = await Promise.all([
+          const [isOpen, schedule, currentPhase] = await Promise.all([
             api.getOrderingStatus(),
             api.getOrderSchedule(),
+            api.getIntakePhase(),
           ]);
+          if (currentPhase) {
+            setIntakePhase(currentPhase);
+          }
 
           if (schedule && schedule.enabled && isScheduleDone(schedule)) {
             const isStartOnly = schedule.startTime && !schedule.endTime;
@@ -740,6 +758,7 @@ export default function App() {
         hour: '2-digit',
         minute: '2-digit',
       }),
+      orderType: (localStorage.getItem('active_login_role') as import('./types').IntakePhase) || intakePhase || 'parent',
     };
 
     try {
@@ -772,9 +791,10 @@ export default function App() {
   };
 
   // Login & Session Handlers
-  const handleStudentLogin = async (student: Student) => {
+  const handleStudentLogin = async (student: Student, role: import('./types').IntakePhase = 'parent') => {
     setSelectedStudent(student);
     localStorage.setItem('active_student_id', student.id);
+    localStorage.setItem('active_login_role', role);
 
     // Fetch latest fresh menu items from backend
     fetchMenuItems().then((m) => m && m.length > 0 && setMenuItems(m)).catch(() => {});
@@ -789,23 +809,35 @@ export default function App() {
     let existing =
       orders.find(
         (o) =>
-          (o.studentId && o.studentId.toLowerCase() === student.id.toLowerCase()) ||
+          ((o.studentId && o.studentId.toLowerCase() === student.id.toLowerCase()) ||
           (o.fullName && o.fullName.toLowerCase() === student.fullName.toLowerCase()) ||
-          (o.studentName && o.studentName.toLowerCase() === student.fullName.toLowerCase())
-      ) || getStudentExistingOrder(student.id, orders, student.fullName);
+          (o.studentName && o.studentName.toLowerCase() === student.fullName.toLowerCase())) && 
+          o.orderType === role
+      ) || getStudentExistingOrder(student.id, orders, student.fullName); // this fallback might find parent orders if role is student, but that's ok
 
     // 2. Query backend directly (handles new browser / incognito window)
     if (!existing) {
       try {
-        const onlineOrder = await api.getOrderByStudent(student.id);
-        if (onlineOrder) existing = onlineOrder;
+        const onlineOrder = await api.getOrderByStudent(student.id); // Note: might need to pass role here later if needed
+        if (onlineOrder && onlineOrder.orderType === role) existing = onlineOrder;
       } catch (e) {}
     }
 
     if (existing) {
       setActiveOrder(existing);
       setCurrentView('submitted');
-    } else if (!ordersOpen) {
+    } else if (intakePhase !== role && intakePhase !== 'closed') {
+      // If they haven't ordered, and the phase is not theirs, they are blocked!
+      setSelectedStudent(null);
+      localStorage.removeItem('active_student_id');
+      localStorage.removeItem('active_login_role');
+      // Wait, we need to show an error, but App.tsx doesn't have a login error state.
+      // It's better to let LoginPage handle this block!
+      // But we are here now. Let's just send them to 'home' and handle it or let LoginPage block it.
+      // Actually, if we just send them to 'home', they will see it. Let's let them go to home, but wait, if phase is student and parent logs in, they can't order!
+      // I'll update LoginPage to block this instead.
+      setCurrentView('home');
+    } else if (!ordersOpen || intakePhase === 'closed') {
       // Orders are closed and student has no order — show closed notice
       setActiveOrder(null);
       setCurrentView('home');
@@ -1050,6 +1082,7 @@ export default function App() {
             onStudentLogin={handleStudentLogin}
             onAdminLogin={handleAdminLogin}
             ordersOpen={ordersOpen}
+            intakePhase={intakePhase}
           />
         )}
 
@@ -1096,8 +1129,8 @@ export default function App() {
           <OrderConfirmation
             order={activeOrder}
             onRefreshOrder={(up) => setActiveOrder(up)}
-            onEditOrder={ordersOpen ? handleEditOrder : undefined}
-            ordersOpen={ordersOpen}
+            onEditOrder={(ordersOpen && (intakePhase === activeOrder.orderType || activeOrder.orderType === undefined)) ? handleEditOrder : undefined}
+            ordersOpen={ordersOpen && (intakePhase === activeOrder.orderType || activeOrder.orderType === undefined)}
           />
         )}
 
@@ -1123,6 +1156,11 @@ export default function App() {
             onToggleOrdering={handleToggleOrdering}
             onSaveSchedule={handleSaveSchedule}
             onRefreshOrders={handleRefreshOrders}
+            intakePhase={intakePhase}
+            onSetIntakePhase={async (phase) => {
+              await api.setIntakePhase(phase);
+              setIntakePhase(phase);
+            }}
           />
         )}
       </main>

@@ -210,7 +210,11 @@ export const OrderTable: React.FC<OrderTableProps> = ({
     }
   };
 
+  const [activeTab, setActiveTab] = useState<'parent' | 'student' | 'guest'>('parent');
+
   const filteredOrders = orders.filter((o) => {
+    const oType = o.orderType || 'parent';
+    if (oType !== activeTab) return false;
     const query = searchQuery.toLowerCase().trim();
     if (!query) return true;
     const gmNo = getOrderGmNo(o, students);
@@ -467,6 +471,23 @@ Thank you for ordering from Family Fiesta!
               <span>Export to Excel</span>
             </button>
           </div>
+        </div>
+        
+        {/* Phase Tabs */}
+        <div className="flex bg-stone-100 p-1 rounded-xl w-full max-w-lg mb-2">
+          {(['parent', 'student', 'guest'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`flex-1 text-xs sm:text-sm font-bold py-2 rounded-lg transition-all capitalize ${
+                activeTab === tab
+                  ? 'bg-white shadow-sm text-stone-900 border border-stone-200'
+                  : 'text-stone-500 hover:text-stone-700 hover:bg-stone-200/50'
+              }`}
+            >
+              {tab} Orders
+            </button>
+          ))}
         </div>
 
         {/* Quick Sheet Summary Statistics */}

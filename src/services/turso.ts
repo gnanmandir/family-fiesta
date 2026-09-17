@@ -209,6 +209,7 @@ export const tursoService = {
         dateDisplay: r.date_display || '',
         timeDisplay: r.time_display || '',
         isEdited: Boolean(r.is_edited === 1 || r.is_edited === '1'),
+        orderType: (r.order_type as any) || 'parent',
       };
     });
   },
@@ -235,6 +236,7 @@ export const tursoService = {
       dateDisplay: r.date_display || '',
       timeDisplay: r.time_display || '',
       isEdited: Boolean(r.is_edited === 1 || r.is_edited === '1'),
+      orderType: (r.order_type as any) || 'parent',
     };
   },
 
@@ -260,14 +262,15 @@ export const tursoService = {
       dateDisplay: r.date_display || '',
       timeDisplay: r.time_display || '',
       isEdited: Boolean(r.is_edited === 1 || r.is_edited === '1'),
+      orderType: (r.order_type as any) || 'parent',
     };
   },
 
   placeOrder: async (order: Order): Promise<Order> => {
     const itemsJson = JSON.stringify(order.items || []);
     await tursoQuery(
-      `INSERT INTO orders (order_number, student_id, student_name, parent_name, full_name, device_id, people_count, allowed_budget, items, total_amount, status, created_at, date_display, time_display)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO orders (order_number, student_id, student_name, parent_name, full_name, device_id, people_count, allowed_budget, items, total_amount, status, created_at, date_display, time_display, order_type)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         order.orderNumber,
         order.studentId,
@@ -283,6 +286,7 @@ export const tursoService = {
         order.createdAt || new Date().toISOString(),
         order.dateDisplay || '',
         order.timeDisplay || '',
+        order.orderType || 'parent',
       ]
     );
 
@@ -337,6 +341,10 @@ export const tursoService = {
       sets.push('is_edited = ?');
       args.push(orderPayload.isEdited ? 1 : 0);
     }
+    if (orderPayload.orderType !== undefined) {
+      sets.push('order_type = ?');
+      args.push(orderPayload.orderType);
+    }
 
     if (sets.length > 0) {
       args.push(orderNumber);
@@ -368,6 +376,7 @@ export const tursoService = {
         dateDisplay: r.date_display || '',
         timeDisplay: r.time_display || '',
         isEdited: Boolean(r.is_edited === 1 || r.is_edited === '1'),
+        orderType: (r.order_type as any) || 'parent',
       };
     }
 
@@ -498,6 +507,21 @@ export const tursoService = {
     );
   },
 
+  // --- Intake Phase ---
+  getIntakePhase: async (): Promise<import('../types').IntakePhase> => {
+    const rows = await tursoQuery("SELECT value FROM app_settings WHERE key = 'intake_phase'");
+    if (!rows || rows.length === 0) return 'parent';
+    const val = rows[0]?.value;
+    return (val as import('../types').IntakePhase) || 'parent';
+  },
+
+  setIntakePhase: async (phase: import('../types').IntakePhase): Promise<void> => {
+    await tursoQuery(
+      `INSERT INTO app_settings (key, value, updated_at) VALUES ('intake_phase', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+      [phase, new Date().toISOString()]
+    );
+  },
+
   // --- Order Schedule ---
   getOrderSchedule: async (): Promise<OrderSchedule> => {
     const rows = await tursoQuery<{ key: string; value: string }>(
@@ -552,5 +576,44 @@ export const tursoService = {
       `INSERT INTO app_settings (key, value, updated_at) VALUES ('system_password', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
       [password, new Date().toISOString()]
     );
+  },
+
+  // --- Guests ---
+  getGuests: async (): Promise<import('../types').GuestCredential[]> => {
+    const rows = await tursoQuery('SELECT * FROM guests ORDER BY created_at DESC');
+    if (!rows) return [];
+    return rows.map((r: any) => ({
+      id: r.id,
+      guestName: r.guest_name,
+      password: r.password,
+      createdAt: r.created_at,
+    }));
+  },
+
+  addGuest: async (guest: import('../types').GuestCredential): Promise<void> => {
+    await tursoQuery(
+      `INSERT INTO guests (id, guest_name, password, created_at) VALUES (?, ?, ?, ?)`,
+      [guest.id, guest.guestName, guest.password, guest.createdAt || new Date().toISOString()]
+    );
+  },
+
+  updateGuest: async (id: string, updates: Partial<import('../types').GuestCredential>): Promise<void> => {
+    const sets: string[] = [];
+    const args: any[] = [];
+    if (updates.guestName !== undefined) {
+      sets.push('guest_name = ?');
+      args.push(updates.guestName);
+    }
+    if (updates.password !== undefined) {
+      sets.push('password = ?');
+      args.push(updates.password);
+    }
+    if (sets.length === 0) return;
+    args.push(id);
+    await tursoQuery(`UPDATE guests SET ${sets.join(', ')} WHERE id = ?`, args);
+  },
+
+  deleteGuest: async (id: string): Promise<void> => {
+    await tursoQuery(`DELETE FROM guests WHERE id = ?`, [id]);
   },
 };
