@@ -1658,7 +1658,38 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               }}
               className="space-y-3.5"
             >
-              {/* Card 1: Auto-Close Time (Orders Stop) */}
+              {/* Card 1: Auto-Open Time (Orders Start) */}
+              <DateTimePicker
+                label="Auto-Open Time"
+                sublabel="(Orders start)"
+                icon={<Power className="w-3 h-3" />}
+                iconBg="bg-emerald-100 text-emerald-700"
+                value={scheduleStart}
+                onChange={(val) => {
+                  setScheduleStart(val);
+                  setScheduleError('');
+                }}
+                onClear={() => {
+                  setScheduleStart('');
+                  setScheduleError('');
+                }}
+                defaultTime={{ hour: 9, minute: 0, ampm: 'AM' }}
+                note="Leave blank if ordering is already open right now."
+                presets={[
+                  {
+                    label: 'Tomorrow 9:00 AM',
+                    onClick: () => {
+                      const tomorrow = new Date();
+                      tomorrow.setDate(tomorrow.getDate() + 1);
+                      tomorrow.setHours(9, 0, 0, 0);
+                      setScheduleStart(toDateTimeLocalString(tomorrow));
+                      setScheduleError('');
+                    },
+                  },
+                ]}
+              />
+
+              {/* Card 2: Auto-Close Time (Orders Halt) */}
               <DateTimePicker
                 label="Auto-Close Time"
                 sublabel="(Orders halt)"
@@ -1705,48 +1736,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 ]}
               />
 
-              {/* Card 2: Auto-Open Time (Orders Start) */}
-              <DateTimePicker
-                label="Auto-Open Time"
-                sublabel="(Orders start)"
-                icon={<Power className="w-3 h-3" />}
-                iconBg="bg-emerald-100 text-emerald-700"
-                value={scheduleStart}
-                onChange={(val) => {
-                  setScheduleStart(val);
-                  setScheduleError('');
-                }}
-                onClear={() => {
-                  setScheduleStart('');
-                  setScheduleError('');
-                }}
-                defaultTime={{ hour: 9, minute: 0, ampm: 'AM' }}
-                note="Optional. Leave blank if ordering is already open right now."
-                presets={[
-                  {
-                    label: 'Tomorrow 9:00 AM',
-                    onClick: () => {
-                      const tomorrow = new Date();
-                      tomorrow.setDate(tomorrow.getDate() + 1);
-                      tomorrow.setHours(9, 0, 0, 0);
-                      setScheduleStart(toDateTimeLocalString(tomorrow));
-                      setScheduleError('');
-                    },
-                  },
-                ]}
-              />
-
               {/* Live Plain-English Timeline Preview */}
               <div className="px-3.5 py-2.5 rounded-xl bg-indigo-50/70 border border-indigo-200/70 flex items-center space-x-2 text-xs font-semibold text-indigo-950">
                 <Clock className="w-4 h-4 text-indigo-600 shrink-0" />
                 <span className="leading-tight">
-                  {!scheduleStart && scheduleEnd
-                    ? `Orders remain open now and automatically close on ${formatScheduleDisplay(scheduleEnd)}.`
+                  {scheduleStart && scheduleEnd
+                    ? `Orders open on ${formatScheduleDisplay(scheduleStart)} and close on ${formatScheduleDisplay(scheduleEnd)}.`
                     : scheduleStart && !scheduleEnd
                     ? `Orders stay closed and automatically open on ${formatScheduleDisplay(scheduleStart)}.`
-                    : scheduleStart && scheduleEnd
-                    ? `Orders open on ${formatScheduleDisplay(scheduleStart)} and close on ${formatScheduleDisplay(scheduleEnd)}.`
-                    : 'Select a close time or open time above to automate intake.'}
+                    : !scheduleStart && scheduleEnd
+                    ? `Orders remain open now and automatically close on ${formatScheduleDisplay(scheduleEnd)}.`
+                    : 'Select an open time or close time above to automate intake.'}
                 </span>
               </div>
 
