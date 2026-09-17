@@ -497,7 +497,6 @@ interface DateTimePickerProps {
   onChange: (isoString: string) => void;
   onClear?: () => void;
   defaultTime?: { hour: number; minute: number; ampm: 'AM' | 'PM' };
-  presets?: { label: string; onClick: () => void }[];
   note?: string;
 }
 
@@ -528,7 +527,6 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   onChange,
   onClear,
   defaultTime = { hour: 11, minute: 59, ampm: 'PM' },
-  presets,
   note,
 }) => {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
@@ -635,7 +633,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
       {/* Expanded 2-Column: Calendar for Date & Circular Clock Dial for Time */}
       {isExpanded && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
-          {/* Column 1: Calendar for Date & Presets */}
+          {/* Column 1: Calendar for Date & Selection Preview */}
           <div className="space-y-3">
             <div>
               <label className="block text-[10.5px] font-bold text-slate-700 mb-1 flex items-center justify-between">
@@ -657,25 +655,6 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
                 className="w-full px-3 py-2 bg-white border border-slate-300 hover:border-indigo-400 focus:border-indigo-500 rounded-xl text-xs sm:text-sm font-bold text-slate-800 shadow-2xs cursor-pointer outline-none transition-all"
               />
             </div>
-
-            {/* Presets */}
-            {presets && presets.length > 0 && (
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-400">Quick Presets:</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {presets.map((p, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={p.onClick}
-                      className="px-2.5 py-1 rounded-lg bg-white hover:bg-indigo-50 hover:border-indigo-300 text-slate-700 hover:text-indigo-700 text-[11px] font-semibold border border-slate-200 cursor-pointer shadow-2xs transition-all"
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Selected preview */}
             {value && (
@@ -2022,18 +2001,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   }}
                   defaultTime={{ hour: 9, minute: 0, ampm: 'AM' }}
                   note="Leave blank if ordering is already open right now."
-                  presets={[
-                    {
-                      label: 'Tomorrow 9:00 AM',
-                      onClick: () => {
-                        const tomorrow = new Date();
-                        tomorrow.setDate(tomorrow.getDate() + 1);
-                        tomorrow.setHours(9, 0, 0, 0);
-                        setScheduleStart(toDateTimeLocalString(tomorrow));
-                        setScheduleError('');
-                      },
-                    },
-                  ]}
                 />
 
                 {/* Card 2: Auto-Close Time (Orders Halt) */}
@@ -2054,35 +2021,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     setScheduleError('');
                   }}
                   defaultTime={{ hour: 11, minute: 59, ampm: 'PM' }}
-                  presets={[
-                    {
-                      label: 'Tonight 11:59 PM',
-                      onClick: () => {
-                        const tonight = new Date();
-                        tonight.setHours(23, 59, 0, 0);
-                        setScheduleEnd(toDateTimeLocalString(tonight));
-                        setScheduleError('');
-                      },
-                    },
-                    {
-                      label: 'Tomorrow 11:59 PM',
-                      onClick: () => {
-                        const tomorrow = new Date();
-                        tomorrow.setDate(tomorrow.getDate() + 1);
-                        tomorrow.setHours(23, 59, 0, 0);
-                        setScheduleEnd(toDateTimeLocalString(tomorrow));
-                        setScheduleError('');
-                      },
-                    },
-                    {
-                      label: 'In 2 Hours',
-                      onClick: () => {
-                        const twoHours = new Date(Date.now() + 2 * 60 * 60 * 1000);
-                        setScheduleEnd(toDateTimeLocalString(twoHours));
-                        setScheduleError('');
-                      },
-                    },
-                  ]}
                 />
 
                 {/* Live Plain-English Timeline Preview */}
