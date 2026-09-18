@@ -214,8 +214,15 @@ export const tursoService = {
     });
   },
 
-  getOrderByStudent: async (studentId: string): Promise<Order | null> => {
-    const rows = await tursoQuery('SELECT * FROM orders WHERE student_id = ? LIMIT 1', [studentId]);
+  getOrderByStudent: async (studentId: string, role?: string): Promise<Order | null> => {
+    let sql = 'SELECT * FROM orders WHERE student_id = ?';
+    const args: any[] = [studentId];
+    if (role) {
+      sql += ' AND order_type = ?';
+      args.push(role);
+    }
+    sql += ' ORDER BY created_at DESC LIMIT 1';
+    const rows = await tursoQuery(sql, args);
     if (!rows || rows.length === 0) return null;
     const r = rows[0];
     let items = [];

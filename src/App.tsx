@@ -703,21 +703,22 @@ export default function App() {
 
     const totalAmount = orderItems.reduce((sum, i) => sum + i.total, 0);
 
-    // If editing existing order OR student already has an order, ALWAYS update existing instead of creating duplicate!
-    let existingToUpdate = (isEditingOrder && activeOrder) ? activeOrder : null;
+    // If editing existing order OR student already has an order for this SPECIFIC role, update existing
+    let existingToUpdate = (isEditingOrder && activeOrder && (activeOrder.orderType || 'parent') === activeRole) ? activeOrder : null;
     if (!existingToUpdate) {
       existingToUpdate =
         orders.find(
           (o) =>
-            (o.studentId && o.studentId.toLowerCase() === currentStudent.id.toLowerCase()) ||
+            ((o.studentId && o.studentId.toLowerCase() === currentStudent.id.toLowerCase()) ||
             (o.fullName && o.fullName.toLowerCase() === currentStudent.fullName.toLowerCase()) ||
-            (o.studentName && o.studentName.toLowerCase() === currentStudent.fullName.toLowerCase())
+            (o.studentName && o.studentName.toLowerCase() === currentStudent.fullName.toLowerCase())) &&
+            (o.orderType || 'parent') === activeRole
         ) || null;
 
       if (!existingToUpdate) {
         try {
-          const online = await api.getOrderByStudent(currentStudent.id);
-          if (online) existingToUpdate = online;
+          const online = await api.getOrderByStudent(currentStudent.id, activeRole);
+          if (online && (online.orderType || 'parent') === activeRole) existingToUpdate = online;
         } catch (e) {}
       }
     }
@@ -744,6 +745,7 @@ export default function App() {
         timeDisplay: newTimeDisplay,
         createdAt: now.toISOString(),
         isEdited: true,
+        orderType: activeRole || existingToUpdate.orderType || 'parent',
       };
 
       const saved = await updateOrderDetails(existingToUpdate.orderNumber, updatedOrder);
@@ -802,9 +804,10 @@ export default function App() {
       setOrders(fresh);
       const existing = fresh.find(
         (o) =>
-          (o.studentId && o.studentId.toLowerCase() === currentStudent.id.toLowerCase()) ||
+          ((o.studentId && o.studentId.toLowerCase() === currentStudent.id.toLowerCase()) ||
           (o.fullName && o.fullName.toLowerCase() === currentStudent.fullName.toLowerCase()) ||
-          (o.studentName && o.studentName.toLowerCase() === currentStudent.fullName.toLowerCase())
+          (o.studentName && o.studentName.toLowerCase() === currentStudent.fullName.toLowerCase())) &&
+          (o.orderType || 'parent') === activeRole
       );
       if (existing) {
         setActiveOrder(existing);

@@ -263,10 +263,10 @@ export const api = {
     return res.data;
   },
 
-  getOrderByStudent: async (studentId: string): Promise<Order | null> => {
+  getOrderByStudent: async (studentId: string, role?: string): Promise<Order | null> => {
     if (isTursoConfigured) {
       try {
-        return await tursoService.getOrderByStudent(studentId);
+        return await tursoService.getOrderByStudent(studentId, role);
       } catch (e) {}
     }
     if (isSupabaseConfigured) {
