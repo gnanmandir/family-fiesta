@@ -72,6 +72,10 @@ export const api = {
       await tursoService.deleteStudent(studentId, fullName);
       return;
     }
+    if (isSupabaseConfigured) {
+      await supabaseService.deleteStudent(studentId, fullName);
+      return;
+    }
     await fetchJson(`${API_BASE}/students/${encodeURIComponent(studentId)}`, {
       method: 'DELETE',
     }).catch(() => {});

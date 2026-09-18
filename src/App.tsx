@@ -1008,15 +1008,27 @@ export default function App() {
     setStudents((prev) =>
       prev.filter(
         (s) =>
-          s.id !== studentId &&
+          s.id.toLowerCase() !== studentId.toLowerCase() &&
           (!fullName || s.fullName.toLowerCase() !== fullName.toLowerCase())
       )
     );
+    // Immediately filter orders in React state so both parent & student orders are removed instantly
+    setOrders((prev) =>
+      prev.filter(
+        (o) =>
+          o.studentId.toLowerCase() !== studentId.toLowerCase() &&
+          (!fullName ||
+            (o.fullName?.toLowerCase() !== fullName.toLowerCase() &&
+             o.studentName?.toLowerCase() !== fullName.toLowerCase()))
+      )
+    );
     const freshOrders = await fetchOrders();
-    setOrders(freshOrders);
+    if (freshOrders) {
+      setOrders(freshOrders);
+    }
     if (
       activeOrder &&
-      (activeOrder.studentId === studentId ||
+      (activeOrder.studentId?.toLowerCase() === studentId.toLowerCase() ||
         (fullName && activeOrder.fullName?.toLowerCase() === fullName.toLowerCase()))
     ) {
       setActiveOrder(null);

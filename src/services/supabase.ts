@@ -164,6 +164,26 @@ export const supabaseService = {
     return student;
   },
 
+  deleteStudent: async (studentId: string, fullName?: string): Promise<void> => {
+    try {
+      // 1. Delete student record
+      await supabaseFetch(`students?id=eq.${encodeURIComponent(studentId)}`, { method: 'DELETE' }).catch(() => {});
+      if (fullName) {
+        await supabaseFetch(`students?full_name=ilike.${encodeURIComponent(fullName)}`, { method: 'DELETE' }).catch(() => {});
+      }
+      // 2. Delete all orders associated with this student (both parent and student orders)
+      await supabaseFetch(`orders?student_id=eq.${encodeURIComponent(studentId)}`, { method: 'DELETE' }).catch(() => {});
+      if (fullName) {
+        await supabaseFetch(`orders?full_name=ilike.${encodeURIComponent(fullName)}`, { method: 'DELETE' }).catch(() => {});
+        await supabaseFetch(`orders?student_name=ilike.${encodeURIComponent(fullName)}`, { method: 'DELETE' }).catch(() => {});
+      }
+      // 3. Delete any device lock for this student
+      await supabaseFetch(`device_locks?student_id=eq.${encodeURIComponent(studentId)}`, { method: 'DELETE' }).catch(() => {});
+    } catch (e) {
+      console.warn('Supabase deleteStudent error:', e);
+    }
+  },
+
   // --- Menu Items ---
   getMenuItems: async (): Promise<FoodItem[]> => {
     const rows = await supabaseFetch<any[]>('menu_items?select=*&order=id.asc');

@@ -251,7 +251,7 @@ export async function deleteStudent(studentId: string, fullName?: string): Promi
   );
   localStorage.setItem(KEYS.STUDENTS, JSON.stringify(updated));
 
-  // Clean up any orders associated with this student in local cache
+  // Clean up any orders associated with this student in local cache (both parent and student orders)
   try {
     const cachedOrders = getCachedOrders();
     const filteredOrders = cachedOrders.filter(
@@ -261,6 +261,17 @@ export async function deleteStudent(studentId: string, fullName?: string): Promi
     );
     if (filteredOrders.length !== cachedOrders.length) {
       localStorage.setItem(KEYS.ORDERS, JSON.stringify(filteredOrders));
+    }
+  } catch (e) {}
+
+  // Clean up from student GM registry
+  try {
+    const regRaw = localStorage.getItem('student_gm_registry');
+    if (regRaw) {
+      const reg = JSON.parse(regRaw);
+      if (fullName) delete reg[fullName.toLowerCase()];
+      delete reg[studentId.toLowerCase()];
+      localStorage.setItem('student_gm_registry', JSON.stringify(reg));
     }
   } catch (e) {}
 }
