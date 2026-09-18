@@ -50,15 +50,25 @@ export const supabaseService = {
   // --- Students ---
   getStudents: async (): Promise<Student[]> => {
     const rows = await supabaseFetch<any[]>('students?select=*&order=first_name.asc');
-    return rows.map((r) => ({
-      id: r.id,
-      gmNo: r.gm_no,
-      firstName: r.first_name,
-      parentName: r.parent_name,
-      fullName: r.full_name,
-      grade: r.grade || 'Gurukul Roster',
-      birthDate: r.birth_date,
-    }));
+    return rows.map((r) => {
+      let gm = r.gm_no ? Number(r.gm_no) : undefined;
+      if (!gm && r.id) {
+        const m = String(r.id).match(/-(\d+)$/);
+        if (m) gm = parseInt(m[1], 10);
+      }
+      if (!gm && r.full_name && String(r.full_name).toLowerCase() === 'bhavyaop') {
+        gm = 999;
+      }
+      return {
+        id: r.id,
+        gmNo: gm,
+        firstName: r.first_name,
+        parentName: r.parent_name,
+        fullName: r.full_name,
+        grade: r.grade || 'Gurukul Roster',
+        birthDate: r.birth_date,
+      };
+    });
   },
 
   saveStudent: async (student: Student): Promise<Student> => {

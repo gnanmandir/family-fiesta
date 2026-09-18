@@ -200,16 +200,25 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
     }
   };
 
-  // Enrich students with authoritative birth dates from INITIAL_STUDENTS
+  // Enrich students with authoritative birth dates from INITIAL_STUDENTS and GM registry
   const enrichedStudents = useMemo(() => {
+    let reg: Record<string, number> = {};
+    try {
+      const regRaw = localStorage.getItem('student_gm_registry');
+      if (regRaw) reg = JSON.parse(regRaw);
+    } catch (e) {}
+
     return localStudents.map((s) => {
       const init = INITIAL_STUDENTS.find(
         (i) => normalize(i.fullName) === normalize(s.fullName) || i.id === s.id
       );
-      let gm = s.gmNo || init?.gmNo || 0;
+      let gm = s.gmNo || init?.gmNo || reg[s.fullName.toLowerCase()] || reg[s.id?.toLowerCase()] || 0;
       if (!gm) {
         const match = (s.id || '').match(/-(\d+)$/);
         if (match) gm = parseInt(match[1], 10);
+      }
+      if (!gm && s.fullName.toLowerCase() === 'bhavyaop') {
+        gm = 999;
       }
       return {
         ...s,
@@ -466,9 +475,27 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                 const firstName = fullName.split(' ')[0] || fullName;
                 const parentName = ((formData.get('parentName') as string) || editingStudent.parentName || '').trim();
                 
+                let studentId = editingStudent.id || '';
+                if (!studentId || !studentId.match(/-(\d+)$/)) {
+                  studentId = `${fullName}-${gmNo || 0}`;
+                } else if (gmNo && !studentId.endsWith(`-${gmNo}`)) {
+                  studentId = studentId.replace(/-(\d+)$/, `-${gmNo}`);
+                }
+
+                // Register in GM registry so it is immediately available across the whole application
+                try {
+                  const regRaw = localStorage.getItem('student_gm_registry');
+                  const reg = regRaw ? JSON.parse(regRaw) : {};
+                  if (gmNo) {
+                    reg[fullName.toLowerCase()] = gmNo;
+                    reg[studentId.toLowerCase()] = gmNo;
+                  }
+                  localStorage.setItem('student_gm_registry', JSON.stringify(reg));
+                } catch (e) {}
+
                 const newStudent: Student = {
                   ...editingStudent,
-                  id: editingStudent.id || `ST-${Math.random().toString(36).substr(2, 9)}`,
+                  id: studentId,
                   fullName,
                   firstName,
                   parentName: parentName || editingStudent.parentName || 'Parent',

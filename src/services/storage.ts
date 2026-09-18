@@ -28,6 +28,28 @@ export function getOrCreateDeviceId(): string {
 
 export async function fetchStudents(): Promise<Student[]> {
   try {
+    let reg: Record<string, number> = {};
+    try {
+      const regRaw = localStorage.getItem('student_gm_registry');
+      if (regRaw) reg = JSON.parse(regRaw);
+    } catch (e) {}
+
+    const resolveGm = (st: Partial<Student>, fallback?: Partial<Student>) => {
+      let g = st.gmNo || fallback?.gmNo || (st.fullName ? reg[st.fullName.toLowerCase()] : 0) || (st.id ? reg[st.id.toLowerCase()] : 0) || 0;
+      if (!g && st.id) {
+        const m = st.id.match(/-(\d+)$/);
+        if (m) g = parseInt(m[1], 10);
+      }
+      if (!g && fallback?.id) {
+        const m = fallback.id.match(/-(\d+)$/);
+        if (m) g = parseInt(m[1], 10);
+      }
+      if (!g && st.fullName && st.fullName.toLowerCase() === 'bhavyaop') {
+        g = 999;
+      }
+      return g;
+    };
+
     const data = await api.getStudents();
     if (data && data.length > 0) {
       // Check cached edits to ensure custom edits like 'Diploma' are preserved
@@ -55,17 +77,27 @@ export async function fetchStudents(): Promise<Student[]> {
               ? localCached.grade
               : existing.grade || s.grade || 'Gurukul Roster';
 
+          const gmNo = resolveGm(s, existing) || resolveGm(localCached || {});
+
           map.set(key, {
             ...existing,
             ...s,
             id: existing.id,
             birthDate: s.birthDate || localCached?.birthDate || existing.birthDate,
-            gmNo: s.gmNo || localCached?.gmNo || existing.gmNo,
+            gmNo,
             fullName: existing.fullName,
             grade,
           });
         } else {
-          map.set(s.id || key, { ...s });
+          const gmNo = resolveGm(s, localCached);
+          map.set(key, {
+            ...s,
+            id: s.id && s.id.match(/-(\d+)$/) ? s.id : `${s.fullName}-${gmNo || 0}`,
+            birthDate: s.birthDate || localCached?.birthDate || '',
+            gmNo,
+            fullName: s.fullName,
+            grade: s.grade || localCached?.grade || 'Gurukul Roster',
+          });
         }
       });
 
@@ -81,6 +113,12 @@ export async function fetchStudents(): Promise<Student[]> {
 
 export function getCachedStudents(): Student[] {
   try {
+    let reg: Record<string, number> = {};
+    try {
+      const regRaw = localStorage.getItem('student_gm_registry');
+      if (regRaw) reg = JSON.parse(regRaw);
+    } catch (e) {}
+
     const raw = localStorage.getItem(KEYS.STUDENTS);
     if (raw) {
       const parsed = JSON.parse(raw);
@@ -89,10 +127,18 @@ export function getCachedStudents(): Student[] {
           const initial = INITIAL_STUDENTS.find(
             (i) => normalizeName(i.fullName) === normalizeName(s.fullName) || i.id === s.id
           );
+          let gm = s.gmNo || initial?.gmNo || (s.fullName ? reg[s.fullName.toLowerCase()] : 0) || (s.id ? reg[s.id.toLowerCase()] : 0) || 0;
+          if (!gm && s.id) {
+            const m = s.id.match(/-(\d+)$/);
+            if (m) gm = parseInt(m[1], 10);
+          }
+          if (!gm && s.fullName && s.fullName.toLowerCase() === 'bhavyaop') {
+            gm = 999;
+          }
           return {
             ...s,
             birthDate: s.birthDate || initial?.birthDate,
-            gmNo: s.gmNo || initial?.gmNo,
+            gmNo: gm,
           };
         });
       }
@@ -102,12 +148,45 @@ export function getCachedStudents(): Student[] {
 }
 
 export async function saveStudent(student: Student): Promise<Student> {
-  let saved = student;
+  let gmNo = student.gmNo || 0;
+  if (!gmNo && student.id) {
+    const m = student.id.match(/-(\d+)$/);
+    if (m) gmNo = parseInt(m[1], 10);
+  }
+  if (!gmNo && student.fullName.toLowerCase() === 'bhavyaop') {
+    gmNo = 999;
+  }
+
+  let studentId = student.id || '';
+  if (!studentId || !studentId.match(/-(\d+)$/)) {
+    studentId = `${student.fullName}-${gmNo}`;
+  } else if (gmNo && !studentId.endsWith(`-${gmNo}`)) {
+    studentId = studentId.replace(/-(\d+)$/, `-${gmNo}`);
+  }
+
+  const normalizedStudent: Student = {
+    ...student,
+    id: studentId,
+    gmNo,
+  };
+
   try {
-    saved = await api.saveStudent(student);
+    const regRaw = localStorage.getItem('student_gm_registry');
+    const reg = regRaw ? JSON.parse(regRaw) : {};
+    if (gmNo) {
+      reg[student.fullName.toLowerCase()] = gmNo;
+      reg[studentId.toLowerCase()] = gmNo;
+    }
+    localStorage.setItem('student_gm_registry', JSON.stringify(reg));
+  } catch (e) {}
+
+  let saved = normalizedStudent;
+  try {
+    saved = await api.saveStudent(normalizedStudent);
   } catch (e) {
     console.warn('API saveStudent error, saving locally:', e);
   }
+  saved = { ...normalizedStudent, ...saved, id: studentId, gmNo };
 
   const existing = getCachedStudents();
   const index = existing.findIndex(

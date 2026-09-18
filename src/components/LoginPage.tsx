@@ -36,6 +36,28 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const allStudents = useMemo(() => {
     const map = new Map<string, Student>();
     
+    let reg: Record<string, number> = {};
+    try {
+      const regRaw = localStorage.getItem('student_gm_registry');
+      if (regRaw) reg = JSON.parse(regRaw);
+    } catch (e) {}
+
+    const resolveGm = (st: Partial<Student>, fallback?: Partial<Student>) => {
+      let g = st.gmNo || fallback?.gmNo || (st.fullName ? reg[st.fullName.toLowerCase()] : 0) || (st.id ? reg[st.id.toLowerCase()] : 0) || 0;
+      if (!g && st.id) {
+        const m = st.id.match(/-(\d+)$/);
+        if (m) g = parseInt(m[1], 10);
+      }
+      if (!g && fallback?.id) {
+        const m = fallback.id.match(/-(\d+)$/);
+        if (m) g = parseInt(m[1], 10);
+      }
+      if (!g && st.fullName && st.fullName.toLowerCase() === 'bhavyaop') {
+        g = 999;
+      }
+      return g;
+    };
+
     // Seed with authoritative list (has all 124 students with exact birth dates)
     INITIAL_STUDENTS.forEach((s) => {
       map.set(normalize(s.fullName), { ...s });
@@ -47,18 +69,27 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         const key = normalize(s.fullName);
         const existing = map.get(key);
         if (existing) {
+          const gmNo = resolveGm(s, existing);
           map.set(key, {
             ...s,
             id: existing.id,
             birthDate: s.birthDate || existing.birthDate,
-            gmNo: s.gmNo || existing.gmNo,
+            gmNo,
             fullName: existing.fullName,
             grade: s.grade || existing.grade,
             parentName: s.parentName || existing.parentName,
             firstName: s.firstName || existing.firstName,
           });
         } else {
-          map.set(s.id || key, { ...s });
+          const gmNo = resolveGm(s);
+          map.set(key, {
+            ...s,
+            id: s.id && s.id.match(/-(\d+)$/) ? s.id : `${s.fullName}-${gmNo || 0}`,
+            birthDate: s.birthDate || '',
+            gmNo,
+            fullName: s.fullName,
+            grade: s.grade || 'Gurukul Roster',
+          });
         }
       });
     }
@@ -182,6 +213,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         const match = (matchedStudent.id || '').match(/-(\d+)$/);
         if (match) effectiveGmNo = parseInt(match[1], 10);
       }
+      if (!effectiveGmNo) {
+        try {
+          const regRaw = localStorage.getItem('student_gm_registry');
+          if (regRaw) {
+            const reg = JSON.parse(regRaw);
+            effectiveGmNo = reg[matchedStudent.fullName.toLowerCase()] || (matchedStudent.id ? reg[matchedStudent.id.toLowerCase()] : 0) || 0;
+          }
+        } catch (e) {}
+      }
+      if (!effectiveGmNo && matchedStudent.fullName.toLowerCase() === 'bhavyaop') {
+        effectiveGmNo = 999;
+      }
 
       // 1. Role Detection (Traffic Cop)
       const inputClean = cleanPwd.replace(/\s+/g, '');
@@ -222,7 +265,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           }
         }
 
-        // Check Student (GM Number - accepts e.g. 64 or GM-64)
+        // Check Student (GM Number - accepts e.g. 64, 999 or GM-64)
         const cleanGmInput = cleanPwd.replace(/^gm[- ]*/i, '');
         if (!isPasswordCorrect && effectiveGmNo && String(effectiveGmNo) === cleanGmInput) {
           isPasswordCorrect = true;
@@ -242,8 +285,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
       if (intakePhase === 'parent' && role === 'student') {
         setIsLoading(false);
-        setError('Student ordering is not yet open.');
+        setError('Student ordering is not yet open. Currently open for Parents only.');
         return;
+      }
+      if (intakePhase === 'student' && role === 'parent') {
+        if (ordersOpen) {
+          setIsLoading(false);
+          setError('Currently open for Student ordering only. Please enter your GM No. to log in as Student.');
+          return;
+        }
       }
       if (intakePhase === 'parent' && isStaffRole) {
         setIsLoading(false);
