@@ -95,6 +95,7 @@ export const tursoService = {
       fullName: r.full_name,
       grade: r.grade || 'Gurukul Roster',
       birthDate: r.birth_date,
+      gmNo: r.gm_no ? Number(r.gm_no) : undefined,
     }));
   },
 
@@ -525,17 +526,62 @@ export const tursoService = {
 
   // --- Save Student ---
   saveStudent: async (student: Student): Promise<Student> => {
-    await tursoQuery(
-      `INSERT INTO students (id, first_name, parent_name, full_name, grade, birth_date)
-       VALUES (?, ?, ?, ?, ?, ?)
-       ON CONFLICT(id) DO UPDATE SET
-         first_name = excluded.first_name,
-         parent_name = excluded.parent_name,
-         full_name = excluded.full_name,
-         grade = excluded.grade,
-         birth_date = excluded.birth_date`,
-      [student.id, student.firstName, student.parentName, student.fullName, student.grade || 'Gurukul Roster', student.birthDate || null]
-    );
+    try {
+      await tursoQuery(
+        `INSERT INTO students (id, first_name, parent_name, full_name, grade, birth_date, gm_no)
+         VALUES (?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           first_name = excluded.first_name,
+           parent_name = excluded.parent_name,
+           full_name = excluded.full_name,
+           grade = excluded.grade,
+           birth_date = excluded.birth_date,
+           gm_no = excluded.gm_no`,
+        [student.id, student.firstName, student.parentName, student.fullName, student.grade || 'Gurukul Roster', student.birthDate || null, student.gmNo || null]
+      );
+    } catch (err: any) {
+      const msg = String(err?.message || err).toLowerCase();
+      if (msg.includes('gm_no') || msg.includes('column')) {
+        try {
+          await tursoQuery(`ALTER TABLE students ADD COLUMN gm_no INTEGER`);
+          await tursoQuery(
+            `INSERT INTO students (id, first_name, parent_name, full_name, grade, birth_date, gm_no)
+             VALUES (?, ?, ?, ?, ?, ?, ?)
+             ON CONFLICT(id) DO UPDATE SET
+               first_name = excluded.first_name,
+               parent_name = excluded.parent_name,
+               full_name = excluded.full_name,
+               grade = excluded.grade,
+               birth_date = excluded.birth_date,
+               gm_no = excluded.gm_no`,
+            [student.id, student.firstName, student.parentName, student.fullName, student.grade || 'Gurukul Roster', student.birthDate || null, student.gmNo || null]
+          );
+        } catch (alterErr) {
+          await tursoQuery(
+            `INSERT INTO students (id, first_name, parent_name, full_name, grade, birth_date)
+             VALUES (?, ?, ?, ?, ?, ?)
+             ON CONFLICT(id) DO UPDATE SET
+               first_name = excluded.first_name,
+               parent_name = excluded.parent_name,
+               full_name = excluded.full_name,
+               grade = excluded.grade,
+               birth_date = excluded.birth_date`,
+            [student.id, student.firstName, student.parentName, student.fullName, student.grade || 'Gurukul Roster', student.birthDate || null]
+          );
+        }
+      } else {
+        throw err;
+      }
+    }
+
+    // Keep existing student orders in sync with updated student name
+    try {
+      await tursoQuery(
+        `UPDATE orders SET student_name = ?, full_name = ? WHERE student_id = ?`,
+        [student.fullName, student.fullName, student.id]
+      );
+    } catch (e) {}
+
     return student;
   },
 

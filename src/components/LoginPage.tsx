@@ -177,7 +177,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       );
 
       const effectiveBirthDate = (matchedStudent.birthDate || initBackup?.birthDate || '').trim();
-      const effectiveGmNo = matchedStudent.gmNo || initBackup?.gmNo || 0;
+      let effectiveGmNo = matchedStudent.gmNo || initBackup?.gmNo || 0;
+      if (!effectiveGmNo) {
+        const match = (matchedStudent.id || '').match(/-(\d+)$/);
+        if (match) effectiveGmNo = parseInt(match[1], 10);
+      }
 
       // 1. Role Detection (Traffic Cop)
       const inputClean = cleanPwd.replace(/\s+/g, '');
@@ -191,14 +195,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           role = 'staff';
         }
       } else {
-        // Check Parent (Birth Date with Slashes)
-        if (inputClean.includes('/') && effectiveBirthDate) {
-          if (inputClean.toLowerCase() === effectiveBirthDate.toLowerCase()) {
+        // Check Parent (Birth Date with Slashes, Dashes or Dots)
+        const dateDelimInput = inputClean.replace(/[-.]/g, '/');
+        const dateDelimExpected = effectiveBirthDate.replace(/[-.]/g, '/');
+        if (dateDelimInput.includes('/') && dateDelimExpected) {
+          if (dateDelimInput.toLowerCase() === dateDelimExpected.toLowerCase()) {
             isPasswordCorrect = true;
             role = 'parent';
           } else {
-            const parts = effectiveBirthDate.split('/');
-            const inputParts = inputClean.split('/');
+            const parts = dateDelimExpected.split('/');
+            const inputParts = dateDelimInput.split('/');
             if (parts.length === 3 && inputParts.length === 3) {
               const expD = parseInt(parts[0], 10);
               const expM = parseInt(parts[1], 10);
@@ -216,8 +222,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           }
         }
 
-        // Check Student (GM Number)
-        if (!isPasswordCorrect && String(effectiveGmNo) === cleanPwd) {
+        // Check Student (GM Number - accepts e.g. 64 or GM-64)
+        const cleanGmInput = cleanPwd.replace(/^gm[- ]*/i, '');
+        if (!isPasswordCorrect && effectiveGmNo && String(effectiveGmNo) === cleanGmInput) {
           isPasswordCorrect = true;
           role = 'student';
         }
@@ -225,7 +232,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
       if (!isPasswordCorrect) {
         setIsLoading(false);
-        setError('Incorrect password. Please enter your valid Birth Date (DD/MM/YYYY).');
+        setError('Incorrect password. For Parents: enter Birth Date (DD/MM/YYYY). For Students: enter GM No.');
         return;
       }
 

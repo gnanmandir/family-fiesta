@@ -133,6 +133,28 @@ export async function saveStudent(student: Student): Promise<Student> {
   // Sort alphabetically by first name
   updated.sort((a, b) => a.firstName.localeCompare(b.firstName));
   localStorage.setItem(KEYS.STUDENTS, JSON.stringify(updated));
+
+  // Sync any local cached orders for this student
+  try {
+    const rawOrders = localStorage.getItem(KEYS.ORDERS);
+    if (rawOrders) {
+      const parsedOrders = JSON.parse(rawOrders);
+      if (Array.isArray(parsedOrders)) {
+        let changed = false;
+        const mappedOrders = parsedOrders.map((o: Order) => {
+          if (o.studentId === saved.id || normalizeName(o.fullName) === normalizeName(saved.fullName)) {
+            changed = true;
+            return { ...o, fullName: saved.fullName, studentName: saved.fullName };
+          }
+          return o;
+        });
+        if (changed) {
+          localStorage.setItem(KEYS.ORDERS, JSON.stringify(mappedOrders));
+        }
+      }
+    }
+  } catch (e) {}
+
   return index >= 0 ? updated[index] : saved;
 }
 
