@@ -967,7 +967,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {[
             { id: 'overview', label: 'Analytics & Charts', icon: <LayoutDashboard className="w-4 h-4" /> },
             { id: 'orders', label: `Live Orders (${totalOrders})`, icon: <ShoppingBag className="w-4 h-4" /> },
-            { id: 'students', label: `Students (${studentsOrdered}/${totalStudents})`, icon: <Users className="w-4 h-4" /> },
+            { id: 'students', label: 'Students', icon: <Users className="w-4 h-4" /> },
             { id: 'staff', label: 'Staff', icon: <Users className="w-4 h-4" /> },
             { id: 'food', label: `Menu Catalog (${menuItems.length})`, icon: <UtensilsCrossed className="w-4 h-4" /> },
             { id: 'pricing', label: 'Pricing & Tiers', icon: <IndianRupee className="w-4 h-4" /> },
