@@ -78,6 +78,91 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   const isSingleTier = dynamicTiers.length === 1;
 
+  if (isSingleTier) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-6 sm:py-10 animate-in fade-in duration-500">
+        {/* Student/User Pill */}
+        {selectedStudent && (
+          <div className="flex justify-center mb-5">
+            <div className="inline-flex items-center space-x-2 px-4 py-2 bg-white border border-slate-200 rounded-full shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)]">
+              {effectiveRole === 'student' ? (
+                <GraduationCap className="w-4 h-4 text-indigo-600 stroke-[2.5]" />
+              ) : (effectiveRole === 'guest' || effectiveRole === 'staff') ? (
+                <UserCheck className="w-4 h-4 text-amber-600 stroke-[2.5]" />
+              ) : (
+                <User className="w-4 h-4 text-orange-500 stroke-[2.5]" />
+              )}
+              <span className="text-sm font-medium text-slate-400 capitalize">
+                {(effectiveRole === 'guest' || effectiveRole === 'staff') ? 'Staff' : effectiveRole}:
+              </span>
+              <span className="text-sm font-bold text-slate-800">{formatNameDisplay(selectedStudent.fullName)}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Main Card */}
+        <div className="bg-white border border-slate-200 rounded-3xl shadow-sm p-6 sm:p-8 space-y-6">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+                {effectiveRole === 'student' ? 'Student Meal Pass' : 'Authorized Meal Allowance'}
+              </h2>
+              <p className="text-xs text-slate-500 mt-1 font-medium">
+                {effectiveRole === 'student'
+                  ? 'Complimentary pass allocated for Family Fiesta 2026'
+                  : 'Pre-authorized allowance for Family Fiesta 2026'}
+              </p>
+            </div>
+            <span className="bg-indigo-50 border border-indigo-200/80 text-indigo-700 text-[11px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full whitespace-nowrap">
+              {effectiveRole === 'student' ? 'Student Pass' : '1 Member Tier'}
+            </span>
+          </div>
+
+          {/* Pass Display */}
+          <div className="relative overflow-hidden p-6 sm:p-7 rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-indigo-800 text-white shadow-xl shadow-indigo-500/20">
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <span className="text-[11px] font-bold text-blue-200 uppercase tracking-widest block">
+                  Authorized Meal Budget
+                </span>
+                <div className="text-4xl sm:text-5xl font-mono font-black tracking-tight">
+                  ₹{allowedBudget}
+                </div>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-white/15 border border-white/20 backdrop-blur-sm flex items-center justify-center">
+                {effectiveRole === 'student' ? (
+                  <GraduationCap className="w-6 h-6 text-white" />
+                ) : (
+                  <ShieldCheck className="w-6 h-6 text-white" />
+                )}
+              </div>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-white/15 flex items-center justify-between text-xs text-blue-100">
+              <span className="font-medium">
+                Pass Holder: <strong>{formatNameDisplay(selectedStudent?.fullName || '')}</strong>
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full bg-white/20 font-bold text-[11px]">
+                1 {getMemberLabel(1)}
+              </span>
+            </div>
+          </div>
+
+          {/* Action Button */}
+          <button
+            type="button"
+            disabled={!selectedStudent}
+            onClick={onStartOrdering}
+            className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white rounded-2xl font-black text-base tracking-wide shadow-lg shadow-blue-500/25 flex items-center justify-center space-x-2 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed uppercase cursor-pointer"
+          >
+            <span>Browse Menu & Order</span>
+            <ArrowRight className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-4 sm:py-6 animate-in fade-in duration-500">
       
@@ -107,20 +192,16 @@ export const HomePage: React.FC<HomePageProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-5 gap-2">
           <div className="flex items-center space-x-3">
             <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-              {isSingleTier ? 'Authorized Meal Allowance' : 'Select Number of Attendees'}
+              Select Number of Attendees
             </h2>
           </div>
           <div className="bg-slate-100 text-slate-500 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full self-start sm:self-auto">
-            {isSingleTier ? `1 ${getMemberLabel(1)} Tier` : `Max ${dynamicTiers.length} ${getMemberLabel(dynamicTiers.length)}`}
+            {`Max ${dynamicTiers.length} ${getMemberLabel(dynamicTiers.length)}`}
           </div>
         </div>
 
         {/* Cards Grid */}
-        <div className={
-          isSingleTier
-            ? "max-w-sm mb-5"
-            : `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${Math.min(4, dynamicTiers.length)} gap-3 sm:gap-4 mb-5`
-        }>
+        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${Math.min(4, dynamicTiers.length)} gap-3 sm:gap-4 mb-5`}>
           {dynamicTiers.map((_, index) => {
             const num = index + 1;
             const isSelected = peopleCount === num;
