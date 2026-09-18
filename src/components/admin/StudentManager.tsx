@@ -206,10 +206,15 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
       const init = INITIAL_STUDENTS.find(
         (i) => normalize(i.fullName) === normalize(s.fullName) || i.id === s.id
       );
+      let gm = s.gmNo || init?.gmNo || 0;
+      if (!gm) {
+        const match = (s.id || '').match(/-(\d+)$/);
+        if (match) gm = parseInt(match[1], 10);
+      }
       return {
         ...s,
         birthDate: s.birthDate || init?.birthDate || '',
-        gmNo: s.gmNo || init?.gmNo || 0,
+        gmNo: gm,
       };
     });
   }, [localStudents]);
@@ -302,9 +307,10 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs table-fixed min-w-[800px]">
             <colgroup>
-              <col className="w-[32%]" />
-              <col className="w-[16%]" />
-              <col className="w-[9%]" />
+              <col className="w-[8%]" />
+              <col className="w-[26%]" />
+              <col className="w-[15%]" />
+              <col className="w-[8%]" />
               <col className="w-[13%]" />
               <col className="w-[10%]" />
               {isSuper ? (
@@ -319,6 +325,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
             </colgroup>
             <thead>
               <tr className="bg-stone-50 border-b border-stone-200 text-stone-600 font-semibold uppercase tracking-wider text-[11px]">
+                <th className="py-3 px-3 text-center">GM No.</th>
                 <th className="py-3 px-4">Student Name</th>
                 <th className="py-3 px-3">Birth Date (Password)</th>
                 <th className="py-3 px-3 text-center">Standard</th>
@@ -342,6 +349,9 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
 
                   return (
                     <tr key={student.id} className="hover:bg-stone-50/80 transition-colors">
+                      <td className="py-3 px-3 font-mono text-stone-900 font-bold text-center whitespace-nowrap">
+                        {student.gmNo && student.gmNo !== 0 ? student.gmNo : '-'}
+                      </td>
                       <td className="py-3 px-4 font-bold text-stone-900 truncate">
                         {formatNameDisplay(student.fullName)}
                       </td>
@@ -426,7 +436,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                 })
               ) : (
                 <tr>
-                  <td colSpan={isSuper ? 8 : 6} className="p-8 text-center text-stone-500 font-medium">
+                  <td colSpan={isSuper ? 9 : 7} className="p-8 text-center text-stone-500 font-medium">
                     No students match your query.
                   </td>
                 </tr>
@@ -450,6 +460,8 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                 const fullName = ((formData.get('fullName') as string) || editingStudent.fullName || '').trim();
                 const birthDate = ((formData.get('birthDate') as string) || editingStudent.birthDate || '').trim();
                 const grade = ((formData.get('grade') as string) || selectedGrade || editingStudent.grade || 'Std 5').trim();
+                const gmNoParsed = parseInt((formData.get('gmNo') as string) || '0', 10);
+                const gmNo = !isNaN(gmNoParsed) && gmNoParsed > 0 ? gmNoParsed : (editingStudent.gmNo || 0);
                 
                 const firstName = fullName.split(' ')[0] || fullName;
                 const parentName = ((formData.get('parentName') as string) || editingStudent.parentName || '').trim();
@@ -461,7 +473,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                   firstName,
                   parentName: parentName || editingStudent.parentName || 'Parent',
                   birthDate,
-                  gmNo: editingStudent.gmNo || 0,
+                  gmNo,
                   grade,
                 };
                 
@@ -495,6 +507,16 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
               }}
               className="space-y-4"
             >
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">GM No.</label>
+                <input
+                  type="number"
+                  name="gmNo"
+                  placeholder="e.g. 64"
+                  defaultValue={editingStudent.gmNo && editingStudent.gmNo !== 0 ? editingStudent.gmNo : ''}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                />
+              </div>
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Student Full Name (Username)</label>
                 <input type="text" name="fullName" required defaultValue={editingStudent.fullName} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm" />
