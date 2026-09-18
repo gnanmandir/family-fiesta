@@ -31,6 +31,9 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onR
   );
   const gmNumberDisplay = matchedStudent?.gmNo || currentOrder.studentId || 'N/A';
 
+  const isStudent = currentOrder.orderType === 'student';
+  const isStaff = currentOrder.orderType === 'guest' || currentOrder.orderType === 'staff';
+
   return (
     <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 flex flex-col justify-center min-h-[calc(100vh-4rem)] py-2">
       
@@ -50,7 +53,7 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onR
               <span className="text-[10px] sm:text-[11px] font-bold text-emerald-600 uppercase tracking-widest">
                 Official Digital Receipt
               </span>
-              {currentOrder.orderType === 'student' && (
+              {isStudent && (
                 <>
                   <span className="text-slate-300">•</span>
                   <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-indigo-100 text-indigo-700 border border-indigo-200">
@@ -59,12 +62,24 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onR
                   </span>
                 </>
               )}
+              {isStaff && (
+                <>
+                  <span className="text-slate-300">•</span>
+                  <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-amber-100 text-amber-800 border border-amber-200">
+                    <span>Staff Pass</span>
+                  </span>
+                </>
+              )}
             </div>
             <div className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
-              GM No. {gmNumberDisplay}
+              {isStaff
+                ? formatNameDisplay(currentOrder.fullName || currentOrder.studentName)
+                : `GM No. ${gmNumberDisplay}`}
             </div>
             <div className="text-[10px] sm:text-xs text-slate-500 mt-1 font-medium">
-              Present this receipt at the coupon counter
+              {isStaff
+                ? 'Present this pass at the food counter'
+                : 'Present this receipt at the coupon counter'}
             </div>
           </div>
         </div>
@@ -82,26 +97,66 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onR
 
         {/* Metadata Grid */}
         <div className="grid grid-cols-2 gap-1.5 bg-slate-50 p-2 sm:p-2.5 rounded-xl border border-slate-100 mt-2">
-          <div>
-            <span className="text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold block">Student</span>
-            <span className="text-slate-800 font-bold text-xs">{formatNameDisplay(currentOrder.studentName)}</span>
-          </div>
-          <div>
-            <span className="text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold block">GM Number</span>
-            <span className="text-slate-800 font-bold text-xs font-mono">{gmNumberDisplay}</span>
-          </div>
-          <div>
-            <span className="text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold block">
-              {currentOrder.orderType === 'student' ? 'Attendee' : (currentOrder.orderType === 'guest' || currentOrder.orderType === 'staff') ? 'Staff' : 'Guests'}
-            </span>
-            <span className="text-slate-800 font-bold text-xs">
-              {currentOrder.peopleCount} {currentOrder.orderType === 'student' ? (currentOrder.peopleCount === 1 ? 'Student' : 'Students') : (currentOrder.orderType === 'guest' || currentOrder.orderType === 'staff') ? (currentOrder.peopleCount === 1 ? 'Staff Member' : 'Staff Members') : (currentOrder.peopleCount === 1 ? 'Guest' : 'Guests')}
-            </span>
-          </div>
-          <div>
-            <span className="text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold block">Budget</span>
-            <span className="text-slate-800 font-bold text-xs font-mono">₹{currentOrder.allowedBudget}</span>
-          </div>
+          {isStaff ? (
+            <>
+              <div>
+                <span className="text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold block">Staff Member</span>
+                <span className="text-slate-800 font-bold text-xs">{formatNameDisplay(currentOrder.fullName || currentOrder.studentName)}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold block">Pass Type</span>
+                <span className="text-slate-800 font-bold text-xs">Staff Dining Pass</span>
+              </div>
+              <div>
+                <span className="text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold block">Attendees</span>
+                <span className="text-slate-800 font-bold text-xs">1 Staff Member</span>
+              </div>
+              <div>
+                <span className="text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold block">Budget</span>
+                <span className="text-slate-800 font-bold text-xs font-mono">₹{currentOrder.allowedBudget}</span>
+              </div>
+            </>
+          ) : isStudent ? (
+            <>
+              <div>
+                <span className="text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold block">Student</span>
+                <span className="text-slate-800 font-bold text-xs">{formatNameDisplay(currentOrder.studentName)}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold block">GM Number</span>
+                <span className="text-slate-800 font-bold text-xs font-mono">{gmNumberDisplay}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold block">Attendee</span>
+                <span className="text-slate-800 font-bold text-xs">1 Student</span>
+              </div>
+              <div>
+                <span className="text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold block">Budget</span>
+                <span className="text-slate-800 font-bold text-xs font-mono">₹{currentOrder.allowedBudget}</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <span className="text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold block">Student</span>
+                <span className="text-slate-800 font-bold text-xs">{formatNameDisplay(currentOrder.studentName)}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold block">GM Number</span>
+                <span className="text-slate-800 font-bold text-xs font-mono">{gmNumberDisplay}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold block">Guests</span>
+                <span className="text-slate-800 font-bold text-xs">
+                  {currentOrder.peopleCount} {currentOrder.peopleCount === 1 ? 'Guest' : 'Guests'}
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold block">Budget</span>
+                <span className="text-slate-800 font-bold text-xs font-mono">₹{currentOrder.allowedBudget}</span>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Items List */}

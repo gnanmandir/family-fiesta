@@ -84,33 +84,65 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   doc.setDrawColor(226, 232, 240);
   doc.line(105, y + 4, 105, y + cardHeight - 4);
 
-  // Left: Student Details
-  doc.setTextColor(88, 28, 135);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.text('STUDENT INFORMATION', 24, y + 7);
+  // Left: Student / Staff Details
+  const isStaffOrder = order.orderType === 'guest' || order.orderType === 'staff';
+  const isStudentOrder = order.orderType === 'student';
 
-  doc.setFontSize(8.5);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(100, 116, 139);
-  doc.text('Student Name:', 24, y + 14);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(15, 23, 42);
-  doc.text(cleanStudentName, 52, y + 14);
+  if (isStaffOrder) {
+    doc.setTextColor(88, 28, 135);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('STAFF INFORMATION', 24, y + 7);
 
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(100, 116, 139);
-  doc.text('GM Number:', 24, y + 21);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(15, 23, 42);
-  doc.text(gmNumber, 52, y + 21);
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Staff Name:', 24, y + 14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text(cleanStudentName, 52, y + 14);
 
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(100, 116, 139);
-  doc.text('Standard:', 24, y + 28);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(15, 23, 42);
-  doc.text(grade, 52, y + 28);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Pass Type:', 24, y + 21);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text('Staff Dining Pass', 52, y + 21);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Category:', 24, y + 28);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text('Faculty & Staff', 52, y + 28);
+  } else {
+    doc.setTextColor(88, 28, 135);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text(isStudentOrder ? 'STUDENT INFORMATION' : 'FAMILY & STUDENT INFO', 24, y + 7);
+
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Student Name:', 24, y + 14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text(cleanStudentName, 52, y + 14);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text('GM Number:', 24, y + 21);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text(gmNumber, 52, y + 21);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Standard:', 24, y + 28);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text(grade, 52, y + 28);
+  }
 
   // Right: Order Details
   doc.setTextColor(88, 28, 135);
@@ -121,13 +153,13 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   doc.setFontSize(8.5);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100, 116, 139);
-  doc.text('Attendees:', 112, y + 14);
+  doc.text(isStaffOrder ? 'Member:' : (isStudentOrder ? 'Attendee:' : 'Attendees:'), 112, y + 14);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(15, 23, 42);
-  const attendeeText = order.orderType === 'student' 
+  const attendeeText = isStudentOrder
     ? `${order.peopleCount} Student` 
-    : (order.orderType === 'guest' || order.orderType === 'staff')
-    ? `${order.peopleCount} Staff Member(s)`
+    : isStaffOrder
+    ? `${order.peopleCount} Staff Member`
     : `${order.peopleCount} Person(s)`;
   doc.text(attendeeText, 140, y + 14);
 
@@ -278,5 +310,8 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
     doc.addImage(stampImg, 'PNG', stampX, stampY, stampWidth, stampHeight);
   }
 
-  doc.save(`Family_Fiesta_Receipt_GM_${gmNumber}.pdf`);
+  const pdfFilename = isStaffOrder
+    ? `Family_Fiesta_Receipt_Staff_${cleanStudentName.replace(/\s+/g, '_')}.pdf`
+    : `Family_Fiesta_Receipt_GM_${gmNumber}.pdf`;
+  doc.save(pdfFilename);
 };
