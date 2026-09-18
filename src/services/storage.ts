@@ -374,12 +374,13 @@ export async function checkDeviceOrderOnline(deviceId: string): Promise<Order | 
   return null;
 }
 
-export function getStudentExistingOrder(studentId: string, ordersList?: Order[], studentName?: string): Order | null {
+export function getStudentExistingOrder(studentId: string, ordersList?: Order[], studentName?: string, role?: string): Order | null {
   const orders = ordersList || getCachedOrders();
   const sId = (studentId || '').trim().toLowerCase();
   const sName = (studentName || '').trim().toLowerCase();
   return (
     orders.find((o) => {
+      if (role && (o.orderType || 'parent') !== role) return false;
       const oId = (o.studentId || '').trim().toLowerCase();
       const oFull = (o.fullName || '').trim().toLowerCase();
       const oName = (o.studentName || '').trim().toLowerCase();

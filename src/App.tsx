@@ -521,7 +521,7 @@ export default function App() {
       );
 
     if (!existing) {
-      const fallback = getStudentExistingOrder(student.id, orders, student.fullName);
+      const fallback = getStudentExistingOrder(student.id, orders, student.fullName, currentRole);
       if (fallback && (fallback.orderType || 'parent') === currentRole) {
         existing = fallback;
       }
@@ -529,7 +529,7 @@ export default function App() {
 
     if (!existing) {
       try {
-        const onlineOrder = await api.getOrderByStudent(student.id);
+        const onlineOrder = await api.getOrderByStudent(student.id, currentRole);
         if (onlineOrder && (onlineOrder.orderType || 'parent') === currentRole) existing = onlineOrder;
       } catch (e) {}
     }
@@ -565,7 +565,7 @@ export default function App() {
       );
 
     if (!existing) {
-      const fallback = getStudentExistingOrder(selectedStudent.id, orders, selectedStudent.fullName);
+      const fallback = getStudentExistingOrder(selectedStudent.id, orders, selectedStudent.fullName, currentRole);
       if (fallback && (fallback.orderType || 'parent') === currentRole) {
         existing = fallback;
       }
@@ -573,7 +573,7 @@ export default function App() {
 
     if (!existing) {
       try {
-        const onlineOrder = await api.getOrderByStudent(selectedStudent.id);
+        const onlineOrder = await api.getOrderByStudent(selectedStudent.id, currentRole);
         if (onlineOrder && (onlineOrder.orderType || 'parent') === currentRole) existing = onlineOrder;
       } catch (e) {}
     }
@@ -786,7 +786,7 @@ export default function App() {
         hour: '2-digit',
         minute: '2-digit',
       }),
-      orderType: (localStorage.getItem('active_login_role') as import('./types').IntakePhase) || intakePhase || 'parent',
+      orderType: activeRole || (localStorage.getItem('active_login_role') as import('./types').IntakePhase) || intakePhase || 'parent',
     };
 
     try {
@@ -851,7 +851,7 @@ export default function App() {
       );
 
     if (!existing) {
-      const fallback = getStudentExistingOrder(student.id, orders, student.fullName);
+      const fallback = getStudentExistingOrder(student.id, orders, student.fullName, currentRole);
       if (fallback && (fallback.orderType || 'parent') === currentRole) {
         existing = fallback;
       }
@@ -860,7 +860,7 @@ export default function App() {
     // 2. Query backend directly (handles new browser / incognito window)
     if (!existing) {
       try {
-        const onlineOrder = await api.getOrderByStudent(student.id);
+        const onlineOrder = await api.getOrderByStudent(student.id, currentRole);
         if (onlineOrder && (onlineOrder.orderType || 'parent') === currentRole) existing = onlineOrder;
       } catch (e) {}
     }
