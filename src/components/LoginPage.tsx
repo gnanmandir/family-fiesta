@@ -284,14 +284,30 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       const isStaffPhase = intakePhase === 'staff' || intakePhase === 'guest';
 
       if (intakePhase === 'parent' && role === 'student') {
-        setIsLoading(false);
-        setError('Student ordering is not yet open. Currently open for Parents only.');
-        return;
+        let hasExistingStudentOrder = false;
+        try {
+          const { api } = await import('../services/api');
+          const existing = await api.getOrderByStudent(matchedStudent.id, 'student');
+          if (existing) hasExistingStudentOrder = true;
+        } catch (e) {}
+
+        if (!hasExistingStudentOrder) {
+          setIsLoading(false);
+          setError('Student ordering is closed.');
+          return;
+        }
       }
       if (intakePhase === 'student' && role === 'parent') {
-        if (ordersOpen) {
+        let hasExistingParentOrder = false;
+        try {
+          const { api } = await import('../services/api');
+          const existing = await api.getOrderByStudent(matchedStudent.id, 'parent');
+          if (existing) hasExistingParentOrder = true;
+        } catch (e) {}
+
+        if (!hasExistingParentOrder) {
           setIsLoading(false);
-          setError('Currently open for Student ordering only. Please enter your GM No. to log in as Student.');
+          setError('Parent ordering is closed.');
           return;
         }
       }
