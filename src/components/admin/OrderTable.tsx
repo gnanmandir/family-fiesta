@@ -435,7 +435,7 @@ Thank you for ordering from Family Fiesta!
               <h2 className="text-base font-bold text-stone-900">All Master Orders Sheet</h2>
             </div>
             <p className="text-xs text-stone-500 mt-0.5">
-              Live comprehensive registry of all {orders.length} student food orders for Family Fiesta 2026.
+              Live comprehensive registry of all {filteredOrders.length} {activeTab} food orders for Family Fiesta 2026 ({orders.length} total across all groups).
             </p>
           </div>
 
@@ -450,13 +450,12 @@ Thank you for ordering from Family Fiesta!
             {onRefreshOrders && (
               <button
                 type="button"
-                onClick={handleManualRefresh}
-                disabled={isRefreshing}
-                className="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold border border-stone-200 active:scale-95 flex items-center space-x-1.5 cursor-pointer transition-all disabled:opacity-60"
-                title="Immediately fetch latest orders and edits from database"
+                onClick={onRefreshOrders}
+                className="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer"
+                title="Refresh order database"
               >
-                <RotateCcw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-indigo-600' : ''}`} />
-                <span>{isRefreshing ? 'Syncing...' : 'Refresh'}</span>
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Refresh</span>
               </button>
             )}
 
@@ -475,19 +474,25 @@ Thank you for ordering from Family Fiesta!
         
         {/* Phase Tabs */}
         <div className="flex bg-stone-100 p-1 rounded-xl w-full max-w-lg mb-2">
-          {(['parent', 'student', 'guest'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`flex-1 text-xs sm:text-sm font-bold py-2 rounded-lg transition-all capitalize ${
-                activeTab === tab
-                  ? 'bg-white shadow-sm text-stone-900 border border-stone-200'
-                  : 'text-stone-500 hover:text-stone-700 hover:bg-stone-200/50'
-              }`}
-            >
-              {tab} Orders
-            </button>
-          ))}
+          {(['parent', 'student', 'guest'] as const).map((tab) => {
+            const count = orders.filter((o) => (o.orderType || 'parent') === tab).length;
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 text-xs sm:text-sm font-bold py-2 rounded-lg transition-all capitalize flex items-center justify-center space-x-1.5 cursor-pointer ${
+                  activeTab === tab
+                    ? 'bg-white shadow-sm text-stone-900 border border-stone-200'
+                    : 'text-stone-500 hover:text-stone-700 hover:bg-stone-200/50'
+                }`}
+              >
+                <span>{tab} Orders</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${activeTab === tab ? 'bg-indigo-50 text-indigo-700' : 'bg-stone-200 text-stone-600'}`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Quick Sheet Summary Statistics */}
