@@ -211,6 +211,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({
   };
 
   const [activeTab, setActiveTab] = useState<'parent' | 'student' | 'guest'>('parent');
+  const isStaff = activeTab === 'guest';
 
   const filteredOrders = orders.filter((o) => {
     const oType = o.orderType || 'parent';
@@ -285,20 +286,18 @@ export const OrderTable: React.FC<OrderTableProps> = ({
 
   // Download single receipt as text file
   const handleDownloadSingleReceipt = (o: Order) => {
+    const isStaffOrder = o.orderType === 'guest' || o.orderType === 'staff';
     const cleanStudentName = o.studentName.replace(/\s*\(.*\)/, '').trim();
     const gmNo = getOrderGmNo(o, students);
     const receiptText = `=========================================
   FAMILY FIESTA - RECEIPT
 =========================================
-GM Number    : ${gmNo !== 999999 ? gmNo : '-'}
-Date & Time  : ${o.dateDisplay || ''} ${o.timeDisplay}
+${isStaffOrder ? '' : `GM Number    : ${gmNo !== 999999 ? gmNo : '-'}\n`}Date & Time  : ${o.dateDisplay || ''} ${o.timeDisplay}
 Status       : ${o.status}
 
----------------- STUDENT DETAILS ----------------
-Student Name : ${cleanStudentName}
-Parent Name  : ${o.parentName}
-Full Name    : ${o.fullName}
-Group Size   : ${o.peopleCount} Person(s)
+---------------- ${isStaffOrder ? 'STAFF DETAILS' : 'STUDENT DETAILS'} ----------------
+${isStaffOrder ? `Staff Name   : ${cleanStudentName}\n` : `Student Name : ${cleanStudentName}\nParent Name  : ${o.parentName}\n`}Full Name    : ${o.fullName}
+Group Size   : ${o.peopleCount} ${isStaffOrder ? 'Staff Member(s)' : 'Person(s)'}
 Budget Limit : ₹${o.allowedBudget}
 
 ---------------- ORDERED ITEMS ------------------
@@ -348,8 +347,8 @@ Thank you for ordering from Family Fiesta!
 
       const row: any = {
         'S.No': idx + 1,
-        'GM No.': gmNo !== 999999 ? gmNo : '',
-        'Student Name': o.fullName || o.studentName,
+        ...(isStaff ? {} : { 'GM No.': gmNo !== 999999 ? gmNo : '' }),
+        [isStaff ? 'Staff Name' : 'Student Name']: o.fullName || o.studentName,
         'People Count': o.peopleCount,
         'Allowed Budget (INR)': o.allowedBudget,
         'Order Total (INR)': o.totalAmount,
@@ -376,8 +375,8 @@ Thank you for ordering from Family Fiesta!
     // Set professional column widths for Excel
     const cols = [
       { wch: 6 },  // S.No
-      { wch: 12 }, // GM No.
-      { wch: 24 }, // Student Name
+      ...(isStaff ? [] : [{ wch: 12 }]), // GM No.
+      { wch: 24 }, // Student / Staff Name
       { wch: 13 }, // People Count
       { wch: 18 }, // Allowed Budget
       { wch: 16 }, // Order Total
@@ -491,7 +490,13 @@ Thank you for ordering from Family Fiesta!
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  if (tab.id === 'guest' && sortKey === 'gmNo') {
+                    setSortKey('time');
+                    setSortDirection('desc');
+                  }
+                }}
                 className={`flex-1 text-xs sm:text-sm font-bold py-2 rounded-lg transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
                   activeTab === tab.id
                     ? 'bg-white shadow-sm text-stone-900 border border-stone-200'
@@ -550,7 +555,7 @@ Thank you for ordering from Family Fiesta!
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by student name or GM No..."
+            placeholder={isStaff ? "Search by staff name..." : "Search by student name or GM No..."}
             className="w-full pl-10 pr-8 py-2 bg-stone-50 border border-stone-200 rounded-lg text-stone-900 placeholder-stone-400 text-xs focus:outline-none focus:border-indigo-600 focus:bg-white transition-all"
           />
           {searchQuery && (
@@ -580,33 +585,37 @@ Thank you for ordering from Family Fiesta!
               <ArrowUpDown className="w-3.5 h-3.5 text-stone-500 shrink-0" />
               <span className="text-[11px] font-semibold text-stone-600 whitespace-nowrap">Sort:</span>
               <span className="text-stone-900 font-bold">
-                {SORT_OPTIONS.find((o) => o.key === sortKey && o.dir === sortDirection)?.label || 'Custom'}
+                {SORT_OPTIONS.filter((opt) => !(isStaff && opt.key === 'gmNo'))
+                  .map((opt) => (isStaff && opt.key === 'studentName' ? { ...opt, label: opt.label.replace('Student Name', 'Staff Name') } : opt))
+                  .find((o) => o.key === sortKey && o.dir === sortDirection)?.label || 'Custom'}
               </span>
               <ChevronDown className={`w-3.5 h-3.5 text-stone-400 transition-transform duration-200 ${isSortDropdownOpen ? 'rotate-180 text-indigo-600' : ''}`} />
             </button>
 
             {isSortDropdownOpen && (
               <div className="absolute left-0 top-full mt-1.5 w-64 bg-white border border-stone-200 rounded-xl shadow-xl z-50 p-1.5 max-h-72 overflow-y-auto space-y-0.5 animate-in fade-in zoom-in-95 duration-150">
-                {SORT_OPTIONS.map((opt) => {
-                  const isSelected = sortKey === opt.key && sortDirection === opt.dir;
-                  return (
-                    <button
-                      key={`${opt.key}-${opt.dir}`}
-                      type="button"
-                      onClick={() => {
-                        setSortKey(opt.key);
-                        setSortDirection(opt.dir);
-                        setIsSortDropdownOpen(false);
-                      }}
-                      className={`w-full px-2.5 py-2 rounded-lg flex items-center justify-between text-left text-xs transition-colors cursor-pointer ${
-                        isSelected ? 'bg-indigo-50 text-indigo-950 font-bold' : 'text-stone-700 hover:bg-stone-50 font-medium'
-                      }`}
-                    >
-                      <span>{opt.label}</span>
-                      {isSelected && <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0" />}
-                    </button>
-                  );
-                })}
+                {SORT_OPTIONS.filter((opt) => !(isStaff && opt.key === 'gmNo'))
+                  .map((opt) => (isStaff && opt.key === 'studentName' ? { ...opt, label: opt.label.replace('Student Name', 'Staff Name') } : opt))
+                  .map((opt) => {
+                    const isSelected = sortKey === opt.key && sortDirection === opt.dir;
+                    return (
+                      <button
+                        key={`${opt.key}-${opt.dir}`}
+                        type="button"
+                        onClick={() => {
+                          setSortKey(opt.key);
+                          setSortDirection(opt.dir);
+                          setIsSortDropdownOpen(false);
+                        }}
+                        className={`w-full px-2.5 py-2 rounded-lg flex items-center justify-between text-left text-xs transition-colors cursor-pointer ${
+                          isSelected ? 'bg-indigo-50 text-indigo-950 font-bold' : 'text-stone-700 hover:bg-stone-50 font-medium'
+                        }`}
+                      >
+                        <span>{opt.label}</span>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0" />}
+                      </button>
+                    );
+                  })}
               </div>
             )}
           </div>
@@ -638,27 +647,29 @@ Thank you for ordering from Family Fiesta!
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-stone-50 border-b border-stone-200 text-stone-600 font-semibold uppercase tracking-wider text-[11px]">
-                <th
-                  onClick={() => handleHeaderClick('gmNo')}
-                  className={`p-3.5 whitespace-nowrap cursor-pointer select-none transition-colors group ${
-                    sortKey === 'gmNo' ? 'bg-indigo-50/80 text-indigo-900 font-bold' : 'hover:bg-stone-100'
-                  }`}
-                  title="Click to sort by GM Number"
-                >
-                  <div className="flex items-center space-x-1.5">
-                    <span>GM No.</span>
-                    {renderSortIcon('gmNo')}
-                  </div>
-                </th>
+                {!isStaff && (
+                  <th
+                    onClick={() => handleHeaderClick('gmNo')}
+                    className={`p-3.5 whitespace-nowrap cursor-pointer select-none transition-colors group ${
+                      sortKey === 'gmNo' ? 'bg-indigo-50/80 text-indigo-900 font-bold' : 'hover:bg-stone-100'
+                    }`}
+                    title="Click to sort by GM Number"
+                  >
+                    <div className="flex items-center space-x-1.5">
+                      <span>GM No.</span>
+                      {renderSortIcon('gmNo')}
+                    </div>
+                  </th>
+                )}
                 <th
                   onClick={() => handleHeaderClick('studentName')}
                   className={`p-3.5 whitespace-nowrap cursor-pointer select-none transition-colors group ${
                     sortKey === 'studentName' ? 'bg-indigo-50/80 text-indigo-900 font-bold' : 'hover:bg-stone-100'
                   }`}
-                  title="Click to sort by Student Name"
+                  title={isStaff ? "Click to sort by Staff Name" : "Click to sort by Student Name"}
                 >
                   <div className="flex items-center space-x-1.5">
-                    <span>Student Name</span>
+                    <span>{isStaff ? 'Staff Name' : 'Student Name'}</span>
                     {renderSortIcon('studentName')}
                   </div>
                 </th>
@@ -727,11 +738,13 @@ Thank you for ordering from Family Fiesta!
 
                   return (
                     <tr key={order.orderNumber} className="hover:bg-stone-50/80 transition-colors">
-                      <td className="p-3.5 whitespace-nowrap">
-                        <span className="font-mono font-bold text-stone-900 bg-stone-100 border border-stone-200 px-2 py-0.5 rounded text-xs">
-                          {gmNo !== 999999 ? gmNo : '-'}
-                        </span>
-                      </td>
+                      {!isStaff && (
+                        <td className="p-3.5 whitespace-nowrap">
+                          <span className="font-mono font-bold text-stone-900 bg-stone-100 border border-stone-200 px-2 py-0.5 rounded text-xs">
+                            {gmNo !== 999999 ? gmNo : '-'}
+                          </span>
+                        </td>
+                      )}
                       <td className="p-3.5 font-bold text-stone-900 whitespace-nowrap">
                         {studentName}
                       </td>
@@ -789,7 +802,7 @@ Thank you for ordering from Family Fiesta!
                 })
               ) : (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-stone-500 font-medium">
+                  <td colSpan={isStaff ? 7 : 8} className="p-8 text-center text-stone-500 font-medium">
                     No order records found matching your query.
                   </td>
                 </tr>
@@ -827,24 +840,33 @@ Thank you for ordering from Family Fiesta!
             {/* Scrollable Body */}
             <div className="p-5 sm:p-6 overflow-y-auto space-y-4 flex-1 custom-scrollbar">
               <div className="grid grid-cols-2 gap-2.5 text-xs bg-stone-50 p-3.5 rounded-xl border border-stone-200">
-                <div>
-                  <span className="text-stone-400 text-[10px] block uppercase font-bold">Student First Name</span>
-                  <span className="font-bold text-stone-900 text-sm">{formatNameDisplay(selectedOrderForReceipt.studentName).split(' ')[0] || selectedOrderForReceipt.studentName}</span>
-                </div>
-                <div>
-                  <span className="text-stone-400 text-[10px] block uppercase font-bold">Parent Name</span>
-                  <span className="font-bold text-stone-900 text-sm">{selectedOrderForReceipt.parentName}</span>
-                </div>
-                <div className="col-span-2 pt-1 border-t border-stone-200/60">
-                  <span className="text-stone-400 text-[10px] block uppercase font-bold">Full Registered Name</span>
-                  <span className="font-semibold text-stone-900">{formatNameDisplay(selectedOrderForReceipt.fullName || selectedOrderForReceipt.studentName)}</span>
-                </div>
-                <div>
-                  <span className="text-stone-400 text-[10px] block uppercase font-bold">GM No.</span>
-                  <span className="font-semibold text-stone-900 font-mono">
-                    {getOrderGmNo(selectedOrderForReceipt, students) !== 999999 ? getOrderGmNo(selectedOrderForReceipt, students) : selectedOrderForReceipt.studentId}
-                  </span>
-                </div>
+                {selectedOrderForReceipt.orderType === 'guest' || selectedOrderForReceipt.orderType === 'staff' ? (
+                  <div className="col-span-2">
+                    <span className="text-stone-400 text-[10px] block uppercase font-bold">Staff Member Name</span>
+                    <span className="font-bold text-stone-900 text-sm">{formatNameDisplay(selectedOrderForReceipt.fullName || selectedOrderForReceipt.studentName)}</span>
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <span className="text-stone-400 text-[10px] block uppercase font-bold">Student First Name</span>
+                      <span className="font-bold text-stone-900 text-sm">{formatNameDisplay(selectedOrderForReceipt.studentName).split(' ')[0] || selectedOrderForReceipt.studentName}</span>
+                    </div>
+                    <div>
+                      <span className="text-stone-400 text-[10px] block uppercase font-bold">Parent Name</span>
+                      <span className="font-bold text-stone-900 text-sm">{selectedOrderForReceipt.parentName}</span>
+                    </div>
+                    <div className="col-span-2 pt-1 border-t border-stone-200/60">
+                      <span className="text-stone-400 text-[10px] block uppercase font-bold">Full Registered Name</span>
+                      <span className="font-semibold text-stone-900">{formatNameDisplay(selectedOrderForReceipt.fullName || selectedOrderForReceipt.studentName)}</span>
+                    </div>
+                    <div>
+                      <span className="text-stone-400 text-[10px] block uppercase font-bold">GM No.</span>
+                      <span className="font-semibold text-stone-900 font-mono">
+                        {getOrderGmNo(selectedOrderForReceipt, students) !== 999999 ? getOrderGmNo(selectedOrderForReceipt, students) : selectedOrderForReceipt.studentId}
+                      </span>
+                    </div>
+                  </>
+                )}
                 <div>
                   <span className="text-stone-400 text-[10px] block uppercase font-bold">
                     {selectedOrderForReceipt.orderType === 'student' ? 'Attendee' : (selectedOrderForReceipt.orderType === 'guest' || selectedOrderForReceipt.orderType === 'staff') ? 'Staff' : 'Guests'}
