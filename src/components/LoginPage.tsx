@@ -114,6 +114,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         );
       }).slice(0, 8)
     : [];
+  const passwordPlaceholder = useMemo(() => {
+    if (intakePhase === 'student') return 'Enter GM No.';
+    if (intakePhase === 'guest') return 'Enter Password';
+    return 'DD/MM/YYYY';
+  }, [intakePhase]);
+
+  const passwordLabel = useMemo(() => {
+    if (intakePhase === 'student') return 'GM No. (Password)';
+    if (intakePhase === 'guest') return 'Guest Password';
+    return 'Password (Birth Date)';
+  }, [intakePhase]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -224,7 +235,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
       if (!isPasswordCorrect) {
         setIsLoading(false);
-        setError('Incorrect password. Please enter your valid Birth Date or GM No.');
+        if (matchedStudent.grade === 'Guest') {
+          setError('Incorrect password. Please enter your valid Guest password.');
+        } else if (intakePhase === 'parent') {
+          setError('Incorrect password. Please enter your valid Birth Date (DD/MM/YYYY).');
+        } else if (intakePhase === 'student') {
+          setError('Incorrect password. Please enter your valid GM No.');
+        } else if (intakePhase === 'guest') {
+          setError('Incorrect password. Please enter your valid Guest password.');
+        } else {
+          setError('Incorrect password. Please check your credentials and try again.');
+        }
         return;
       }
 
@@ -362,7 +383,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           {/* Password */}
           <div className="space-y-1.5 text-left">
             <label className="block text-xs font-semibold text-slate-600">
-              Password
+              {passwordLabel}
             </label>
             <div className="relative">
               <input
@@ -375,34 +396,36 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   setPassword(e.target.value);
                   if (error) setError(null);
                 }}
-                placeholder="DD/MM/YYYY"
-                className="w-full pl-3.5 pr-11 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-colors font-medium"
+                placeholder={passwordPlaceholder}
+                className={`w-full pl-3.5 ${intakePhase === 'parent' ? 'pr-11' : 'pr-3.5'} py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-colors font-medium`}
                 autoComplete="off"
                 data-lpignore="true"
                 required
               />
-              {/* Calendar picker button */}
-              <div
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-100 transition-colors cursor-pointer flex items-center justify-center group"
-                title="Select birth date from calendar"
-              >
-                <Calendar className="w-4 h-4 pointer-events-none group-hover:text-indigo-600" />
-                <input
-                  type="date"
-                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+              {/* Calendar picker button only for parent intake phase */}
+              {intakePhase === 'parent' && (
+                <div
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-100 transition-colors cursor-pointer flex items-center justify-center group"
                   title="Select birth date from calendar"
-                  max={new Date().toISOString().split('T')[0]}
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      const [y, m, d] = e.target.value.split('-');
-                      if (y && m && d) {
-                        setPassword(`${d}/${m}/${y}`);
-                        if (error) setError(null);
+                >
+                  <Calendar className="w-4 h-4 pointer-events-none group-hover:text-indigo-600" />
+                  <input
+                    type="date"
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    title="Select birth date from calendar"
+                    max={new Date().toISOString().split('T')[0]}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        const [y, m, d] = e.target.value.split('-');
+                        if (y && m && d) {
+                          setPassword(`${d}/${m}/${y}`);
+                          if (error) setError(null);
+                        }
                       }
-                    }
-                  }}
-                />
-              </div>
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
 
