@@ -97,9 +97,13 @@ export default function App() {
   const [activeOrder, setActiveOrder] = useState<Order | null>(() => {
     try {
       const savedNum = localStorage.getItem('active_order_number');
+      const activeLoginRole = (localStorage.getItem('active_login_role') as import('./types').IntakePhase) || 'parent';
       if (savedNum) {
         const cached = getCachedOrders();
-        return cached.find((o) => o.orderNumber === savedNum) || null;
+        const found = cached.find((o) => o.orderNumber === savedNum);
+        if (found && (found.orderType || 'parent') === activeLoginRole) {
+          return found;
+        }
       }
     } catch (e) {}
     return null;
@@ -154,11 +158,13 @@ export default function App() {
         const st = cachedStudents.find((s) => s.id === activeStudentId);
         if (st) {
           setSelectedStudent(st);
+          const activeLoginRole = (localStorage.getItem('active_login_role') as import('./types').IntakePhase) || 'parent';
           const existingOrder = cachedOrders.find(
             (o) =>
-              (o.studentId && o.studentId.toLowerCase() === activeStudentId.toLowerCase()) ||
+              ((o.studentId && o.studentId.toLowerCase() === activeStudentId.toLowerCase()) ||
               (o.fullName && o.fullName.toLowerCase() === st.fullName.toLowerCase()) ||
-              (o.studentName && o.studentName.toLowerCase() === st.fullName.toLowerCase())
+              (o.studentName && o.studentName.toLowerCase() === st.fullName.toLowerCase())) &&
+              (o.orderType || 'parent') === activeLoginRole
           );
           if (existingOrder) {
             setActiveOrder(existingOrder);
@@ -246,11 +252,13 @@ export default function App() {
           if (foundSt) {
             setSelectedStudent(foundSt);
           }
+          const activeLoginRole = (localStorage.getItem('active_login_role') as import('./types').IntakePhase) || 'parent';
           const studentOrder = orderList.find(
             (o) =>
-              (o.studentId && o.studentId.toLowerCase() === savedStudentId.toLowerCase()) ||
+              ((o.studentId && o.studentId.toLowerCase() === savedStudentId.toLowerCase()) ||
               (foundSt && o.fullName && o.fullName.toLowerCase() === foundSt.fullName.toLowerCase()) ||
-              (foundSt && o.studentName && o.studentName.toLowerCase() === foundSt.fullName.toLowerCase())
+              (foundSt && o.studentName && o.studentName.toLowerCase() === foundSt.fullName.toLowerCase())) &&
+              (o.orderType || 'parent') === activeLoginRole
           );
           if (studentOrder) {
             setActiveOrder(studentOrder);
