@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Order } from '../types';
-import { CheckCircle2, Ticket, Edit3, Download, Lock, Info, LogOut } from 'lucide-react';
+import { CheckCircle2, Ticket, Edit3, Download, Lock, Info, LogOut, GraduationCap, Users, UserCheck } from 'lucide-react';
 import { generateAndDownloadPDFReceipt } from '../utils/pdfGenerator';
 import { INITIAL_STUDENTS } from '../data/students';
 import { formatNameDisplay } from '../utils/nameFormatter';
@@ -46,10 +46,29 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onR
             <CheckCircle2 className="text-emerald-600 w-5 h-5" />
           </div>
           <div className="mt-2">
-            <div className="text-[10px] sm:text-[11px] font-bold text-emerald-600 uppercase tracking-widest">
-              Official Digital Receipt
+            <div className="flex items-center justify-center space-x-2">
+              <span className="text-[10px] sm:text-[11px] font-bold text-emerald-600 uppercase tracking-widest">
+                Official Digital Receipt
+              </span>
+              <span className="text-slate-300">•</span>
+              {currentOrder.orderType === 'student' ? (
+                <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-indigo-100 text-indigo-700 border border-indigo-200">
+                  <GraduationCap className="w-3 h-3" />
+                  <span>Student Pass</span>
+                </span>
+              ) : currentOrder.orderType === 'guest' ? (
+                <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-amber-100 text-amber-700 border border-amber-200">
+                  <UserCheck className="w-3 h-3" />
+                  <span>Guest Pass</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-purple-100 text-purple-700 border border-purple-200">
+                  <Users className="w-3 h-3" />
+                  <span>Parent Pass</span>
+                </span>
+              )}
             </div>
-            <div className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight mt-0.5">
+            <div className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
               GM No. {gmNumberDisplay}
             </div>
             <div className="text-[10px] sm:text-xs text-slate-500 mt-1 font-medium">
@@ -80,8 +99,12 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onR
             <span className="text-slate-800 font-bold text-xs font-mono">{gmNumberDisplay}</span>
           </div>
           <div>
-            <span className="text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold block">Guests</span>
-            <span className="text-slate-800 font-bold text-xs">{currentOrder.peopleCount}</span>
+            <span className="text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold block">
+              {currentOrder.orderType === 'student' ? 'Attendee' : 'Guests'}
+            </span>
+            <span className="text-slate-800 font-bold text-xs">
+              {currentOrder.peopleCount} {currentOrder.orderType === 'student' ? (currentOrder.peopleCount === 1 ? 'Student' : 'Students') : (currentOrder.peopleCount === 1 ? 'Guest' : 'Guests')}
+            </span>
           </div>
           <div>
             <span className="text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold block">Budget</span>

@@ -65,8 +65,12 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
 
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(12);
-  doc.text('OFFICIAL FOOD COUPONS', 105, y + 6.8, { align: 'center' });
+  const bannerText = order.orderType === 'student' 
+    ? 'OFFICIAL STUDENT FOOD COUPONS' 
+    : order.orderType === 'guest' 
+    ? 'OFFICIAL GUEST FOOD COUPONS' 
+    : 'OFFICIAL FOOD COUPONS';
+  doc.text(bannerText, 105, y + 6.8, { align: 'center' });
 
   // 3. Two-Column Structured Details Card (no line overlaps)
   y += 15;
@@ -120,7 +124,12 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   doc.text('Attendees:', 112, y + 14);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(15, 23, 42);
-  doc.text(`${order.peopleCount} Person(s)`, 140, y + 14);
+  const attendeeText = order.orderType === 'student' 
+    ? `${order.peopleCount} Student` 
+    : order.orderType === 'guest'
+    ? `${order.peopleCount} Guest(s)`
+    : `${order.peopleCount} Person(s)`;
+  doc.text(attendeeText, 140, y + 14);
 
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100, 116, 139);
