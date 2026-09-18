@@ -455,9 +455,9 @@ export const tursoService = {
     );
   },
 
-  // --- Role Tiers (Parent, Student, Guest) ---
-  getRoleTiers: async (role: 'parent' | 'student' | 'guest'): Promise<number[]> => {
-    const key = `${role}_tiers`;
+  // --- Role Tiers (Parent, Student, Staff / Guest) ---
+  getRoleTiers: async (role: 'parent' | 'student' | 'guest' | 'staff'): Promise<number[]> => {
+    const key = role === 'staff' ? 'staff_tiers' : `${role}_tiers`;
     const rows = await tursoQuery(`SELECT value FROM app_settings WHERE key = ?`, [key]);
     if (rows && rows.length > 0 && rows[0].value) {
       try {
@@ -466,8 +466,18 @@ export const tursoService = {
       } catch (e) {}
     }
     // Fallbacks
+    if (role === 'staff' || role === 'guest') {
+      const fallbackRows = await tursoQuery(`SELECT value FROM app_settings WHERE key IN ('staff_tiers', 'guest_tiers') ORDER BY updated_at DESC LIMIT 1`);
+      if (fallbackRows && fallbackRows.length > 0 && fallbackRows[0].value) {
+        try {
+          const parsed = JSON.parse(fallbackRows[0].value);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        } catch (e) {}
+      }
+      return [230];
+    }
     if (role === 'parent') {
-      const legacy = await tursoQuery("SELECT value FROM app_settings WHERE key = 'guest_tiers'");
+      const legacy = await tursoQuery("SELECT value FROM app_settings WHERE key = 'parent_tiers'");
       if (legacy && legacy.length > 0 && legacy[0].value) {
         try {
           const parsed = JSON.parse(legacy[0].value);
@@ -477,19 +487,29 @@ export const tursoService = {
       return [230, 230, 140, 80];
     }
     if (role === 'student') return [230];
-    if (role === 'guest') return [230];
     return [230];
   },
 
-  setRoleTiers: async (role: 'parent' | 'student' | 'guest', tiers: number[]): Promise<void> => {
-    const key = `${role}_tiers`;
+  setRoleTiers: async (role: 'parent' | 'student' | 'guest' | 'staff', tiers: number[]): Promise<void> => {
+    const key = role === 'staff' ? 'staff_tiers' : `${role}_tiers`;
     await tursoQuery(
       `INSERT INTO app_settings (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
       [key, JSON.stringify(tiers), new Date().toISOString()]
     );
-    if (role === 'parent') {
+    if (role === 'staff' || role === 'guest') {
+      // Sync both keys
       await tursoQuery(
         `INSERT INTO app_settings (key, value, updated_at) VALUES ('guest_tiers', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+        [JSON.stringify(tiers), new Date().toISOString()]
+      );
+      await tursoQuery(
+        `INSERT INTO app_settings (key, value, updated_at) VALUES ('staff_tiers', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+        [JSON.stringify(tiers), new Date().toISOString()]
+      );
+    }
+    if (role === 'parent') {
+      await tursoQuery(
+        `INSERT INTO app_settings (key, value, updated_at) VALUES ('parent_tiers', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
         [JSON.stringify(tiers), new Date().toISOString()]
       );
     }

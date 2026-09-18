@@ -63,20 +63,21 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       });
     }
 
-    // Merge guests as pseudo-students
+    // Merge staff/guests as pseudo-students
     if (Array.isArray(guests) && guests.length > 0) {
       guests.forEach((g) => {
+        const name = (g as any).staffName || g.guestName;
         const pseudoStudent: Student = {
           id: g.id,
-          fullName: g.guestName,
-          firstName: g.guestName,
+          fullName: name,
+          firstName: name,
           lastName: '',
-          parentName: 'Guest',
+          parentName: 'Staff',
           gmNo: 0,
-          grade: 'Guest',
-          birthDate: g.password, // We store the guest password here to simplify matching
+          grade: 'Staff',
+          birthDate: g.password, // We store the staff password here to simplify matching
         };
-        map.set(normalize(g.guestName), pseudoStudent);
+        map.set(normalize(name), pseudoStudent);
       });
     }
 
@@ -183,11 +184,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       let isPasswordCorrect = false;
       let role: import('../types').IntakePhase = 'parent';
 
-      // Check Guest
-      if (matchedStudent.grade === 'Guest') {
+      // Check Staff / Guest
+      if (matchedStudent.grade === 'Staff' || matchedStudent.grade === 'Guest') {
         if (cleanPwd === effectiveBirthDate) {
           isPasswordCorrect = true;
-          role = 'guest';
+          role = 'staff';
         }
       } else {
         // Check Parent (Birth Date with Slashes)
@@ -229,19 +230,27 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       }
 
       // 2. Phase Blocking Rules
+      const isStaffRole = role === 'staff' || role === 'guest';
+      const isStaffPhase = intakePhase === 'staff' || intakePhase === 'guest';
+
       if (intakePhase === 'parent' && role === 'student') {
         setIsLoading(false);
         setError('Student ordering is not yet open.');
         return;
       }
-      if (intakePhase === 'parent' && role === 'guest') {
+      if (intakePhase === 'parent' && isStaffRole) {
         setIsLoading(false);
-        setError('Guest ordering is not yet open.');
+        setError('Staff ordering is not yet open.');
         return;
       }
-      if (intakePhase === 'student' && role === 'guest') {
+      if (intakePhase === 'student' && isStaffRole) {
         setIsLoading(false);
-        setError('Guest ordering is not yet open.');
+        setError('Staff ordering is not yet open.');
+        return;
+      }
+      if (isStaffPhase && (role === 'parent' || role === 'student')) {
+        setIsLoading(false);
+        setError('Parent/Student ordering is now closed. Currently open for Staff.');
         return;
       }
 

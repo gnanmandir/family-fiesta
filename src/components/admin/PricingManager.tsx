@@ -147,7 +147,7 @@ export const PricingManager: React.FC<PricingManagerProps> = ({ adminRole = 'adm
       case 'student':
         return 'Students';
       case 'guest':
-        return 'Guests';
+        return 'Staff';
     }
   };
 
@@ -168,7 +168,7 @@ export const PricingManager: React.FC<PricingManagerProps> = ({ adminRole = 'adm
           Allowance & Member Configuration
         </h2>
         <p className="text-slate-500 mt-2 text-sm max-w-2xl">
-          Configure attendee allowances independently for each group. Manage how many members Parents, Students, and Guests can select, along with their authorized food budget.
+          Configure attendee allowances independently for each group. Manage how many members Parents, Students, and Staff can select, along with their authorized food budget.
         </p>
       </div>
 
@@ -219,7 +219,7 @@ export const PricingManager: React.FC<PricingManagerProps> = ({ adminRole = 'adm
             <p className="text-xs text-slate-500 mt-0.5">
               {activeGroup === 'student' && 'Students typically have 1 member allocated.'}
               {activeGroup === 'parent' && 'Parents can attend with family members (up to the tier limit).'}
-              {activeGroup === 'guest' && 'Guests can be assigned custom single or multi-member allowances.'}
+              {activeGroup === 'guest' && 'Staff can be assigned custom single or multi-member allowances.'}
             </p>
           </div>
           {!isReadOnly && (

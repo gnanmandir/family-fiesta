@@ -209,7 +209,10 @@ export default function App() {
         setIntakePhase(currentPhase);
         if (parentTiers) localStorage.setItem('app_parent_tiers', JSON.stringify(parentTiers));
         if (studentTiers) localStorage.setItem('app_student_tiers', JSON.stringify(studentTiers));
-        if (guestTiers) localStorage.setItem('app_guest_tiers', JSON.stringify(guestTiers));
+        if (guestTiers) {
+          localStorage.setItem('app_guest_tiers', JSON.stringify(guestTiers));
+          localStorage.setItem('app_staff_tiers', JSON.stringify(guestTiers));
+        }
 
         // Check if schedule is already completed/done in real time
         if (schedule && schedule.enabled && isScheduleDone(schedule)) {

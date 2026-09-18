@@ -11,9 +11,17 @@ export const getDynamicTiers = (role?: string, customTiers?: number[]): number[]
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
+    // Fallback for staff to check legacy app_guest_tiers
+    if (effectiveRole === 'staff' || effectiveRole === 'guest') {
+      const staffRaw = localStorage.getItem('app_staff_tiers') || localStorage.getItem('app_guest_tiers');
+      if (staffRaw) {
+        const parsed = JSON.parse(staffRaw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    }
     // Fallback for parent to check legacy app_guest_tiers
     if (effectiveRole === 'parent') {
-      const legacyRaw = localStorage.getItem('app_guest_tiers');
+      const legacyRaw = localStorage.getItem('app_parent_tiers') || localStorage.getItem('app_guest_tiers');
       if (legacyRaw) {
         const parsed = JSON.parse(legacyRaw);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -22,7 +30,7 @@ export const getDynamicTiers = (role?: string, customTiers?: number[]): number[]
   } catch (e) {}
 
   if (effectiveRole === 'student') return [230];
-  if (effectiveRole === 'guest') return [230];
+  if (effectiveRole === 'guest' || effectiveRole === 'staff') return [230];
   return [230, 230, 140, 80]; // Default fallback for parent
 };
 

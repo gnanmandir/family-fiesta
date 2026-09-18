@@ -214,7 +214,11 @@ export const OrderTable: React.FC<OrderTableProps> = ({
 
   const filteredOrders = orders.filter((o) => {
     const oType = o.orderType || 'parent';
-    if (oType !== activeTab) return false;
+    if (activeTab === 'guest') {
+      if (oType !== 'guest' && oType !== 'staff') return false;
+    } else if (oType !== activeTab) {
+      return false;
+    }
     const query = searchQuery.toLowerCase().trim();
     if (!query) return true;
     const gmNo = getOrderGmNo(o, students);
@@ -435,7 +439,7 @@ Thank you for ordering from Family Fiesta!
               <h2 className="text-base font-bold text-stone-900">All Master Orders Sheet</h2>
             </div>
             <p className="text-xs text-stone-500 mt-0.5">
-              Live comprehensive registry of all {filteredOrders.length} {activeTab} food orders for Family Fiesta 2026 ({orders.length} total across all groups).
+              Live comprehensive registry of all {filteredOrders.length} {activeTab === 'guest' ? 'Staff' : activeTab} food orders for Family Fiesta 2026 ({orders.length} total across all groups).
             </p>
           </div>
 
@@ -474,20 +478,28 @@ Thank you for ordering from Family Fiesta!
         
         {/* Phase Tabs */}
         <div className="flex bg-stone-100 p-1 rounded-xl w-full max-w-lg mb-2">
-          {(['parent', 'student', 'guest'] as const).map((tab) => {
-            const count = orders.filter((o) => (o.orderType || 'parent') === tab).length;
+          {([
+            { id: 'parent', label: 'Parent Orders' },
+            { id: 'student', label: 'Student Orders' },
+            { id: 'guest', label: 'Staff Orders' },
+          ] as const).map((tab) => {
+            const count = orders.filter((o) => {
+              const type = o.orderType || 'parent';
+              if (tab.id === 'guest') return type === 'guest' || type === 'staff';
+              return type === tab.id;
+            }).length;
             return (
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`flex-1 text-xs sm:text-sm font-bold py-2 rounded-lg transition-all capitalize flex items-center justify-center space-x-1.5 cursor-pointer ${
-                  activeTab === tab
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 text-xs sm:text-sm font-bold py-2 rounded-lg transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+                  activeTab === tab.id
                     ? 'bg-white shadow-sm text-stone-900 border border-stone-200'
                     : 'text-stone-500 hover:text-stone-700 hover:bg-stone-200/50'
                 }`}
               >
-                <span>{tab} Orders</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${activeTab === tab ? 'bg-indigo-50 text-indigo-700' : 'bg-stone-200 text-stone-600'}`}>
+                <span>{tab.label}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${activeTab === tab.id ? 'bg-indigo-50 text-indigo-700' : 'bg-stone-200 text-stone-600'}`}>
                   {count}
                 </span>
               </button>
@@ -834,7 +846,9 @@ Thank you for ordering from Family Fiesta!
                   </span>
                 </div>
                 <div>
-                  <span className="text-stone-400 text-[10px] block uppercase font-bold">Guests</span>
+                  <span className="text-stone-400 text-[10px] block uppercase font-bold">
+                    {selectedOrderForReceipt.orderType === 'student' ? 'Attendee' : (selectedOrderForReceipt.orderType === 'guest' || selectedOrderForReceipt.orderType === 'staff') ? 'Staff' : 'Guests'}
+                  </span>
                   <span className="font-semibold text-stone-900">{selectedOrderForReceipt.peopleCount}</span>
                 </div>
                 <div>

@@ -11,12 +11,15 @@ export interface Student {
   birthDate?: string; // used for auth
 }
 
-export interface GuestCredential {
-  id: string; // e.g. "guest-12345"
+export interface StaffCredential {
+  id: string; // e.g. "guest-12345" or "staff-12345"
   guestName: string;
+  staffName?: string;
   password: string;
   createdAt: string;
 }
+
+export type GuestCredential = StaffCredential;
 
 export interface FoodItem {
   id: string;
@@ -62,7 +65,7 @@ export interface Order {
   dateDisplay: string;
   timeDisplay: string;
   isEdited?: boolean;
-  orderType?: 'parent' | 'student' | 'guest';
+  orderType?: 'parent' | 'student' | 'guest' | 'staff';
 }
 
 export interface DeviceLockInfo {
@@ -79,4 +82,4 @@ export interface OrderSchedule {
   endTime: string;   // ISO or YYYY-MM-DDTHH:mm
 }
 
-export type IntakePhase = 'parent' | 'student' | 'guest' | 'closed';
+export type IntakePhase = 'parent' | 'student' | 'guest' | 'staff' | 'closed';

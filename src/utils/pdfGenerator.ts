@@ -67,8 +67,8 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   doc.setFont('helvetica', 'bold');
   const bannerText = order.orderType === 'student' 
     ? 'OFFICIAL STUDENT FOOD COUPONS' 
-    : order.orderType === 'guest' 
-    ? 'OFFICIAL GUEST FOOD COUPONS' 
+    : (order.orderType === 'guest' || order.orderType === 'staff')
+    ? 'OFFICIAL STAFF FOOD COUPONS' 
     : 'OFFICIAL FOOD COUPONS';
   doc.text(bannerText, 105, y + 6.8, { align: 'center' });
 
@@ -126,8 +126,8 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   doc.setTextColor(15, 23, 42);
   const attendeeText = order.orderType === 'student' 
     ? `${order.peopleCount} Student` 
-    : order.orderType === 'guest'
-    ? `${order.peopleCount} Guest(s)`
+    : (order.orderType === 'guest' || order.orderType === 'staff')
+    ? `${order.peopleCount} Staff Member(s)`
     : `${order.peopleCount} Person(s)`;
   doc.text(attendeeText, 140, y + 14);
 

@@ -92,10 +92,10 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onR
           </div>
           <div>
             <span className="text-slate-500 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold block">
-              {currentOrder.orderType === 'student' ? 'Attendee' : 'Guests'}
+              {currentOrder.orderType === 'student' ? 'Attendee' : (currentOrder.orderType === 'guest' || currentOrder.orderType === 'staff') ? 'Staff' : 'Guests'}
             </span>
             <span className="text-slate-800 font-bold text-xs">
-              {currentOrder.peopleCount} {currentOrder.orderType === 'student' ? (currentOrder.peopleCount === 1 ? 'Student' : 'Students') : (currentOrder.peopleCount === 1 ? 'Guest' : 'Guests')}
+              {currentOrder.peopleCount} {currentOrder.orderType === 'student' ? (currentOrder.peopleCount === 1 ? 'Student' : 'Students') : (currentOrder.orderType === 'guest' || currentOrder.orderType === 'staff') ? (currentOrder.peopleCount === 1 ? 'Staff Member' : 'Staff Members') : (currentOrder.peopleCount === 1 ? 'Guest' : 'Guests')}
             </span>
           </div>
           <div>

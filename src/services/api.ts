@@ -88,7 +88,7 @@ export const api = {
     }
   },
 
-  getRoleTiers: async (role: 'parent' | 'student' | 'guest'): Promise<number[]> => {
+  getRoleTiers: async (role: 'parent' | 'student' | 'guest' | 'staff'): Promise<number[]> => {
     if (isTursoConfigured) {
       try {
         return await tursoService.getRoleTiers(role);
@@ -100,7 +100,7 @@ export const api = {
     return [230];
   },
 
-  setRoleTiers: async (role: 'parent' | 'student' | 'guest', tiers: number[]): Promise<void> => {
+  setRoleTiers: async (role: 'parent' | 'student' | 'guest' | 'staff', tiers: number[]): Promise<void> => {
     if (isTursoConfigured) {
       await tursoService.setRoleTiers(role, tiers);
     }

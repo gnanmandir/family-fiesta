@@ -968,7 +968,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             { id: 'overview', label: 'Analytics & Charts', icon: <LayoutDashboard className="w-4 h-4" /> },
             { id: 'orders', label: `Live Orders (${totalOrders})`, icon: <ShoppingBag className="w-4 h-4" /> },
             { id: 'students', label: `Students (${studentsOrdered}/${totalStudents})`, icon: <Users className="w-4 h-4" /> },
-            { id: 'guests', label: 'Guests', icon: <Users className="w-4 h-4" /> },
+            { id: 'staff', label: 'Staff', icon: <Users className="w-4 h-4" /> },
             { id: 'food', label: `Menu Catalog (${menuItems.length})`, icon: <UtensilsCrossed className="w-4 h-4" /> },
             { id: 'pricing', label: 'Pricing & Tiers', icon: <IndianRupee className="w-4 h-4" /> },
             ...(isSuper ? [
@@ -1077,8 +1077,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         )}
 
-        {/* Tab: Guests */}
-        {activeTab === 'guests' && (
+        {/* Tab: Staff */}
+        {(activeTab === 'staff' || activeTab === 'guests') && (
           <div className="rounded-2xl bg-white border border-stone-200 p-6 shadow-xs">
             <GuestManager />
           </div>
@@ -1147,7 +1147,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <div className={`absolute top-0 inset-x-0 h-1.5 ${
                       intakePhase === 'parent' ? 'bg-gradient-to-r from-blue-500 to-indigo-500' :
                       intakePhase === 'student' ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500' :
-                      intakePhase === 'guest' ? 'bg-gradient-to-r from-amber-500 to-orange-500' :
+                      (intakePhase === 'guest' || intakePhase === 'staff') ? 'bg-gradient-to-r from-amber-500 to-orange-500' :
                       'bg-gradient-to-r from-slate-500 to-gray-500'
                     }`} />
                     
@@ -1162,7 +1162,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           </h4>
                         </div>
                         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10.5px] sm:text-[11px] font-bold shadow-2xs shrink-0 bg-slate-50 text-slate-700 border border-slate-200 uppercase tracking-wide">
-                          {intakePhase}
+                          {intakePhase === 'guest' ? 'staff' : intakePhase}
                         </span>
                       </div>
                       
@@ -1173,7 +1173,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     
                     <div className="pt-3.5 mt-4 border-t border-slate-100/80">
                       <select
-                        value={intakePhase}
+                        value={intakePhase === 'guest' ? 'staff' : intakePhase}
                         onChange={(e) => {
                           const newPhase = e.target.value as import('../types').IntakePhase;
                           openProtectedAction(
@@ -1188,7 +1188,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       >
                         <option value="parent">Parent Phase</option>
                         <option value="student">Student Phase</option>
-                        <option value="guest">Guest Phase</option>
+                        <option value="staff">Staff Phase</option>
                         <option value="closed">Closed Phase</option>
                       </select>
                     </div>

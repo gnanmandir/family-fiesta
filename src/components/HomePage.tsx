@@ -50,6 +50,9 @@ export const HomePage: React.FC<HomePageProps> = ({
     if (effectiveRole === 'student') {
       return count === 1 ? 'Student' : 'Students';
     }
+    if (effectiveRole === 'staff' || effectiveRole === 'guest') {
+      return count === 1 ? 'Staff Member' : 'Staff Members';
+    }
     return count === 1 ? 'Guest' : 'Guests';
   };
 
@@ -84,12 +87,14 @@ export const HomePage: React.FC<HomePageProps> = ({
           <div className="inline-flex items-center space-x-2 px-4 py-2 bg-white border border-slate-200 rounded-full shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)]">
             {effectiveRole === 'student' ? (
               <GraduationCap className="w-4 h-4 text-indigo-600 stroke-[2.5]" />
-            ) : effectiveRole === 'guest' ? (
+            ) : (effectiveRole === 'guest' || effectiveRole === 'staff') ? (
               <UserCheck className="w-4 h-4 text-amber-600 stroke-[2.5]" />
             ) : (
               <User className="w-4 h-4 text-orange-500 stroke-[2.5]" />
             )}
-            <span className="text-sm font-medium text-slate-400 capitalize">{effectiveRole}:</span>
+            <span className="text-sm font-medium text-slate-400 capitalize">
+              {(effectiveRole === 'guest' || effectiveRole === 'staff') ? 'Staff' : effectiveRole}:
+            </span>
             <span className="text-sm font-bold text-slate-700">{formatNameDisplay(selectedStudent.fullName)}</span>
           </div>
         </div>

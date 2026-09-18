@@ -61,7 +61,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
         {/* Right Controls */}
         <div className="flex items-center space-x-3 sm:space-x-4">
-          {/* On Menu Page, show Edit Guest button instead of student name */}
+          {/* On Menu Page, show Change Attendees button instead of student name */}
           {currentView === 'menu' && onNavigateHome && (
             <button
               type="button"
@@ -69,7 +69,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="flex items-center px-4 py-2 rounded-full border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm font-bold transition-colors shadow-sm"
             >
               <UserCheck className="w-4 h-4 mr-2" />
-              <span>Edit Guest</span>
+              <span>Change Attendees</span>
             </button>
           )}
 

@@ -217,8 +217,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   <span className="text-slate-900 font-bold">{formatNameDisplay(selectedStudent.fullName || `${selectedStudent.firstName} ${selectedStudent.parentName}`)}</span>
                 </div>
                 <div className="flex justify-between items-center text-slate-500">
-                  <span>Guests:</span>
-                  <span className="text-slate-900 font-bold">{peopleCount}</span>
+                  <span>{(localStorage.getItem('active_login_role') === 'student') ? 'Attendee:' : (localStorage.getItem('active_login_role') === 'guest' || localStorage.getItem('active_login_role') === 'staff') ? 'Staff:' : 'Guests:'}</span>
+                  <span className="text-slate-900 font-bold">
+                    {peopleCount} {(localStorage.getItem('active_login_role') === 'student') ? 'Student' : (localStorage.getItem('active_login_role') === 'guest' || localStorage.getItem('active_login_role') === 'staff') ? 'Staff Member' : (peopleCount === 1 ? 'Guest' : 'Guests')}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center text-slate-500">
                   <span>Total Items:</span>

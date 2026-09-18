@@ -49,7 +49,7 @@ export const GuestManager: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this guest credential?')) {
+    if (confirm('Are you sure you want to delete this staff credential?')) {
       await api.deleteGuest(id);
       fetchGuests();
     }
@@ -64,8 +64,8 @@ export const GuestManager: React.FC = () => {
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-stone-900">Guest Credentials</h2>
-              <p className="text-xs text-stone-500">Manage names and passwords for external guests.</p>
+              <h2 className="text-base font-bold text-stone-900">Staff Credentials</h2>
+              <p className="text-xs text-stone-500">Manage names and passwords for staff members.</p>
             </div>
           </div>
           <button
@@ -73,7 +73,7 @@ export const GuestManager: React.FC = () => {
             className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center space-x-2"
           >
             <Plus className="w-4 h-4" />
-            <span>Add Guest</span>
+            <span>Add Staff</span>
           </button>
         </div>
 
@@ -81,12 +81,12 @@ export const GuestManager: React.FC = () => {
           {isAdding && (
             <div className="mb-6 bg-indigo-50/50 border border-indigo-100 rounded-xl p-4 flex flex-col sm:flex-row gap-3 items-end">
               <div className="flex-1 w-full">
-                <label className="block text-xs font-bold text-stone-700 mb-1">Guest Name</label>
+                <label className="block text-xs font-bold text-stone-700 mb-1">Staff Name</label>
                 <input
                   type="text"
                   value={newGuestName}
                   onChange={(e) => setNewGuestName(e.target.value)}
-                  placeholder="e.g. VIP Guest"
+                  placeholder="e.g. Staff Member"
                   className="w-full px-3 py-2 border border-stone-200 rounded-lg text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                 />
               </div>
@@ -118,10 +118,10 @@ export const GuestManager: React.FC = () => {
           )}
 
           {isLoading ? (
-            <div className="text-center py-8 text-stone-500 text-sm">Loading guests...</div>
+            <div className="text-center py-8 text-stone-500 text-sm">Loading staff...</div>
           ) : guests.length === 0 ? (
             <div className="text-center py-8 text-stone-500 text-sm border-2 border-dashed border-stone-200 rounded-xl">
-              No guest credentials added yet.
+              No staff credentials added yet.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
