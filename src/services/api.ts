@@ -409,6 +409,20 @@ export const api = {
     });
   },
 
+  deleteOrdersByRole: async (role: 'parent' | 'student' | 'guest' | 'staff'): Promise<void> => {
+    if (isTursoConfigured) {
+      await tursoService.deleteOrdersByRole(role);
+      return;
+    }
+    if (isSupabaseConfigured) {
+      await supabaseService.deleteOrdersByRole(role);
+      return;
+    }
+    await fetchJson<{ success: boolean }>(`${API_BASE}/orders/role/${encodeURIComponent(role)}`, {
+      method: 'DELETE',
+    }).catch(() => {});
+  },
+
   clearDeviceLock: async (deviceId: string): Promise<void> => {
     if (isTursoConfigured) {
       await tursoService.clearDeviceLock(deviceId);

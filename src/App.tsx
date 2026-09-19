@@ -1064,19 +1064,44 @@ export default function App() {
   };
 
   const handleClearAllOrders = async () => {
+    await handleClearOrdersByRole('all');
+  };
+
+  const handleClearOrdersByRole = async (role: 'parent' | 'student' | 'staff' | 'all') => {
     try {
-      await deleteAllOrders();
-      setOrders([]);
-      setActiveOrder(null);
-      localStorage.removeItem('active_order_number');
-      localStorage.removeItem('app_device_order');
+      if (role === 'all') {
+        await deleteAllOrders();
+        setOrders([]);
+        setActiveOrder(null);
+        localStorage.removeItem('active_order_number');
+        localStorage.removeItem('app_device_order');
+      } else {
+        const { deleteOrdersByRole } = await import('./services/storage');
+        await deleteOrdersByRole(role === 'staff' ? 'staff' : role);
+        const fresh = await fetchOrders();
+        setOrders(fresh);
+        if (activeOrder) {
+          const oType = activeOrder.orderType || 'parent';
+          const matches =
+            role === 'parent'
+              ? oType === 'parent'
+              : role === 'staff'
+              ? oType === 'staff' || oType === 'guest'
+              : oType === role;
+          if (matches) {
+            setActiveOrder(null);
+            localStorage.removeItem('active_order_number');
+            localStorage.removeItem('app_device_order');
+          }
+        }
+      }
       // Ensure admin remains firmly on admin dashboard
       localStorage.setItem('admin_token', 'admin_session_' + Date.now());
       localStorage.setItem('app_current_view', 'admin');
       setIsAdminLoggedIn(true);
       setCurrentView('admin');
     } catch (e) {
-      console.error('Error clearing orders:', e);
+      console.error('Error clearing orders by role:', e);
     }
   };
 
@@ -1218,6 +1243,7 @@ export default function App() {
             onWipeStudentOrder={handleWipeStudentOrder}
             onResetDeviceLock={handleResetDeviceLock}
             onClearAllOrders={handleClearAllOrders}
+            onClearOrdersByRole={handleClearOrdersByRole}
             onExitAdmin={handleAdminLogout}
             onLogoutAdmin={handleAdminLogout}
             ordersOpen={ordersOpen}

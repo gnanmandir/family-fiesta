@@ -458,6 +458,32 @@ export async function deleteAllOrders(): Promise<void> {
   }
 }
 
+export async function deleteOrdersByRole(role: 'parent' | 'student' | 'guest' | 'staff'): Promise<void> {
+  try {
+    const existing = getCachedOrders();
+    const isTarget = (o: Order) => {
+      const oType = o.orderType || 'parent';
+      if (role === 'parent') return oType === 'parent';
+      if (role === 'guest' || role === 'staff') return oType === 'guest' || oType === 'staff';
+      return oType === role;
+    };
+    const remaining = existing.filter((o) => !isTarget(o));
+    localStorage.setItem(KEYS.ORDERS, JSON.stringify(remaining));
+
+    const deviceOrder = getDeviceOrder();
+    if (deviceOrder) {
+      const orderInDeleted = existing.find((o) => o.orderNumber === deviceOrder.orderNumber && isTarget(o));
+      if (orderInDeleted) {
+        localStorage.removeItem(KEYS.DEVICE_ORDER);
+      }
+    }
+
+    await api.deleteOrdersByRole(role);
+  } catch (e) {
+    console.error(`Error deleting ${role} orders:`, e);
+  }
+}
+
 export function getDeviceOrder(): DeviceLockInfo | null {
   try {
     const raw = localStorage.getItem(KEYS.DEVICE_ORDER);

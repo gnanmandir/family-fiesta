@@ -418,6 +418,25 @@ export const tursoService = {
     await tursoQuery('DELETE FROM device_locks').catch(() => {});
   },
 
+  deleteOrdersByRole: async (role: 'parent' | 'student' | 'guest' | 'staff'): Promise<void> => {
+    let orderTypeCondition = "order_type = ?";
+    let params: any[] = [role];
+    if (role === 'parent') {
+      orderTypeCondition = "(order_type = 'parent' OR order_type IS NULL OR order_type = '')";
+      params = [];
+    } else if (role === 'guest' || role === 'staff') {
+      orderTypeCondition = "(order_type = 'guest' OR order_type = 'staff')";
+      params = [];
+    }
+
+    await tursoQuery(
+      `DELETE FROM device_locks WHERE order_number IN (SELECT order_number FROM orders WHERE ${orderTypeCondition})`,
+      params
+    ).catch(() => {});
+
+    await tursoQuery(`DELETE FROM orders WHERE ${orderTypeCondition}`, params);
+  },
+
   clearDeviceLock: async (deviceId: string): Promise<void> => {
     await tursoQuery('DELETE FROM device_locks WHERE device_id = ?', [deviceId]).catch(() => {});
   },

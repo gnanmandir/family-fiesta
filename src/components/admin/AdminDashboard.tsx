@@ -57,6 +57,7 @@ interface AdminDashboardProps {
   onWipeStudentOrder?: (student: Student, order?: Order) => Promise<void> | void;
   onResetDeviceLock: () => void;
   onClearAllOrders: () => void;
+  onClearOrdersByRole?: (role: 'parent' | 'student' | 'staff' | 'all') => Promise<void> | void;
   onExitAdmin: () => void;
   onLogoutAdmin: () => void;
   ordersOpen?: boolean;
@@ -709,6 +710,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onWipeStudentOrder,
   onResetDeviceLock,
   onClearAllOrders,
+  onClearOrdersByRole,
   onExitAdmin,
   onLogoutAdmin,
   ordersOpen = true,
@@ -888,6 +890,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const totalStudents = students.length;
   const studentsOrdered = orderedStudentIds.size;
   const studentsRemaining = totalStudents - studentsOrdered;
+  const parentOrdersCount = orders.filter((o) => !o.orderType || o.orderType === 'parent').length;
+  const studentOrdersCount = orders.filter((o) => o.orderType === 'student').length;
+  const staffOrdersCount = orders.filter((o) => o.orderType === 'guest' || o.orderType === 'staff').length;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
@@ -1319,9 +1324,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-rose-50 text-rose-600 border border-rose-200/80 flex items-center justify-center shrink-0 shadow-2xs">
                           <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 text-rose-600" />
                         </div>
-                        <h4 className="text-sm sm:text-base font-bold text-slate-900 truncate">
-                          Wipe Order Register
-                        </h4>
+                        <div>
+                          <h4 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                            Wipe Order Register
+                          </h4>
+                          <p className="text-[11px] text-slate-500 font-medium">
+                            Select a category to wipe individually, or wipe all orders.
+                          </p>
+                        </div>
                       </div>
 
                       <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10px] sm:text-[10.5px] font-bold tracking-wide uppercase bg-rose-100 text-rose-800 border border-rose-200/80 shadow-2xs shrink-0">
@@ -1330,33 +1340,171 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </span>
                     </div>
 
-                    <div className="bg-rose-50/80 border border-rose-200/80 rounded-xl px-3 py-2.5 flex items-center space-x-2 text-rose-900">
+                    <div className="bg-rose-50/80 border border-rose-200/80 rounded-xl px-3 py-2 flex items-center space-x-2 text-rose-900">
                       <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
                       <p className="text-xs font-medium leading-tight">
-                        Permanently wipes all orders and resets coupon tokens to #1.
+                        Wiping clears selected orders and releases device locks for that category.
                       </p>
+                    </div>
+
+                    {/* Individual Category Wipe Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+                      {/* Parent Orders Wipe */}
+                      <div className="p-3 rounded-xl border border-rose-100 bg-white shadow-2xs flex flex-col justify-between space-y-2">
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-900">Parent Orders</span>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                              {parentOrdersCount}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 mt-0.5">Family & parent meal orders</p>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={parentOrdersCount === 0}
+                          onClick={() => {
+                            openProtectedAction(
+                              'Permanently Wipe Parent Orders',
+                              `CRITICAL WARNING: This will permanently delete all ${parentOrdersCount} parent orders and release their device locks. Student and Staff orders will NOT be touched. Enter system password to proceed.`,
+                              async () => {
+                                if (onClearOrdersByRole) {
+                                  await onClearOrdersByRole('parent');
+                                } else {
+                                  await onClearAllOrders();
+                                }
+                                alert('Parent orders wiped successfully!');
+                              },
+                              true,
+                              'Wipe Parent Orders'
+                            );
+                          }}
+                          className={`w-full py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all ${
+                            parentOrdersCount === 0
+                              ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                              : 'bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 hover:border-rose-600 cursor-pointer active:scale-95'
+                          }`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Wipe Parents ({parentOrdersCount})</span>
+                        </button>
+                      </div>
+
+                      {/* Student Orders Wipe */}
+                      <div className="p-3 rounded-xl border border-rose-100 bg-white shadow-2xs flex flex-col justify-between space-y-2">
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-900">Student Orders</span>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                              {studentOrdersCount}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 mt-0.5">Student phase meal passes</p>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={studentOrdersCount === 0}
+                          onClick={() => {
+                            openProtectedAction(
+                              'Permanently Wipe Student Orders',
+                              `CRITICAL WARNING: This will permanently delete all ${studentOrdersCount} student orders and release their device locks. Parent and Staff orders will NOT be touched. Enter system password to proceed.`,
+                              async () => {
+                                if (onClearOrdersByRole) {
+                                  await onClearOrdersByRole('student');
+                                } else {
+                                  await onClearAllOrders();
+                                }
+                                alert('Student orders wiped successfully!');
+                              },
+                              true,
+                              'Wipe Student Orders'
+                            );
+                          }}
+                          className={`w-full py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all ${
+                            studentOrdersCount === 0
+                              ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                              : 'bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 hover:border-rose-600 cursor-pointer active:scale-95'
+                          }`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Wipe Students ({studentOrdersCount})</span>
+                        </button>
+                      </div>
+
+                      {/* Staff Orders Wipe */}
+                      <div className="p-3 rounded-xl border border-rose-100 bg-white shadow-2xs flex flex-col justify-between space-y-2">
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-900">Staff Orders</span>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                              {staffOrdersCount}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 mt-0.5">Staff dining meal vouchers</p>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={staffOrdersCount === 0}
+                          onClick={() => {
+                            openProtectedAction(
+                              'Permanently Wipe Staff Orders',
+                              `CRITICAL WARNING: This will permanently delete all ${staffOrdersCount} staff orders and release their device locks. Parent and Student orders will NOT be touched. Enter system password to proceed.`,
+                              async () => {
+                                if (onClearOrdersByRole) {
+                                  await onClearOrdersByRole('staff');
+                                } else {
+                                  await onClearAllOrders();
+                                }
+                                alert('Staff orders wiped successfully!');
+                              },
+                              true,
+                              'Wipe Staff Orders'
+                            );
+                          }}
+                          className={`w-full py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all ${
+                            staffOrdersCount === 0
+                              ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                              : 'bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 hover:border-rose-600 cursor-pointer active:scale-95'
+                          }`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Wipe Staff ({staffOrdersCount})</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="pt-3.5 mt-4 border-t border-rose-100/80 flex items-center justify-end">
+                  <div className="pt-3.5 mt-4 border-t border-rose-100/80 flex flex-col sm:flex-row items-center justify-between gap-2">
+                    <span className="text-[11px] text-slate-500 font-medium">
+                      Need a full reset? Wipe all categories simultaneously:
+                    </span>
                     <button
                       type="button"
+                      disabled={orders.length === 0}
                       onClick={() => {
                         openProtectedAction(
                           'Permanently Wipe All Orders',
-                          'CRITICAL WARNING: This action will permanently erase all order records and cannot be undone. Enter system password to proceed.',
+                          `CRITICAL WARNING: This action will permanently erase all ${orders.length} order records across Parent, Student, and Staff categories. Enter system password to proceed.`,
                           async () => {
-                            await onClearAllOrders();
+                            if (onClearOrdersByRole) {
+                              await onClearOrdersByRole('all');
+                            } else {
+                              await onClearAllOrders();
+                            }
                             alert('All orders wiped successfully!');
                           },
                           true,
                           'Wipe All Orders'
                         );
                       }}
-                      className="w-full sm:w-auto px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-sm shadow-rose-600/25 flex items-center justify-center space-x-2 cursor-pointer transition-all active:scale-95"
+                      className={`w-full sm:w-auto px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold flex items-center justify-center space-x-2 transition-all ${
+                        orders.length === 0
+                          ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                          : 'text-white bg-rose-600 hover:bg-rose-700 shadow-sm shadow-rose-600/25 cursor-pointer active:scale-95'
+                      }`}
                     >
                       <Trash2 className="w-4 h-4" />
-                      <span>Wipe Order Register</span>
+                      <span>Wipe All Orders ({orders.length})</span>
                     </button>
                   </div>
                 </div>

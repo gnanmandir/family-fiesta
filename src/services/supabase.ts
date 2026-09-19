@@ -504,6 +504,37 @@ export const supabaseService = {
     } catch (e) {}
   },
 
+  deleteOrdersByRole: async (role: 'parent' | 'student' | 'guest' | 'staff'): Promise<void> => {
+    try {
+      let filter = `order_type=eq.${role}`;
+      if (role === 'parent') {
+        filter = 'or=(order_type.eq.parent,order_type.is.null)';
+      } else if (role === 'guest' || role === 'staff') {
+        filter = 'or=(order_type.eq.guest,order_type.eq.staff)';
+      }
+
+      const existing = await supabaseFetch<any[]>(`orders?${filter}&select=order_number,device_id`);
+      if (existing && existing.length > 0) {
+        await Promise.all(
+          existing.map((o) =>
+            Promise.all([
+              supabaseFetch(`orders?order_number=eq.${encodeURIComponent(o.order_number)}`, {
+                method: 'DELETE',
+              }).catch((err) => console.warn('Individual order delete failed:', err)),
+              o.device_id
+                ? supabaseFetch(`device_locks?device_id=eq.${encodeURIComponent(o.device_id)}`, {
+                    method: 'DELETE',
+                  }).catch(() => {})
+                : Promise.resolve(),
+            ])
+          )
+        );
+      }
+    } catch (e) {
+      console.warn(`Failed to delete ${role} orders from Supabase:`, e);
+    }
+  },
+
   clearDeviceLock: async (deviceId: string): Promise<void> => {
     await supabaseFetch(`device_locks?device_id=eq.${encodeURIComponent(deviceId)}`, {
       method: 'DELETE',
