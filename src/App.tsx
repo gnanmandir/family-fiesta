@@ -6,6 +6,8 @@ import {
   Order,
   OrderStatus,
   OrderSchedule,
+  AdminRole,
+  SystemControls,
 } from './types';
 import { getStudentDisplayName } from './data/students';
 import {
@@ -27,6 +29,8 @@ import {
   resetAllData,
   deleteAllOrders,
   getStudentExistingOrder,
+  getCachedSystemControls,
+  setCachedSystemControls,
 } from './services/storage';
 import { api } from './services/api';
 import { isSupabaseConfigured } from './services/supabase';
@@ -114,8 +118,11 @@ export default function App() {
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
     return Boolean(localStorage.getItem('admin_token'));
   });
-  const [adminRole, setAdminRole] = useState<'super' | 'admin' | null>(() => {
-    return (localStorage.getItem('admin_role') as 'super' | 'admin') || null;
+  const [adminRole, setAdminRole] = useState<AdminRole | null>(() => {
+    return (localStorage.getItem('admin_role') as AdminRole) || null;
+  });
+  const [systemControls, setSystemControls] = useState<SystemControls>(() => {
+    return getCachedSystemControls();
   });
   const [isAdminLoginModalOpen, setIsAdminLoginModalOpen] = useState<boolean>(false);
 
@@ -196,7 +203,7 @@ export default function App() {
     // Asynchronously fetch fresh data from backend
     const loadBackendData = async () => {
       try {
-        const [stList, menuList, orderList, isOpen, schedule, currentPhase, guestsList, parentTiers, studentTiers, guestTiers] = await Promise.all([
+        const [stList, menuList, orderList, isOpen, schedule, currentPhase, guestsList, parentTiers, studentTiers, guestTiers, controls] = await Promise.all([
           fetchStudents(),
           fetchMenuItems(),
           fetchOrders(),
@@ -207,12 +214,14 @@ export default function App() {
           api.getRoleTiers('parent'),
           api.getRoleTiers('student'),
           api.getRoleTiers('guest'),
+          api.getSystemControls(),
         ]);
         setStudents(stList);
         setGuests(guestsList);
         setMenuItems(menuList);
         setOrders(orderList);
         setIntakePhase(currentPhase);
+        if (controls) setSystemControls(controls);
         if (parentTiers) localStorage.setItem('app_parent_tiers', JSON.stringify(parentTiers));
         if (studentTiers) localStorage.setItem('app_student_tiers', JSON.stringify(studentTiers));
         if (guestTiers) {
@@ -900,8 +909,8 @@ export default function App() {
     }
   };
 
-  const handleAdminLogin = (role?: 'super' | 'admin') => {
-    const assignedRole = role || (localStorage.getItem('admin_role') as 'super' | 'admin') || 'admin';
+  const handleAdminLogin = (role?: AdminRole) => {
+    const assignedRole = role || (localStorage.getItem('admin_role') as AdminRole) || 'admin';
     localStorage.setItem('admin_token', 'admin_session_' + Date.now());
     localStorage.setItem('admin_role', assignedRole);
     setAdminRole(assignedRole);
@@ -930,7 +939,7 @@ export default function App() {
   };
 
   // Admin Actions
-  const handleAdminLoginSuccess = (role: 'super' | 'admin') => {
+  const handleAdminLoginSuccess = (role: AdminRole) => {
     localStorage.setItem('admin_token', 'admin_session_' + Date.now());
     localStorage.setItem('admin_role', role);
     setAdminRole(role);
@@ -1174,7 +1183,7 @@ export default function App() {
             guests={guests}
             onStudentLogin={handleStudentLogin}
             onAdminLogin={handleAdminLogin}
-            ordersOpen={ordersOpen}
+            ordersOpen={ordersOpen && systemControls.allowOrderPortal}
             intakePhase={intakePhase}
           />
         )}
@@ -1189,7 +1198,7 @@ export default function App() {
             onStartOrdering={handleStartOrdering}
             onOpenAdmin={() => setIsAdminLoginModalOpen(true)}
             onSignOut={handleSignOut}
-            ordersOpen={ordersOpen}
+            ordersOpen={ordersOpen && systemControls.allowOrderPortal}
             role={activeRole}
           />
         )}
@@ -1223,8 +1232,8 @@ export default function App() {
           <OrderConfirmation
             order={activeOrder}
             onRefreshOrder={(up) => setActiveOrder(up)}
-            onEditOrder={(ordersOpen && (intakePhase === activeOrder.orderType || activeOrder.orderType === undefined)) ? handleEditOrder : undefined}
-            ordersOpen={ordersOpen && (intakePhase === activeOrder.orderType || activeOrder.orderType === undefined)}
+            onEditOrder={(ordersOpen && systemControls.allowOrderPortal && systemControls.allowOrderEditing && (intakePhase === activeOrder.orderType || activeOrder.orderType === undefined)) ? handleEditOrder : undefined}
+            ordersOpen={ordersOpen && systemControls.allowOrderPortal && systemControls.allowOrderEditing && (intakePhase === activeOrder.orderType || activeOrder.orderType === undefined)}
           />
         )}
 
@@ -1234,6 +1243,11 @@ export default function App() {
             students={students}
             menuItems={menuItems}
             adminRole={adminRole || 'admin'}
+            systemControls={systemControls}
+            onUpdateSystemControls={async (controls) => {
+              setSystemControls(controls);
+              await api.setSystemControls(controls);
+            }}
             onUpdateOrderStatus={handleUpdateOrderStatus}
             onDeleteOrder={handleDeleteOrder}
             onDeleteCompletedOrders={handleDeleteCompletedOrders}

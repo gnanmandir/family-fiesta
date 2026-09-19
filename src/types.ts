@@ -83,3 +83,15 @@ export interface OrderSchedule {
 }
 
 export type IntakePhase = 'parent' | 'student' | 'guest' | 'staff' | 'closed';
+
+export type AdminRole = 'boss' | 'super' | 'admin';
+
+export interface SystemControls {
+  allowDataWipe: boolean;        // Super Admin wipe order register
+  allowPhaseChange: boolean;     // Super Admin changing intake phase
+  allowMenuEdit: boolean;        // Super Admin editing food items / pricing
+  allowRosterEdit: boolean;      // Super Admin managing students / staff
+  allowOrderPortal: boolean;     // Live food ordering portal for users
+  allowOrderEditing: boolean;    // Users editing already-submitted orders
+  allowSuperAdminLogin: boolean; // Allowing non-boss admins to log in
+}

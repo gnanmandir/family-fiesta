@@ -3,13 +3,15 @@ import { IndianRupee, Save, Plus, Trash2, Users, ShieldAlert, X, Eye, EyeOff, Lo
 import { api } from '../../services/api';
 
 interface PricingManagerProps {
-  adminRole?: 'super' | 'admin';
+  adminRole?: import('../../types').AdminRole;
+  allowEdit?: boolean;
 }
 
 type IntakeGroup = 'parent' | 'student' | 'guest';
 
-export const PricingManager: React.FC<PricingManagerProps> = ({ adminRole = 'admin' }) => {
-  const isReadOnly = adminRole !== 'super';
+export const PricingManager: React.FC<PricingManagerProps> = ({ adminRole = 'admin', allowEdit = true }) => {
+  const isBoss = adminRole === 'boss';
+  const isReadOnly = (!isBoss && adminRole !== 'super') || (!isBoss && !allowEdit);
   const [activeGroup, setActiveGroup] = useState<IntakeGroup>('parent');
 
   const [tiersByGroup, setTiersByGroup] = useState<Record<IntakeGroup, (number | '')[]>>({

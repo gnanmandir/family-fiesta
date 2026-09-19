@@ -1,4 +1,4 @@
-import { FoodItem, Order, OrderStatus, Student, OrderSchedule } from '../types';
+import { FoodItem, Order, OrderStatus, Student, OrderSchedule, SystemControls } from '../types';
 
 let TURSO_URL = (import.meta.env.VITE_TURSO_DATABASE_URL || '').trim();
 if (TURSO_URL.startsWith('libsql://')) {
@@ -747,5 +747,36 @@ export const tursoService = {
 
   deleteGuest: async (id: string): Promise<void> => {
     await tursoQuery(`DELETE FROM guests WHERE id = ?`, [id]);
+  },
+
+  // --- System Controls ---
+  getSystemControls: async (): Promise<SystemControls> => {
+    const DEFAULT_SYSTEM_CONTROLS: SystemControls = {
+      allowDataWipe: true,
+      allowPhaseChange: true,
+      allowMenuEdit: true,
+      allowRosterEdit: true,
+      allowOrderPortal: true,
+      allowOrderEditing: true,
+      allowSuperAdminLogin: true,
+    };
+    try {
+      const rows = await tursoQuery("SELECT value FROM app_settings WHERE key = 'system_controls'");
+      if (rows && rows.length > 0 && rows[0]?.value) {
+        const parsed = typeof rows[0].value === 'string' ? JSON.parse(rows[0].value) : rows[0].value;
+        return { ...DEFAULT_SYSTEM_CONTROLS, ...parsed };
+      }
+    } catch (e) {
+      console.warn('[Turso] Failed to get system_controls:', e);
+    }
+    return DEFAULT_SYSTEM_CONTROLS;
+  },
+
+  setSystemControls: async (controls: SystemControls): Promise<void> => {
+    const now = new Date().toISOString();
+    await tursoQuery(
+      `INSERT INTO app_settings (key, value, updated_at) VALUES ('system_controls', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+      [JSON.stringify(controls), now]
+    );
   },
 };

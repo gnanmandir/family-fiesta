@@ -7,7 +7,8 @@ import { formatNameDisplay } from '../../utils/nameFormatter';
 interface StudentManagerProps {
   students: Student[];
   orders: Order[];
-  adminRole?: 'super' | 'admin';
+  adminRole?: import('../../types').AdminRole;
+  allowEdit?: boolean;
   onStudentUpdated?: (student: Student) => void;
   onStudentDeleted?: (studentId: string, fullName?: string) => Promise<void> | void;
   onDeleteOrder?: (orderNumber: string) => Promise<void> | void;
@@ -31,12 +32,14 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
   students,
   orders,
   adminRole = 'admin',
+  allowEdit = true,
   onStudentUpdated,
   onStudentDeleted,
   onDeleteOrder,
   onWipeStudentOrder,
 }) => {
-  const isSuper = adminRole === 'super';
+  const isBoss = adminRole === 'boss';
+  const isSuper = (adminRole === 'super' || isBoss) && (isBoss || allowEdit);
   const [localStudents, setLocalStudents] = useState<Student[]>(students);
   const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');

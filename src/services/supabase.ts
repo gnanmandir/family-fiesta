@@ -1,4 +1,4 @@
-import { FoodItem, Order, OrderStatus, Student, OrderSchedule } from '../types';
+import { FoodItem, Order, OrderStatus, Student, OrderSchedule, SystemControls } from '../types';
 
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '')
   .replace(/\/+$/, '')
@@ -651,6 +651,37 @@ export const supabaseService = {
       method: 'POST',
       headers: { 'Prefer': 'resolution=merge-duplicates' },
       body: JSON.stringify({ key: 'guest_tiers', value: JSON.stringify(tiers) }),
+    });
+  },
+
+  // --- System Controls ---
+  getSystemControls: async (): Promise<SystemControls> => {
+    const DEFAULT_SYSTEM_CONTROLS: SystemControls = {
+      allowDataWipe: true,
+      allowPhaseChange: true,
+      allowMenuEdit: true,
+      allowRosterEdit: true,
+      allowOrderPortal: true,
+      allowOrderEditing: true,
+      allowSuperAdminLogin: true,
+    };
+    try {
+      const rows = await supabaseFetch<any[]>('app_settings?key=eq.system_controls&select=value');
+      if (rows && rows.length > 0 && rows[0]?.value) {
+        const parsed = typeof rows[0].value === 'string' ? JSON.parse(rows[0].value) : rows[0].value;
+        return { ...DEFAULT_SYSTEM_CONTROLS, ...parsed };
+      }
+    } catch (e) {
+      // ignore
+    }
+    return DEFAULT_SYSTEM_CONTROLS;
+  },
+
+  setSystemControls: async (controls: SystemControls): Promise<void> => {
+    await supabaseFetch('app_settings?on_conflict=key', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify({ key: 'system_controls', value: JSON.stringify(controls) }),
     });
   },
 };

@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { KeyRound, X, AlertCircle } from 'lucide-react';
 import { Logo } from '../Logo';
 
+import { AdminRole } from '../../types';
+
 interface AdminLoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onLoginSuccess: (role: 'super' | 'admin') => void;
+  onLoginSuccess: (role: AdminRole) => void;
 }
 
 export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
@@ -51,7 +53,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
         const data = await res.json();
         
         if (data.success && data.token) {
-          const role = (data.role as 'super' | 'admin') || 'admin';
+          const role = (data.role as AdminRole) || 'admin';
           localStorage.setItem('admin_token', data.token);
           localStorage.setItem('admin_role', role);
           setError(false);

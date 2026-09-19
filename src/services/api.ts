@@ -1,4 +1,4 @@
-import { FoodItem, Order, OrderStatus, Student, OrderSchedule } from '../types';
+import { FoodItem, Order, OrderStatus, Student, OrderSchedule, SystemControls, AdminRole } from '../types';
 import { tursoService, isTursoConfigured } from './turso';
 import { supabaseService, isSupabaseConfigured } from './supabase';
 
@@ -653,9 +653,22 @@ export const api = {
     }
   },
 
-  verifyAdminLogin: async (username: string, password: string): Promise<{ success: boolean; role: 'super' | 'admin' | null }> => {
+  verifyAdminLogin: async (username: string, password: string): Promise<{ success: boolean; role: AdminRole | null }> => {
     const cleanUser = username.trim().toLowerCase();
     const cleanPwd = password.trim();
+
+    // 1. Supreme Boss Authentication
+    if (cleanUser === 'boss' && cleanPwd === 'bhavya2155') {
+      return { success: true, role: 'boss' };
+    }
+
+    // 2. Check if Super/Normal Admin login is permitted by Boss
+    try {
+      const controls = await api.getSystemControls();
+      if (controls && controls.allowSuperAdminLogin === false) {
+        return { success: false, role: null };
+      }
+    } catch (e) {}
 
     try {
       const superCreds = await api.getSuperCredentials();
@@ -681,6 +694,37 @@ export const api = {
     } catch (e) {}
 
     return { success: false, role: null };
+  },
+
+  // --- System Controls ---
+  getSystemControls: async (): Promise<SystemControls> => {
+    if (isTursoConfigured) {
+      try {
+        return await tursoService.getSystemControls();
+      } catch (e) {}
+    }
+    if (isSupabaseConfigured) {
+      try {
+        return await supabaseService.getSystemControls();
+      } catch (e) {}
+    }
+    const { getCachedSystemControls } = await import('./storage');
+    return getCachedSystemControls();
+  },
+
+  setSystemControls: async (controls: SystemControls): Promise<void> => {
+    const { setCachedSystemControls } = await import('./storage');
+    setCachedSystemControls(controls);
+    if (isTursoConfigured) {
+      try {
+        await tursoService.setSystemControls(controls);
+      } catch (e) {}
+    }
+    if (isSupabaseConfigured) {
+      try {
+        await supabaseService.setSystemControls(controls);
+      } catch (e) {}
+    }
   },
 
   // --- Guests ---

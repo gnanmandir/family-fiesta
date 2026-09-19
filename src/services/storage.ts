@@ -1,4 +1,4 @@
-import { FoodItem, Order, Student, DeviceLockInfo, OrderStatus } from '../types';
+import { FoodItem, Order, Student, DeviceLockInfo, OrderStatus, SystemControls } from '../types';
 import { INITIAL_MENU } from '../data/menu';
 import { INITIAL_STUDENTS } from '../data/students';
 import { api } from './api';
@@ -551,3 +551,28 @@ export async function resetAllData(): Promise<void> {
     console.error('Error resetting data:', e);
   }
 }
+
+const DEFAULT_SYSTEM_CONTROLS: SystemControls = {
+  allowDataWipe: true,
+  allowPhaseChange: true,
+  allowMenuEdit: true,
+  allowRosterEdit: true,
+  allowOrderPortal: true,
+  allowOrderEditing: true,
+  allowSuperAdminLogin: true,
+};
+
+export function getCachedSystemControls(): SystemControls {
+  try {
+    const raw = localStorage.getItem('system_controls');
+    if (raw) return { ...DEFAULT_SYSTEM_CONTROLS, ...JSON.parse(raw) };
+  } catch (e) {}
+  return DEFAULT_SYSTEM_CONTROLS;
+}
+
+export function setCachedSystemControls(controls: SystemControls): void {
+  try {
+    localStorage.setItem('system_controls', JSON.stringify(controls));
+  } catch (e) {}
+}
+

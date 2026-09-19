@@ -5,16 +5,19 @@ import { ImageCropModal } from './ImageCropModal';
 
 interface FoodManagerProps {
   menuItems: FoodItem[];
-  adminRole?: 'super' | 'admin';
+  adminRole?: import('../../types').AdminRole;
+  allowEdit?: boolean;
   onSaveMenuItems: (items: FoodItem[]) => void;
 }
 
 export const FoodManager: React.FC<FoodManagerProps> = ({
   menuItems,
   adminRole = 'admin',
+  allowEdit = true,
   onSaveMenuItems,
 }) => {
-  const isReadOnly = adminRole !== 'super';
+  const isBoss = adminRole === 'boss';
+  const isReadOnly = (!isBoss && adminRole !== 'super') || (!isBoss && !allowEdit);
   const [isAddingOrEditing, setIsAddingOrEditing] = useState(false);
   const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
 

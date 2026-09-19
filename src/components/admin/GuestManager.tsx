@@ -3,7 +3,14 @@ import { GuestCredential } from '../../types';
 import { api } from '../../services/api';
 import { Plus, Trash2, KeyRound, Save, X, Edit2, Users } from 'lucide-react';
 
-export const GuestManager: React.FC = () => {
+interface GuestManagerProps {
+  adminRole?: import('../../types').AdminRole;
+  allowEdit?: boolean;
+}
+
+export const GuestManager: React.FC<GuestManagerProps> = ({ adminRole = 'admin', allowEdit = true }) => {
+  const isBoss = adminRole === 'boss';
+  const canEdit = isBoss || allowEdit;
   const [guests, setGuests] = useState<GuestCredential[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -70,7 +77,12 @@ export const GuestManager: React.FC = () => {
           </div>
           <button
             onClick={() => setIsAdding(true)}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center space-x-2"
+            disabled={!canEdit}
+            className={`px-4 py-2 text-sm font-bold rounded-xl shadow-sm transition-all flex items-center space-x-2 ${
+              canEdit
+                ? 'bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer'
+                : 'bg-stone-100 text-stone-400 opacity-50 cursor-not-allowed pointer-events-none'
+            }`}
           >
             <Plus className="w-4 h-4" />
             <span>Add Staff</span>
@@ -155,20 +167,22 @@ export const GuestManager: React.FC = () => {
                           <span>{g.password}</span>
                         </div>
                       </div>
-                      <div className="flex justify-end space-x-2 mt-3 pt-3 border-t border-stone-100">
+                      <div className={`flex justify-end space-x-2 mt-3 pt-3 border-t border-stone-100 ${!canEdit ? 'opacity-40 pointer-events-none cursor-not-allowed' : ''}`}>
                         <button
+                          disabled={!canEdit}
                           onClick={() => {
                             setEditingId(g.id);
                             setEditName(g.guestName);
                             setEditPassword(g.password);
                           }}
-                          className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded"
+                          className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded cursor-pointer"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
+                          disabled={!canEdit}
                           onClick={() => handleDelete(g.id)}
-                          className="p-1.5 text-rose-600 hover:bg-rose-50 rounded"
+                          className="p-1.5 text-rose-600 hover:bg-rose-50 rounded cursor-pointer"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

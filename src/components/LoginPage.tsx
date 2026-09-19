@@ -8,7 +8,7 @@ import { AlertCircle, User, Info, Calendar } from 'lucide-react';
 interface LoginPageProps {
   students: Student[];
   onStudentLogin: (student: Student, role: import('../types').IntakePhase) => void;
-  onAdminLogin: (role?: 'super' | 'admin') => void;
+  onAdminLogin: (role?: import('../types').AdminRole) => void;
   ordersOpen?: boolean;
   intakePhase: import('../types').IntakePhase;
   guests?: import('../types').GuestCredential[];
