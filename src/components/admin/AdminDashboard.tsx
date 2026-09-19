@@ -1145,7 +1145,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <h3 className="text-sm font-bold text-slate-900">Festival Operations</h3>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 {/* Card 0: Master Intake Phase Switch */}
                 {onSetIntakePhase && (
                   <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs hover:shadow-md transition-all p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden">
@@ -1313,9 +1313,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
                   </div>
                 )}
+              </div>
 
-                {/* Card 2: Wipe Order Register (Danger Zone) */}
-                <div className="bg-gradient-to-b from-white via-white to-rose-50/25 border border-rose-200/90 rounded-2xl shadow-xs hover:shadow-md transition-all p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden">
+              {/* Card 2: Wipe Order Register (Danger Zone - Full Width) */}
+              <div className="bg-gradient-to-b from-white via-white to-rose-50/25 border border-rose-200/90 rounded-2xl shadow-xs hover:shadow-md transition-all p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden">
                   <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-rose-500 to-red-600" />
 
                   <div className="space-y-3">
@@ -1509,7 +1510,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
                 </div>
               </div>
-            </div>
 
             {/* SECTION 2: Access Control & Security Credentials */}
             <div className="space-y-3">
