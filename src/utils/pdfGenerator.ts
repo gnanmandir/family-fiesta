@@ -74,7 +74,9 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
 
   // 3. Two-Column Structured Details Card (no line overlaps)
   y += 15;
-  const cardHeight = 36;
+  const isStaffOrder = order.orderType === 'guest' || order.orderType === 'staff';
+  const isStudentOrder = order.orderType === 'student';
+  const cardHeight = isStaffOrder ? 27 : 36;
   doc.setFillColor(248, 250, 252);
   doc.setDrawColor(226, 232, 240);
   doc.setLineWidth(0.3);
@@ -85,9 +87,6 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   doc.line(105, y + 4, 105, y + cardHeight - 4);
 
   // Left: Student / Staff Details
-  const isStaffOrder = order.orderType === 'guest' || order.orderType === 'staff';
-  const isStudentOrder = order.orderType === 'student';
-
   if (isStaffOrder) {
     doc.setTextColor(88, 28, 135);
     doc.setFontSize(9);
@@ -101,6 +100,13 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(15, 23, 42);
     doc.text(cleanStudentName, 52, y + 14);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Member:', 24, y + 21);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text(`${order.peopleCount} Member`, 52, y + 21);
   } else {
     doc.setTextColor(88, 28, 135);
     doc.setFontSize(9);
@@ -136,32 +142,47 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   doc.setFont('helvetica', 'bold');
   doc.text('EVENT DETAILS', 112, y + 7);
 
-  doc.setFontSize(8.5);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(100, 116, 139);
-  doc.text(isStaffOrder ? 'Member:' : (isStudentOrder ? 'Attendee:' : 'Attendees:'), 112, y + 14);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(15, 23, 42);
-  const attendeeText = isStudentOrder
-    ? `${order.peopleCount} Student` 
-    : isStaffOrder
-    ? `${order.peopleCount} Member`
-    : `${order.peopleCount} Person(s)`;
-  doc.text(attendeeText, 140, y + 14);
+  if (isStaffOrder) {
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Order Date:', 112, y + 14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text(order.dateDisplay || '', 140, y + 14);
 
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(100, 116, 139);
-  doc.text('Order Date:', 112, y + 21);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(15, 23, 42);
-  doc.text(order.dateDisplay || '', 140, y + 21);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Order Time:', 112, y + 21);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text(order.timeDisplay || '', 140, y + 21);
+  } else {
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text(isStudentOrder ? 'Attendee:' : 'Attendees:', 112, y + 14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    const attendeeText = isStudentOrder
+      ? `${order.peopleCount} Student` 
+      : `${order.peopleCount} Person(s)`;
+    doc.text(attendeeText, 140, y + 14);
 
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(100, 116, 139);
-  doc.text('Order Time:', 112, y + 28);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(15, 23, 42);
-  doc.text(order.timeDisplay || '', 140, y + 28);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Order Date:', 112, y + 21);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text(order.dateDisplay || '', 140, y + 21);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Order Time:', 112, y + 28);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text(order.timeDisplay || '', 140, y + 28);
+  }
 
   // 4. Ordered Items Table
   y += cardHeight + 6;
