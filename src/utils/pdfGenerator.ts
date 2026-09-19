@@ -101,20 +101,6 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(15, 23, 42);
     doc.text(cleanStudentName, 52, y + 14);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 116, 139);
-    doc.text('Pass Type:', 24, y + 21);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(15, 23, 42);
-    doc.text('Staff Dining Pass', 52, y + 21);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 116, 139);
-    doc.text('Category:', 24, y + 28);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(15, 23, 42);
-    doc.text('Faculty & Staff', 52, y + 28);
   } else {
     doc.setTextColor(88, 28, 135);
     doc.setFontSize(9);
@@ -159,7 +145,7 @@ export const generateAndDownloadPDFReceipt = async (order: Order) => {
   const attendeeText = isStudentOrder
     ? `${order.peopleCount} Student` 
     : isStaffOrder
-    ? `${order.peopleCount} Staff Member`
+    ? `${order.peopleCount} Member`
     : `${order.peopleCount} Person(s)`;
   doc.text(attendeeText, 140, y + 14);
 
