@@ -275,13 +275,29 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
       if (!isPasswordCorrect) {
         setIsLoading(false);
-        setError('Incorrect password. For Parents: enter Birth Date (DD/MM/YYYY). For Students: enter GM No.');
+        setError('Incorrect password.');
         return;
       }
 
-      // 2. Phase Blocking Rules
+      // 2. Phase & Order Blocking Rules
       const isStaffRole = role === 'staff' || role === 'guest';
       const isStaffPhase = intakePhase === 'staff' || intakePhase === 'guest';
+
+      // Overall Orders Closed Check
+      if (!ordersOpen || intakePhase === 'closed') {
+        let hasExistingOrder = false;
+        try {
+          const { api } = await import('../services/api');
+          const existing = await api.getOrderByStudent(matchedStudent.id, role);
+          if (existing) hasExistingOrder = true;
+        } catch (e) {}
+
+        if (!hasExistingOrder) {
+          setIsLoading(false);
+          setError('Online ordering is closed.');
+          return;
+        }
+      }
 
       if (intakePhase === 'parent' && role === 'student') {
         let hasExistingStudentOrder = false;
@@ -293,7 +309,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
         if (!hasExistingStudentOrder) {
           setIsLoading(false);
-          setError('Student ordering is closed.');
+          setError('Student ordering is not yet open.');
           return;
         }
       }
@@ -457,34 +473,42 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   setPassword(e.target.value);
                   if (error) setError(null);
                 }}
-                placeholder="DD/MM/YYYY"
+                placeholder={
+                  intakePhase === 'student'
+                    ? 'Enter GM No.'
+                    : intakePhase === 'parent'
+                    ? 'DD/MM/YYYY'
+                    : 'Enter password'
+                }
                 className="w-full pl-3.5 pr-11 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-colors font-medium"
                 autoComplete="off"
                 data-lpignore="true"
                 required
               />
-              {/* Calendar picker button */}
-              <div
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-100 transition-colors cursor-pointer flex items-center justify-center group"
-                title="Select birth date from calendar"
-              >
-                <Calendar className="w-4 h-4 pointer-events-none group-hover:text-indigo-600" />
-                <input
-                  type="date"
-                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+              {/* Calendar picker button - only shown when birth date is required */}
+              {intakePhase !== 'student' && (
+                <div
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-100 transition-colors cursor-pointer flex items-center justify-center group"
                   title="Select birth date from calendar"
-                  max={new Date().toISOString().split('T')[0]}
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      const [y, m, d] = e.target.value.split('-');
-                      if (y && m && d) {
-                        setPassword(`${d}/${m}/${y}`);
-                        if (error) setError(null);
+                >
+                  <Calendar className="w-4 h-4 pointer-events-none group-hover:text-indigo-600" />
+                  <input
+                    type="date"
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    title="Select birth date from calendar"
+                    max={new Date().toISOString().split('T')[0]}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        const [y, m, d] = e.target.value.split('-');
+                        if (y && m && d) {
+                          setPassword(`${d}/${m}/${y}`);
+                          if (error) setError(null);
+                        }
                       }
-                    }
-                  }}
-                />
-              </div>
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
 
