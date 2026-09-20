@@ -1311,9 +1311,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
 
                     {/* Action buttons: 2-column grid on mobile, flex on desktop */}
-                    <div className="pt-3.5 mt-4 border-t border-slate-100 grid grid-cols-2 sm:flex sm:items-center sm:justify-between gap-2">
+                    <div className={`pt-3.5 mt-4 border-t border-slate-100 grid grid-cols-2 sm:flex sm:items-center sm:justify-between gap-2 ${
+                      (!isBoss && systemControls?.allowOrderPortal === false) ? 'opacity-40 cursor-not-allowed pointer-events-none select-none' : ''
+                    }`}>
                       <button
                         type="button"
+                        disabled={!isBoss && systemControls?.allowOrderPortal === false}
                         onClick={() => {
                           setScheduleError('');
                           if (isScheduleActuallyActive && orderSchedule) {
@@ -1325,7 +1328,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           }
                           setIsScheduleModalOpen(true);
                         }}
-                        className={`px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs font-bold cursor-pointer transition-all shadow-2xs flex items-center justify-center space-x-1.5 active:scale-95 border ${
+                        className={`px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center justify-center space-x-1.5 active:scale-95 border ${
+                          (!isBoss && systemControls?.allowOrderPortal === false) ? 'cursor-not-allowed' : 'cursor-pointer'
+                        } ${
                           isScheduleActuallyActive
                             ? 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200/90 shadow-xs'
                             : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
@@ -1337,6 +1342,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                       <button
                         type="button"
+                        disabled={!isBoss && systemControls?.allowOrderPortal === false}
                         onClick={() => {
                           const newState = !ordersOpen;
                           openProtectedAction(
@@ -1349,7 +1355,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             newState ? 'Open Ordering' : 'Close Ordering'
                           );
                         }}
-                        className={`px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs font-bold cursor-pointer transition-all shadow-2xs flex items-center justify-center space-x-1.5 active:scale-95 ${
+                        className={`px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center justify-center space-x-1.5 active:scale-95 ${
+                          (!isBoss && systemControls?.allowOrderPortal === false) ? 'cursor-not-allowed' : 'cursor-pointer'
+                        } ${
                           ordersOpen
                             ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 hover:border-rose-300'
                             : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/25'
@@ -1707,6 +1715,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
                 {
+                  key: 'allowOrderPortal' as const,
+                  title: 'Food Ordering Portal & Schedule',
+                  desc: 'Allow Super Admins to manually open/halt ordering and configure automated intake schedules. When disabled, the portal switch and schedule buttons are locked.',
+                  icon: <Power className="w-5 h-5" />,
+                },
+                {
                   key: 'allowPhaseChange' as const,
                   title: 'Intake Phase Switching',
                   desc: 'Allow Super Admins to change the active intake phase (Parent, Student, Staff, Closed). When disabled, phase selection is locked.',
@@ -1765,6 +1779,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             allowPhaseChange: true,
                             allowOrderWipe: true,
                             allowRosterEdit: true,
+                            allowOrderPortal: true,
                           };
                           const updated = {
                             ...current,
