@@ -217,7 +217,20 @@ export const OrderTable: React.FC<OrderTableProps> = ({
     }
   };
 
-  const [activeTab, setActiveTab] = useState<'parent' | 'student' | 'guest'>('parent');
+  const [activeTab, setActiveTab] = useState<'parent' | 'student' | 'guest'>(() => {
+    try {
+      const saved = localStorage.getItem('order_table_active_tab');
+      if (saved === 'parent' || saved === 'student' || saved === 'guest') return saved;
+    } catch (e) {}
+    return 'parent';
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('order_table_active_tab', activeTab);
+    } catch (e) {}
+  }, [activeTab]);
+
   const isStaff = activeTab === 'guest';
 
   const filteredOrders = orders.filter((o) => {

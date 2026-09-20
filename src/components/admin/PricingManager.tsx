@@ -12,7 +12,19 @@ type IntakeGroup = 'parent' | 'student' | 'guest';
 export const PricingManager: React.FC<PricingManagerProps> = ({ adminRole = 'admin', allowEdit = true }) => {
   const isBoss = adminRole === 'boss';
   const isReadOnly = (!isBoss && adminRole !== 'super') || (!isBoss && !allowEdit);
-  const [activeGroup, setActiveGroup] = useState<IntakeGroup>('parent');
+  const [activeGroup, setActiveGroup] = useState<IntakeGroup>(() => {
+    try {
+      const saved = localStorage.getItem('pricing_manager_active_group');
+      if (saved === 'parent' || saved === 'student' || saved === 'guest') return saved;
+    } catch (e) {}
+    return 'parent';
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('pricing_manager_active_group', activeGroup);
+    } catch (e) {}
+  }, [activeGroup]);
 
   const [tiersByGroup, setTiersByGroup] = useState<Record<IntakeGroup, (number | '')[]>>({
     parent: [230, 230, 140, 80],

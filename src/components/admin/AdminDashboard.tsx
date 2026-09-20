@@ -752,17 +752,63 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 }) => {
   const isBoss = adminRole === 'boss';
   const isSuper = adminRole === 'super' || isBoss;
-  const [activeTab, setActiveTab] = useState<
-    'overview' | 'orders' | 'students' | 'staff' | 'food' | 'settings' | 'pricing' | 'boss_controls'
-  >('overview');
+
+  type AdminTab = 'overview' | 'orders' | 'students' | 'staff' | 'food' | 'settings' | 'pricing' | 'boss_controls';
+  const VALID_ADMIN_TABS: AdminTab[] = ['overview', 'orders', 'students', 'staff', 'food', 'settings', 'pricing', 'boss_controls'];
+
+  const [activeTab, setActiveTab] = useState<AdminTab>(() => {
+    try {
+      const hash = window.location.hash.replace(/^#/, '').trim() as AdminTab;
+      if (hash && VALID_ADMIN_TABS.includes(hash)) {
+        return hash;
+      }
+      const saved = localStorage.getItem('admin_active_tab') as AdminTab;
+      if (saved && VALID_ADMIN_TABS.includes(saved)) {
+        return saved;
+      }
+    } catch (e) {}
+    return 'overview';
+  });
+
+  // Persist activeTab to localStorage and keep URL hash in sync so refresh preserves the current page
+  React.useEffect(() => {
+    try {
+      localStorage.setItem('admin_active_tab', activeTab);
+      if (window.location.hash !== `#${activeTab}`) {
+        window.history.replaceState(null, '', `#${activeTab}`);
+      }
+    } catch (e) {}
+  }, [activeTab]);
+
+  // Listen to URL hash changes (browser back/forward navigation)
+  React.useEffect(() => {
+    const handleHashChange = () => {
+      try {
+        const hash = window.location.hash.replace(/^#/, '').trim() as AdminTab;
+        if (hash && VALID_ADMIN_TABS.includes(hash) && hash !== activeTab) {
+          setActiveTab(hash);
+        }
+      } catch (e) {}
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [activeTab]);
 
   // Protect restricted tabs
   React.useEffect(() => {
     if (!isSuper && activeTab === 'settings') {
       setActiveTab('overview');
+      try {
+        localStorage.setItem('admin_active_tab', 'overview');
+        window.history.replaceState(null, '', '#overview');
+      } catch (e) {}
     }
     if (!isBoss && activeTab === 'boss_controls') {
       setActiveTab('overview');
+      try {
+        localStorage.setItem('admin_active_tab', 'overview');
+        window.history.replaceState(null, '', '#overview');
+      } catch (e) {}
     }
   }, [isSuper, isBoss, activeTab]);
 

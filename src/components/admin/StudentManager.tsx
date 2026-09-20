@@ -43,7 +43,19 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
   const isBoss = adminRole === 'boss';
   const isSuper = (adminRole === 'super' || isBoss) && (isBoss || allowEdit);
   const [localStudents, setLocalStudents] = useState<Student[]>(students);
-  const [phaseTab, setPhaseTab] = useState<'parent' | 'student'>('parent');
+  const [phaseTab, setPhaseTab] = useState<'parent' | 'student'>(() => {
+    try {
+      const saved = localStorage.getItem('student_manager_phase_tab');
+      if (saved === 'parent' || saved === 'student') return saved;
+    } catch (e) {}
+    return 'parent';
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('student_manager_phase_tab', phaseTab);
+    } catch (e) {}
+  }, [phaseTab]);
   const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'All' | 'Ordered' | 'Remaining'>('All');
