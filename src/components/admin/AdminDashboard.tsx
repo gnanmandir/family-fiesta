@@ -1226,8 +1226,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 {onToggleOrdering && (
                   <div className={`bg-white border rounded-2xl shadow-xs hover:shadow-md transition-all p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden ${
                     ordersOpen ? 'border-emerald-200/90' : 'border-rose-200/90'
-                  } ${
-                    (!isBoss && systemControls?.allowOrderPortal === false) ? 'opacity-40 cursor-not-allowed pointer-events-none select-none' : ''
                   }`}>
                     <div className={`absolute top-0 inset-x-0 h-1.5 ${
                       ordersOpen ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 'bg-gradient-to-r from-rose-500 to-red-500'
@@ -1289,7 +1287,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <div className="pt-3.5 mt-4 border-t border-slate-100 grid grid-cols-2 sm:flex sm:items-center sm:justify-between gap-2">
                       <button
                         type="button"
-                        disabled={!isBoss && systemControls?.allowOrderPortal === false}
                         onClick={() => {
                           setScheduleError('');
                           if (isScheduleActuallyActive && orderSchedule) {
@@ -1305,7 +1302,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           isScheduleActuallyActive
                             ? 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200/90 shadow-xs'
                             : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
-                        } ${(!isBoss && systemControls?.allowOrderPortal === false) ? 'cursor-not-allowed' : ''}`}
+                        }`}
                       >
                         <Calendar className="w-3.5 h-3.5 text-indigo-600" />
                         <span>{isScheduleActuallyActive ? 'Edit' : 'Schedule'}</span>
@@ -1313,7 +1310,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                       <button
                         type="button"
-                        disabled={!isBoss && systemControls?.allowOrderPortal === false}
                         onClick={() => {
                           const newState = !ordersOpen;
                           openProtectedAction(
@@ -1330,7 +1326,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           ordersOpen
                             ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 hover:border-rose-300'
                             : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/25'
-                        } ${(!isBoss && systemControls?.allowOrderPortal === false) ? 'cursor-not-allowed' : ''}`}
+                        }`}
                       >
                         <Power className="w-3.5 h-3.5" />
                         <span>{ordersOpen ? 'Halt' : 'Re-Open'}</span>
@@ -1707,24 +1703,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   desc: 'Allow Super Admins to add, update, or remove Students and Staff credentials. When disabled, rosters cannot be altered.',
                   icon: <Users className="w-5 h-5" />,
                 },
-                {
-                  key: 'allowOrderPortal' as const,
-                  title: 'Live Food Ordering Portal',
-                  desc: 'Global kill switch for live attendee ordering. When disabled, parents, students, and staff cannot place new orders.',
-                  icon: <Power className="w-5 h-5" />,
-                },
-                {
-                  key: 'allowOrderEditing' as const,
-                  title: 'Order Modifications',
-                  desc: 'Allow attendees to edit their already-submitted orders from the digital receipt. When disabled, orders are locked upon submission.',
-                  icon: <RotateCcw className="w-5 h-5" />,
-                },
-                {
-                  key: 'allowSuperAdminLogin' as const,
-                  title: 'Super Admin Login Access',
-                  desc: 'Allow standard and super admin users to sign in to the portal. If disabled, only the Boss account can access the admin dashboard.',
-                  icon: <Lock className="w-5 h-5" />,
-                },
               ].map((ctrl) => {
                 const isEnabled = systemControls ? systemControls[ctrl.key] !== false : true;
                 return (
@@ -1767,9 +1745,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             allowPhaseChange: true,
                             allowMenuEdit: true,
                             allowRosterEdit: true,
-                            allowOrderPortal: true,
-                            allowOrderEditing: true,
-                            allowSuperAdminLogin: true,
                           };
                           const updated = {
                             ...current,

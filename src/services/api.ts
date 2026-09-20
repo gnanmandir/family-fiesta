@@ -662,13 +662,6 @@ export const api = {
       return { success: true, role: 'boss' };
     }
 
-    // 2. Check if Super/Normal Admin login is permitted by Boss
-    try {
-      const controls = await api.getSystemControls();
-      if (controls && controls.allowSuperAdminLogin === false) {
-        return { success: false, role: null };
-      }
-    } catch (e) {}
 
     try {
       const superCreds = await api.getSuperCredentials();

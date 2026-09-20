@@ -1183,7 +1183,7 @@ export default function App() {
             guests={guests}
             onStudentLogin={handleStudentLogin}
             onAdminLogin={handleAdminLogin}
-            ordersOpen={ordersOpen && systemControls.allowOrderPortal}
+            ordersOpen={ordersOpen}
             intakePhase={intakePhase}
           />
         )}
@@ -1198,7 +1198,7 @@ export default function App() {
             onStartOrdering={handleStartOrdering}
             onOpenAdmin={() => setIsAdminLoginModalOpen(true)}
             onSignOut={handleSignOut}
-            ordersOpen={ordersOpen && systemControls.allowOrderPortal}
+            ordersOpen={ordersOpen}
             role={activeRole}
           />
         )}
@@ -1232,8 +1232,8 @@ export default function App() {
           <OrderConfirmation
             order={activeOrder}
             onRefreshOrder={(up) => setActiveOrder(up)}
-            onEditOrder={(ordersOpen && systemControls.allowOrderPortal && systemControls.allowOrderEditing && (intakePhase === activeOrder.orderType || activeOrder.orderType === undefined)) ? handleEditOrder : undefined}
-            ordersOpen={ordersOpen && systemControls.allowOrderPortal && systemControls.allowOrderEditing && (intakePhase === activeOrder.orderType || activeOrder.orderType === undefined)}
+            onEditOrder={(ordersOpen && (intakePhase === activeOrder.orderType || activeOrder.orderType === undefined)) ? handleEditOrder : undefined}
+            ordersOpen={ordersOpen && (intakePhase === activeOrder.orderType || activeOrder.orderType === undefined)}
           />
         )}
 

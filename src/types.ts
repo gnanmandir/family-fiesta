@@ -91,7 +91,7 @@ export interface SystemControls {
   allowPhaseChange: boolean;     // Super Admin changing intake phase
   allowMenuEdit: boolean;        // Super Admin editing food items / pricing
   allowRosterEdit: boolean;      // Super Admin managing students / staff
-  allowOrderPortal: boolean;     // Live food ordering portal for users
-  allowOrderEditing: boolean;    // Users editing already-submitted orders
-  allowSuperAdminLogin: boolean; // Allowing non-boss admins to log in
+  allowOrderPortal?: boolean;    // Live food ordering portal for users (legacy/optional)
+  allowOrderEditing?: boolean;   // Users editing already-submitted orders (legacy/optional)
+  allowSuperAdminLogin?: boolean;// Allowing non-boss admins to log in (legacy/optional)
 }
