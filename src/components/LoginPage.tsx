@@ -413,7 +413,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 onBlur={() => {
                   setTimeout(() => setShowNameSuggestions(false), 200);
                 }}
-                placeholder="Enter student name..."
+                placeholder="Enter name"
                 className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-colors"
                 autoFocus
                 autoComplete="off"
@@ -473,13 +473,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   setPassword(e.target.value);
                   if (error) setError(null);
                 }}
-                placeholder={
-                  intakePhase === 'student'
-                    ? 'Enter GM No.'
-                    : intakePhase === 'parent'
-                    ? 'DD/MM/YYYY'
-                    : 'Enter password'
-                }
+                placeholder="Enter password"
                 className="w-full pl-3.5 pr-11 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-colors font-medium"
                 autoComplete="off"
                 data-lpignore="true"
