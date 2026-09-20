@@ -87,10 +87,10 @@ export type IntakePhase = 'parent' | 'student' | 'guest' | 'staff' | 'closed';
 export type AdminRole = 'boss' | 'super' | 'admin';
 
 export interface SystemControls {
-  allowDataWipe: boolean;        // Super Admin wipe order register
   allowPhaseChange: boolean;     // Super Admin changing intake phase
   allowOrderWipe: boolean;       // Super Admin wiping individual/all orders everywhere
   allowRosterEdit: boolean;      // Super Admin managing students / staff
+  allowDataWipe?: boolean;       // Super Admin wipe order register (legacy/optional)
   allowMenuEdit?: boolean;       // Super Admin editing food items / pricing (legacy/optional)
   allowOrderPortal?: boolean;    // Live food ordering portal for users (legacy/optional)
   allowOrderEditing?: boolean;   // Users editing already-submitted orders (legacy/optional)
