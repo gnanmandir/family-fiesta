@@ -9,6 +9,7 @@ interface StudentManagerProps {
   orders: Order[];
   adminRole?: import('../../types').AdminRole;
   allowEdit?: boolean;
+  allowOrderWipe?: boolean;
   onStudentUpdated?: (student: Student) => void;
   onStudentDeleted?: (studentId: string, fullName?: string) => Promise<void> | void;
   onDeleteOrder?: (orderNumber: string) => Promise<void> | void;
@@ -33,6 +34,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
   orders,
   adminRole = 'admin',
   allowEdit = true,
+  allowOrderWipe = true,
   onStudentUpdated,
   onStudentDeleted,
   onDeleteOrder,
@@ -95,6 +97,11 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
   const handleConfirmWipeWithPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!wipeModal) return;
+
+    if (!allowOrderWipe) {
+      setWipePasswordError('Order wiping is currently disabled.');
+      return;
+    }
 
     const entered = wipePassword.trim();
     if (!entered) {
@@ -407,9 +414,14 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                             {existingOrder ? (
                               <button
                                 type="button"
-                                onClick={() => handleOpenWipeModal(student, existingOrder)}
-                                title={`Wipe order #${existingOrder.orderNumber} and allow re-ordering`}
-                                className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 border border-rose-200 text-xs font-semibold rounded-lg transition-colors inline-flex items-center space-x-1 cursor-pointer"
+                                disabled={!allowOrderWipe}
+                                onClick={() => allowOrderWipe && handleOpenWipeModal(student, existingOrder)}
+                                title={!allowOrderWipe ? 'Order wiping is disabled' : `Wipe order #${existingOrder.orderNumber} and allow re-ordering`}
+                                className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors inline-flex items-center space-x-1 ${
+                                  !allowOrderWipe
+                                    ? 'bg-stone-100 text-stone-400 border border-stone-200 opacity-40 cursor-not-allowed pointer-events-none select-none'
+                                    : 'bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 border border-rose-200 cursor-pointer'
+                                }`}
                               >
                                 <Trash2 className="w-3.5 h-3.5 text-rose-600" />
                                 <span>Wipe Order</span>

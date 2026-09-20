@@ -89,8 +89,9 @@ export type AdminRole = 'boss' | 'super' | 'admin';
 export interface SystemControls {
   allowDataWipe: boolean;        // Super Admin wipe order register
   allowPhaseChange: boolean;     // Super Admin changing intake phase
-  allowMenuEdit: boolean;        // Super Admin editing food items / pricing
+  allowOrderWipe: boolean;       // Super Admin wiping individual/all orders everywhere
   allowRosterEdit: boolean;      // Super Admin managing students / staff
+  allowMenuEdit?: boolean;       // Super Admin editing food items / pricing (legacy/optional)
   allowOrderPortal?: boolean;    // Live food ordering portal for users (legacy/optional)
   allowOrderEditing?: boolean;   // Users editing already-submitted orders (legacy/optional)
   allowSuperAdminLogin?: boolean;// Allowing non-boss admins to log in (legacy/optional)

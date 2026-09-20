@@ -1074,6 +1074,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               onUpdateStatus={onUpdateOrderStatus}
               onDeleteOrder={isSuper ? onDeleteOrder : undefined}
               onRefreshOrders={onRefreshOrders}
+              allowOrderWipe={isBoss || systemControls?.allowOrderWipe !== false}
             />
           </div>
         )}
@@ -1086,6 +1087,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               orders={orders}
               adminRole={adminRole}
               allowEdit={isBoss || systemControls?.allowRosterEdit !== false}
+              allowOrderWipe={isBoss || systemControls?.allowOrderWipe !== false}
               onStudentUpdated={onStudentUpdated}
               onStudentDeleted={onStudentDeleted}
               onDeleteOrder={onDeleteOrder}
@@ -1111,7 +1113,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               menuItems={menuItems}
               onSaveMenuItems={onSaveMenuItems}
               adminRole={adminRole}
-              allowEdit={isBoss || systemControls?.allowMenuEdit !== false}
+              allowEdit={true}
             />
           </div>
         )}
@@ -1120,7 +1122,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {activeTab === 'pricing' && (
           <PricingManager
             adminRole={adminRole}
-            allowEdit={isBoss || systemControls?.allowMenuEdit !== false}
+            allowEdit={true}
           />
         )}
 
@@ -1339,7 +1341,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
               {/* Card 2: Wipe Order Register (Danger Zone - Full Width) */}
               <div className={`bg-gradient-to-b from-white via-white to-rose-50/25 border border-rose-200/90 rounded-2xl shadow-xs hover:shadow-md transition-all p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden ${
-                (!isBoss && systemControls?.allowDataWipe === false) ? 'opacity-40 cursor-not-allowed pointer-events-none select-none' : ''
+                (!isBoss && (systemControls?.allowDataWipe === false || systemControls?.allowOrderWipe === false)) ? 'opacity-40 cursor-not-allowed pointer-events-none select-none' : ''
               }`}>
                   <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-rose-500 to-red-600" />
 
@@ -1387,7 +1389,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                         <button
                           type="button"
-                          disabled={parentOrdersCount === 0}
+                          disabled={parentOrdersCount === 0 || (!isBoss && (systemControls?.allowDataWipe === false || systemControls?.allowOrderWipe === false))}
                           onClick={() => {
                             openProtectedAction(
                               'Permanently Wipe Parent Orders',
@@ -1405,7 +1407,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             );
                           }}
                           className={`w-full py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all ${
-                            parentOrdersCount === 0
+                            parentOrdersCount === 0 || (!isBoss && (systemControls?.allowDataWipe === false || systemControls?.allowOrderWipe === false))
                               ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                               : 'bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 hover:border-rose-600 cursor-pointer active:scale-95'
                           }`}
@@ -1428,7 +1430,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                         <button
                           type="button"
-                          disabled={studentOrdersCount === 0}
+                          disabled={studentOrdersCount === 0 || (!isBoss && (systemControls?.allowDataWipe === false || systemControls?.allowOrderWipe === false))}
                           onClick={() => {
                             openProtectedAction(
                               'Permanently Wipe Student Orders',
@@ -1446,7 +1448,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             );
                           }}
                           className={`w-full py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all ${
-                            studentOrdersCount === 0
+                            studentOrdersCount === 0 || (!isBoss && (systemControls?.allowDataWipe === false || systemControls?.allowOrderWipe === false))
                               ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                               : 'bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 hover:border-rose-600 cursor-pointer active:scale-95'
                           }`}
@@ -1469,7 +1471,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                         <button
                           type="button"
-                          disabled={staffOrdersCount === 0}
+                          disabled={staffOrdersCount === 0 || (!isBoss && (systemControls?.allowDataWipe === false || systemControls?.allowOrderWipe === false))}
                           onClick={() => {
                             openProtectedAction(
                               'Permanently Wipe Staff Orders',
@@ -1487,7 +1489,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             );
                           }}
                           className={`w-full py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all ${
-                            staffOrdersCount === 0
+                            staffOrdersCount === 0 || (!isBoss && (systemControls?.allowDataWipe === false || systemControls?.allowOrderWipe === false))
                               ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                               : 'bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 hover:border-rose-600 cursor-pointer active:scale-95'
                           }`}
@@ -1505,7 +1507,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </span>
                     <button
                       type="button"
-                      disabled={orders.length === 0}
+                      disabled={orders.length === 0 || (!isBoss && (systemControls?.allowDataWipe === false || systemControls?.allowOrderWipe === false))}
                       onClick={() => {
                         openProtectedAction(
                           'Permanently Wipe All Orders',
@@ -1523,7 +1525,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         );
                       }}
                       className={`w-full sm:w-auto px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold flex items-center justify-center space-x-2 transition-all ${
-                        orders.length === 0
+                        orders.length === 0 || (!isBoss && (systemControls?.allowDataWipe === false || systemControls?.allowOrderWipe === false))
                           ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                           : 'text-white bg-rose-600 hover:bg-rose-700 shadow-sm shadow-rose-600/25 cursor-pointer active:scale-95'
                       }`}
@@ -1692,10 +1694,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   icon: <Settings className="w-5 h-5" />,
                 },
                 {
-                  key: 'allowMenuEdit' as const,
-                  title: 'Menu & Price Editing',
-                  desc: 'Allow Super Admins to add, edit, or delete dishes and modify tier prices. When disabled, menu catalog and pricing are read-only.',
-                  icon: <UtensilsCrossed className="w-5 h-5" />,
+                  key: 'allowOrderWipe' as const,
+                  title: 'Order Wipe Controls',
+                  desc: 'Allow Super Admins to wipe individual orders and registers. When disabled, every order wipe button across the system is locked and grayed out.',
+                  icon: <Trash2 className="w-5 h-5" />,
                 },
                 {
                   key: 'allowRosterEdit' as const,
@@ -1743,7 +1745,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           const current = systemControls || {
                             allowDataWipe: true,
                             allowPhaseChange: true,
-                            allowMenuEdit: true,
+                            allowOrderWipe: true,
                             allowRosterEdit: true,
                           };
                           const updated = {

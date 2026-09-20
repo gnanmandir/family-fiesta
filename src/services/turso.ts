@@ -754,8 +754,9 @@ export const tursoService = {
     const DEFAULT_SYSTEM_CONTROLS: SystemControls = {
       allowDataWipe: true,
       allowPhaseChange: true,
-      allowMenuEdit: true,
+      allowOrderWipe: true,
       allowRosterEdit: true,
+      allowMenuEdit: true,
       allowOrderPortal: true,
       allowOrderEditing: true,
       allowSuperAdminLogin: true,
