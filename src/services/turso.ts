@@ -615,13 +615,60 @@ export const tursoService = {
   },
 
   deleteStudent: async (studentId: string, fullName?: string): Promise<void> => {
-    await tursoQuery('DELETE FROM students WHERE id = ?', [studentId]);
-    await tursoQuery('DELETE FROM orders WHERE student_id = ?', [studentId]).catch(() => {});
+    await tursoQuery('DELETE FROM students WHERE id = ? OR LOWER(id) = LOWER(?)', [studentId, studentId]).catch(() => {});
+    await tursoQuery('DELETE FROM orders WHERE student_id = ? OR LOWER(student_id) = LOWER(?)', [studentId, studentId]).catch(() => {});
     if (fullName) {
-      await tursoQuery('DELETE FROM orders WHERE full_name = ?', [fullName]).catch(() => {});
-      await tursoQuery('DELETE FROM orders WHERE student_name = ?', [fullName]).catch(() => {});
+      await tursoQuery('DELETE FROM students WHERE full_name = ? OR LOWER(full_name) = LOWER(?)', [fullName, fullName]).catch(() => {});
+      await tursoQuery('DELETE FROM orders WHERE full_name = ? OR LOWER(full_name) = LOWER(?)', [fullName, fullName]).catch(() => {});
+      await tursoQuery('DELETE FROM orders WHERE student_name = ? OR LOWER(student_name) = LOWER(?)', [fullName, fullName]).catch(() => {});
     }
-    await tursoQuery('DELETE FROM device_locks WHERE student_id = ?', [studentId]).catch(() => {});
+    await tursoQuery('DELETE FROM device_locks WHERE student_id = ? OR LOWER(student_id) = LOWER(?)', [studentId, studentId]).catch(() => {});
+  },
+
+  getDeletedStudents: async (): Promise<{ id: string; fullName: string; normalizedName: string }[]> => {
+    try {
+      const rows = await tursoQuery("SELECT value FROM app_settings WHERE key = 'deleted_students'");
+      if (!rows || rows.length === 0) return [];
+      const val = rows[0]?.value;
+      if (!val) return [];
+      return JSON.parse(val);
+    } catch (e) {
+      return [];
+    }
+  },
+
+  addDeletedStudent: async (entry: { id: string; fullName: string; normalizedName: string }): Promise<void> => {
+    try {
+      const current = await tursoService.getDeletedStudents();
+      const exists = current.some(
+        (c) =>
+          (entry.id && c.id?.toLowerCase() === entry.id.toLowerCase()) ||
+          (entry.normalizedName && c.normalizedName === entry.normalizedName)
+      );
+      if (!exists) {
+        current.push(entry);
+        await tursoQuery(
+          `INSERT INTO app_settings (key, value, updated_at) VALUES ('deleted_students', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+          [JSON.stringify(current), new Date().toISOString()]
+        );
+      }
+    } catch (e) {}
+  },
+
+  removeDeletedStudent: async (studentId: string, fullName?: string): Promise<void> => {
+    try {
+      const current = await tursoService.getDeletedStudents();
+      const norm = fullName ? fullName.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+      const updated = current.filter(
+        (c) =>
+          c.id?.toLowerCase() !== studentId.toLowerCase() &&
+          (!norm || c.normalizedName !== norm)
+      );
+      await tursoQuery(
+        `INSERT INTO app_settings (key, value, updated_at) VALUES ('deleted_students', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+        [JSON.stringify(updated), new Date().toISOString()]
+      );
+    } catch (e) {}
   },
 
   // --- Ordering Status ---

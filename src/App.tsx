@@ -1014,21 +1014,22 @@ export default function App() {
   const handleStudentDeleted = async (studentId: string, fullName?: string) => {
     const { deleteStudent } = await import('./services/storage');
     await deleteStudent(studentId, fullName);
+    const norm = fullName ? fullName.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
     setStudents((prev) =>
       prev.filter(
         (s) =>
           s.id.toLowerCase() !== studentId.toLowerCase() &&
-          (!fullName || s.fullName.toLowerCase() !== fullName.toLowerCase())
+          (!norm || s.fullName.toLowerCase().replace(/[^a-z0-9]/g, '') !== norm)
       )
     );
     // Immediately filter orders in React state so both parent & student orders are removed instantly
     setOrders((prev) =>
       prev.filter(
         (o) =>
-          o.studentId.toLowerCase() !== studentId.toLowerCase() &&
-          (!fullName ||
-            (o.fullName?.toLowerCase() !== fullName.toLowerCase() &&
-             o.studentName?.toLowerCase() !== fullName.toLowerCase()))
+          o.studentId?.toLowerCase() !== studentId.toLowerCase() &&
+          (!norm ||
+            ((o.fullName || '').toLowerCase().replace(/[^a-z0-9]/g, '') !== norm &&
+             (o.studentName || '').toLowerCase().replace(/[^a-z0-9]/g, '') !== norm))
       )
     );
     const freshOrders = await fetchOrders();
@@ -1038,7 +1039,7 @@ export default function App() {
     if (
       activeOrder &&
       (activeOrder.studentId?.toLowerCase() === studentId.toLowerCase() ||
-        (fullName && activeOrder.fullName?.toLowerCase() === fullName.toLowerCase()))
+        (norm && (activeOrder.fullName || '').toLowerCase().replace(/[^a-z0-9]/g, '') === norm))
     ) {
       setActiveOrder(null);
       localStorage.removeItem('active_order_number');

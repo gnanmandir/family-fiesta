@@ -9,9 +9,40 @@ const KEYS = {
   STUDENTS: 'flame_co_students_v10',
   DEVICE_ID: 'jusso_device_id_v2',
   DEVICE_ORDER: 'jusso_device_order_v6',
+  DELETED_STUDENTS: 'flame_co_deleted_students_v1',
 };
 
+export interface DeletedStudentEntry {
+  id: string;
+  fullName: string;
+  normalizedName: string;
+  deletedAt: string;
+}
+
 const normalizeName = (val: string) => (val || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+export function getLocalDeletedStudents(): DeletedStudentEntry[] {
+  try {
+    const raw = localStorage.getItem(KEYS.DELETED_STUDENTS);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return [];
+}
+
+export function isStudentDeleted(
+  studentId?: string,
+  fullName?: string,
+  deletedList?: DeletedStudentEntry[]
+): boolean {
+  const list = deletedList || getLocalDeletedStudents();
+  const sId = (studentId || '').toLowerCase().trim();
+  const normName = fullName ? normalizeName(fullName) : '';
+  return list.some((d) => {
+    if (sId && d.id && d.id.toLowerCase().trim() === sId) return true;
+    if (normName && d.normalizedName && d.normalizedName === normName) return true;
+    return false;
+  });
+}
 
 export function getOrCreateDeviceId(): string {
   try {
@@ -28,6 +59,27 @@ export function getOrCreateDeviceId(): string {
 
 export async function fetchStudents(): Promise<Student[]> {
   try {
+    // 1. Sync deleted students from backend
+    let deletedList = getLocalDeletedStudents();
+    try {
+      const remoteDeleted = await api.getDeletedStudents();
+      if (remoteDeleted && remoteDeleted.length > 0) {
+        const mergedDeleted = [...deletedList];
+        remoteDeleted.forEach((rd) => {
+          if (!mergedDeleted.some((d) => (rd.id && d.id?.toLowerCase() === rd.id.toLowerCase()) || (rd.normalizedName && d.normalizedName === rd.normalizedName))) {
+            mergedDeleted.push({
+              id: rd.id,
+              fullName: rd.fullName,
+              normalizedName: rd.normalizedName,
+              deletedAt: new Date().toISOString(),
+            });
+          }
+        });
+        deletedList = mergedDeleted;
+        localStorage.setItem(KEYS.DELETED_STUDENTS, JSON.stringify(deletedList));
+      }
+    } catch (e) {}
+
     let reg: Record<string, number> = {};
     try {
       const regRaw = localStorage.getItem('student_gm_registry');
@@ -56,15 +108,23 @@ export async function fetchStudents(): Promise<Student[]> {
       const cached = getCachedStudents();
       const cachedMap = new Map<string, Student>();
       cached.forEach((c) => {
-        cachedMap.set(normalizeName(c.fullName), c);
+        if (!isStudentDeleted(c.id, c.fullName, deletedList)) {
+          cachedMap.set(normalizeName(c.fullName), c);
+        }
       });
 
       const map = new Map<string, Student>();
       INITIAL_STUDENTS.forEach((init) => {
-        map.set(normalizeName(init.fullName), { ...init });
+        if (!isStudentDeleted(init.id, init.fullName, deletedList)) {
+          map.set(normalizeName(init.fullName), { ...init });
+        }
       });
 
       data.forEach((s) => {
+        if (isStudentDeleted(s.id, s.fullName, deletedList)) {
+          return;
+        }
+
         const key = normalizeName(s.fullName);
         const existing = map.get(key);
         const localCached = cachedMap.get(key);
@@ -101,7 +161,9 @@ export async function fetchStudents(): Promise<Student[]> {
         }
       });
 
-      const merged = Array.from(map.values());
+      const merged = Array.from(map.values()).filter(
+        (s) => !isStudentDeleted(s.id, s.fullName, deletedList)
+      );
       localStorage.setItem(KEYS.STUDENTS, JSON.stringify(merged));
       return merged;
     }
@@ -113,6 +175,7 @@ export async function fetchStudents(): Promise<Student[]> {
 
 export function getCachedStudents(): Student[] {
   try {
+    const deletedList = getLocalDeletedStudents();
     let reg: Record<string, number> = {};
     try {
       const regRaw = localStorage.getItem('student_gm_registry');
@@ -123,31 +186,49 @@ export function getCachedStudents(): Student[] {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.map((s: Student) => {
-          const initial = INITIAL_STUDENTS.find(
-            (i) => normalizeName(i.fullName) === normalizeName(s.fullName) || i.id === s.id
-          );
-          let gm = s.gmNo || initial?.gmNo || (s.fullName ? reg[s.fullName.toLowerCase()] : 0) || (s.id ? reg[s.id.toLowerCase()] : 0) || 0;
-          if (!gm && s.id) {
-            const m = s.id.match(/-(\d+)$/);
-            if (m) gm = parseInt(m[1], 10);
-          }
-          if (!gm && s.fullName && s.fullName.toLowerCase() === 'bhavyaop') {
-            gm = 999;
-          }
-          return {
-            ...s,
-            birthDate: s.birthDate || initial?.birthDate,
-            gmNo: gm,
-          };
-        });
+        return parsed
+          .filter((s: Student) => !isStudentDeleted(s.id, s.fullName, deletedList))
+          .map((s: Student) => {
+            const initial = INITIAL_STUDENTS.find(
+              (i) => normalizeName(i.fullName) === normalizeName(s.fullName) || i.id === s.id
+            );
+            let gm = s.gmNo || initial?.gmNo || (s.fullName ? reg[s.fullName.toLowerCase()] : 0) || (s.id ? reg[s.id.toLowerCase()] : 0) || 0;
+            if (!gm && s.id) {
+              const m = s.id.match(/-(\d+)$/);
+              if (m) gm = parseInt(m[1], 10);
+            }
+            if (!gm && s.fullName && s.fullName.toLowerCase() === 'bhavyaop') {
+              gm = 999;
+            }
+            return {
+              ...s,
+              birthDate: s.birthDate || initial?.birthDate,
+              gmNo: gm,
+            };
+          });
       }
     }
   } catch (e) {}
-  return INITIAL_STUDENTS;
+  const deletedList = getLocalDeletedStudents();
+  return INITIAL_STUDENTS.filter((s) => !isStudentDeleted(s.id, s.fullName, deletedList));
 }
 
 export async function saveStudent(student: Student): Promise<Student> {
+  // If previously marked deleted, unmark it so it can be re-added
+  try {
+    const deleted = getLocalDeletedStudents();
+    const norm = normalizeName(student.fullName);
+    const updatedDeleted = deleted.filter(
+      (d) =>
+        d.id?.toLowerCase() !== student.id?.toLowerCase() &&
+        (!norm || d.normalizedName !== norm)
+    );
+    if (updatedDeleted.length !== deleted.length) {
+      localStorage.setItem(KEYS.DELETED_STUDENTS, JSON.stringify(updatedDeleted));
+      api.removeDeletedStudent(student.id, student.fullName).catch(() => {});
+    }
+  } catch (e) {}
+
   let gmNo = student.gmNo || 0;
   if (!gmNo && student.id) {
     const m = student.id.match(/-(\d+)$/);
@@ -238,33 +319,64 @@ export async function saveStudent(student: Student): Promise<Student> {
 }
 
 export async function deleteStudent(studentId: string, fullName?: string): Promise<void> {
+  const normName = fullName ? normalizeName(fullName) : '';
+  const entry: DeletedStudentEntry = {
+    id: studentId,
+    fullName: fullName || '',
+    normalizedName: normName,
+    deletedAt: new Date().toISOString(),
+  };
+
+  // 1. Record in local deleted students list
+  try {
+    const deleted = getLocalDeletedStudents();
+    const exists = deleted.some(
+      (d) =>
+        (studentId && d.id?.toLowerCase() === studentId.toLowerCase()) ||
+        (normName && d.normalizedName === normName)
+    );
+    if (!exists) {
+      deleted.push(entry);
+      localStorage.setItem(KEYS.DELETED_STUDENTS, JSON.stringify(deleted));
+    }
+  } catch (e) {}
+
+  // 2. Delete from remote DB (Turso & Supabase)
   try {
     await api.deleteStudent(studentId, fullName);
   } catch (e) {
     console.warn('API deleteStudent error, deleting locally:', e);
   }
 
+  // 3. Persist tombstone to remote DB so all devices stay in sync
+  try {
+    await api.addDeletedStudent(entry);
+  } catch (e) {}
+
+  // 4. Clean up local student cache
   const existing = getCachedStudents();
-  const normName = fullName ? normalizeName(fullName) : '';
   const updated = existing.filter(
-    (s) => s.id !== studentId && (normName ? normalizeName(s.fullName) !== normName : true)
+    (s) =>
+      s.id.toLowerCase() !== studentId.toLowerCase() &&
+      (normName ? normalizeName(s.fullName) !== normName : true)
   );
   localStorage.setItem(KEYS.STUDENTS, JSON.stringify(updated));
 
-  // Clean up any orders associated with this student in local cache (both parent and student orders)
+  // 5. Clean up any orders associated with this student in local cache (both parent and student orders)
   try {
     const cachedOrders = getCachedOrders();
-    const filteredOrders = cachedOrders.filter(
-      (o) =>
-        o.studentId !== studentId &&
-        (normName ? normalizeName(o.fullName || o.studentName || '') !== normName : true)
-    );
-    if (filteredOrders.length !== cachedOrders.length) {
-      localStorage.setItem(KEYS.ORDERS, JSON.stringify(filteredOrders));
-    }
+    const filteredOrders = cachedOrders.filter((o) => {
+      if (o.studentId && o.studentId.toLowerCase() === studentId.toLowerCase()) return false;
+      if (normName) {
+        if (o.fullName && normalizeName(o.fullName) === normName) return false;
+        if (o.studentName && normalizeName(o.studentName) === normName) return false;
+      }
+      return true;
+    });
+    localStorage.setItem(KEYS.ORDERS, JSON.stringify(filteredOrders));
   } catch (e) {}
 
-  // Clean up from student GM registry
+  // 6. Clean up from student GM registry
   try {
     const regRaw = localStorage.getItem('student_gm_registry');
     if (regRaw) {
@@ -321,8 +433,18 @@ export async function saveMenuItems(items: FoodItem[]): Promise<void> {
 export async function fetchOrders(): Promise<Order[]> {
   try {
     const data = await api.getOrders();
-    localStorage.setItem(KEYS.ORDERS, JSON.stringify(data));
-    return data;
+    const deletedList = getLocalDeletedStudents();
+    const filtered = (data || []).filter((o) => {
+      const matchId = o.studentId && deletedList.some((d) => d.id && d.id.toLowerCase() === o.studentId.toLowerCase());
+      const normFull = o.fullName ? normalizeName(o.fullName) : '';
+      const normStudent = o.studentName ? normalizeName(o.studentName) : '';
+      const matchName = deletedList.some(
+        (d) => (normFull && d.normalizedName === normFull) || (normStudent && d.normalizedName === normStudent)
+      );
+      return !matchId && !matchName;
+    });
+    localStorage.setItem(KEYS.ORDERS, JSON.stringify(filtered));
+    return filtered;
   } catch (e) {
     console.warn('API error fetching orders, using cache:', e);
   }
@@ -332,7 +454,19 @@ export async function fetchOrders(): Promise<Order[]> {
 export function getCachedOrders(): Order[] {
   try {
     const raw = localStorage.getItem(KEYS.ORDERS);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed: Order[] = JSON.parse(raw);
+      const deletedList = getLocalDeletedStudents();
+      return (parsed || []).filter((o) => {
+        const matchId = o.studentId && deletedList.some((d) => d.id && d.id.toLowerCase() === o.studentId.toLowerCase());
+        const normFull = o.fullName ? normalizeName(o.fullName) : '';
+        const normStudent = o.studentName ? normalizeName(o.studentName) : '';
+        const matchName = deletedList.some(
+          (d) => (normFull && d.normalizedName === normFull) || (normStudent && d.normalizedName === normStudent)
+        );
+        return !matchId && !matchName;
+      });
+    }
   } catch (e) {}
   return [];
 }

@@ -194,8 +194,8 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
       setLocalStudents((prev) =>
         prev.filter(
           (s) =>
-            s.id !== studentToDelete.id &&
-            s.fullName.toLowerCase() !== studentToDelete.fullName.toLowerCase()
+            s.id.toLowerCase() !== studentToDelete.id.toLowerCase() &&
+            normalize(s.fullName) !== normalize(studentToDelete.fullName)
         )
       );
       alert(`Student "${studentToDelete.fullName}" has been permanently removed.`);

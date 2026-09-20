@@ -69,16 +69,46 @@ export const api = {
 
   deleteStudent: async (studentId: string, fullName?: string): Promise<void> => {
     if (isTursoConfigured) {
-      await tursoService.deleteStudent(studentId, fullName);
-      return;
+      await tursoService.deleteStudent(studentId, fullName).catch(() => {});
     }
     if (isSupabaseConfigured) {
-      await supabaseService.deleteStudent(studentId, fullName);
-      return;
+      await supabaseService.deleteStudent(studentId, fullName).catch(() => {});
     }
     await fetchJson(`${API_BASE}/students/${encodeURIComponent(studentId)}`, {
       method: 'DELETE',
     }).catch(() => {});
+  },
+
+  getDeletedStudents: async (): Promise<{ id: string; fullName: string; normalizedName: string }[]> => {
+    if (isTursoConfigured) {
+      try {
+        return await tursoService.getDeletedStudents();
+      } catch (e) {}
+    }
+    if (isSupabaseConfigured) {
+      try {
+        return await supabaseService.getDeletedStudents();
+      } catch (e) {}
+    }
+    return [];
+  },
+
+  addDeletedStudent: async (entry: { id: string; fullName: string; normalizedName: string }): Promise<void> => {
+    if (isTursoConfigured) {
+      await tursoService.addDeletedStudent(entry).catch(() => {});
+    }
+    if (isSupabaseConfigured) {
+      await supabaseService.addDeletedStudent(entry).catch(() => {});
+    }
+  },
+
+  removeDeletedStudent: async (studentId: string, fullName?: string): Promise<void> => {
+    if (isTursoConfigured) {
+      await tursoService.removeDeletedStudent(studentId, fullName).catch(() => {});
+    }
+    if (isSupabaseConfigured) {
+      await supabaseService.removeDeletedStudent(studentId, fullName).catch(() => {});
+    }
   },
 
   setAdminCredentials: async (username: string, password: string) => {

@@ -168,20 +168,79 @@ export const supabaseService = {
     try {
       // 1. Delete student record
       await supabaseFetch(`students?id=eq.${encodeURIComponent(studentId)}`, { method: 'DELETE' }).catch(() => {});
+      await supabaseFetch(`students?id=ilike.${encodeURIComponent(studentId)}`, { method: 'DELETE' }).catch(() => {});
       if (fullName) {
         await supabaseFetch(`students?full_name=ilike.${encodeURIComponent(fullName)}`, { method: 'DELETE' }).catch(() => {});
       }
       // 2. Delete all orders associated with this student (both parent and student orders)
       await supabaseFetch(`orders?student_id=eq.${encodeURIComponent(studentId)}`, { method: 'DELETE' }).catch(() => {});
+      await supabaseFetch(`orders?student_id=ilike.${encodeURIComponent(studentId)}`, { method: 'DELETE' }).catch(() => {});
       if (fullName) {
         await supabaseFetch(`orders?full_name=ilike.${encodeURIComponent(fullName)}`, { method: 'DELETE' }).catch(() => {});
         await supabaseFetch(`orders?student_name=ilike.${encodeURIComponent(fullName)}`, { method: 'DELETE' }).catch(() => {});
       }
       // 3. Delete any device lock for this student
       await supabaseFetch(`device_locks?student_id=eq.${encodeURIComponent(studentId)}`, { method: 'DELETE' }).catch(() => {});
+      await supabaseFetch(`device_locks?student_id=ilike.${encodeURIComponent(studentId)}`, { method: 'DELETE' }).catch(() => {});
     } catch (e) {
       console.warn('Supabase deleteStudent error:', e);
     }
+  },
+
+  getDeletedStudents: async (): Promise<{ id: string; fullName: string; normalizedName: string }[]> => {
+    try {
+      const rows = await supabaseFetch<any[]>('app_settings?key=eq.deleted_students');
+      if (!rows || rows.length === 0) return [];
+      const val = rows[0]?.value;
+      if (!val) return [];
+      return typeof val === 'string' ? JSON.parse(val) : val;
+    } catch (e) {
+      return [];
+    }
+  },
+
+  addDeletedStudent: async (entry: { id: string; fullName: string; normalizedName: string }): Promise<void> => {
+    try {
+      const current = await supabaseService.getDeletedStudents();
+      const exists = current.some(
+        (c) =>
+          (entry.id && c.id?.toLowerCase() === entry.id.toLowerCase()) ||
+          (entry.normalizedName && c.normalizedName === entry.normalizedName)
+      );
+      if (!exists) {
+        current.push(entry);
+        await supabaseFetch('app_settings', {
+          method: 'POST',
+          headers: { Prefer: 'resolution=merge-duplicates' },
+          body: JSON.stringify({
+            key: 'deleted_students',
+            value: JSON.stringify(current),
+            updated_at: new Date().toISOString(),
+          }),
+        }).catch(() => {});
+      }
+    } catch (e) {}
+  },
+
+  removeDeletedStudent: async (studentId: string, fullName?: string): Promise<void> => {
+    try {
+      const current = await supabaseService.getDeletedStudents();
+      const norm = fullName ? fullName.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+      const updated = current.filter(
+        (c) =>
+          c.id?.toLowerCase() !== studentId.toLowerCase() &&
+          (!norm || c.normalizedName !== norm)
+      );
+      await supabaseFetch('app_settings', {
+        method: 'POST',
+        headers: { Prefer: 'resolution=merge-duplicates' },
+        body: JSON.stringify({
+          key: 'deleted_students',
+          value: JSON.stringify(updated),
+          updated_at: new Date().toISOString(),
+        }),
+      }).catch(() => {});
+    } catch (e) {}
   },
 
   // --- Menu Items ---
