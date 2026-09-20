@@ -43,6 +43,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
   const isBoss = adminRole === 'boss';
   const isSuper = (adminRole === 'super' || isBoss) && (isBoss || allowEdit);
   const [localStudents, setLocalStudents] = useState<Student[]>(students);
+  const [phaseTab, setPhaseTab] = useState<'parent' | 'student'>('parent');
   const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'All' | 'Ordered' | 'Remaining'>('All');
@@ -70,10 +71,12 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
 
   const normalize = (val: string) => (val || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
-  // Helper to reliably find an order for a student (by id, full_name, or student_name)
-  const getStudentOrder = (student: Student): Order | undefined => {
+  // Helper to reliably find an order for a student (by id, full_name, or student_name) for a specific phase
+  const getStudentOrder = (student: Student, phase: 'parent' | 'student' = phaseTab): Order | undefined => {
     const normStudentName = normalize(student.fullName);
     return orders.find((o) => {
+      const oType = o.orderType || 'parent';
+      if (oType !== phase) return false;
       if (o.studentId && student.id && o.studentId.toLowerCase() === student.id.toLowerCase()) {
         return true;
       }
@@ -239,11 +242,20 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
   }, [localStudents]);
 
   const totalStudents = enrichedStudents.length;
-  const orderedCount = enrichedStudents.filter((s) => Boolean(getStudentOrder(s))).length;
-  const remainingCount = totalStudents - orderedCount;
+
+  const parentOrderedCount = useMemo(() => {
+    return enrichedStudents.filter((s) => Boolean(getStudentOrder(s, 'parent'))).length;
+  }, [enrichedStudents, orders]);
+
+  const studentOrderedCount = useMemo(() => {
+    return enrichedStudents.filter((s) => Boolean(getStudentOrder(s, 'student'))).length;
+  }, [enrichedStudents, orders]);
+
+  const activeOrderedCount = phaseTab === 'parent' ? parentOrderedCount : studentOrderedCount;
+  const activeRemainingCount = totalStudents - activeOrderedCount;
 
   const filteredStudents = enrichedStudents.filter((s) => {
-    const hasOrdered = Boolean(getStudentOrder(s));
+    const hasOrdered = Boolean(getStudentOrder(s, phaseTab));
     if (filter === 'Ordered' && !hasOrdered) return false;
     if (filter === 'Remaining' && hasOrdered) return false;
 
@@ -259,7 +271,46 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
 
   return (
     <div className="space-y-4">
-      
+
+      {/* Phase Selector Toggle */}
+      <div className="flex items-center space-x-2 bg-stone-100 p-1.5 rounded-2xl w-fit border border-stone-200/80 shadow-2xs">
+        <button
+          type="button"
+          onClick={() => setPhaseTab('parent')}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            phaseTab === 'parent'
+              ? 'bg-white text-indigo-700 shadow-xs border border-stone-200/60'
+              : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/50'
+          }`}
+        >
+          <span className="text-base leading-none">👨‍👩‍👦</span>
+          <span>Parent Phase Orders</span>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+            phaseTab === 'parent' ? 'bg-indigo-50 text-indigo-700' : 'bg-stone-200 text-stone-600'
+          }`}>
+            {parentOrderedCount}/{totalStudents}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setPhaseTab('student')}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            phaseTab === 'student'
+              ? 'bg-white text-indigo-700 shadow-xs border border-stone-200/60'
+              : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/50'
+          }`}
+        >
+          <span className="text-base leading-none">🎓</span>
+          <span>Student Phase Orders</span>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+            phaseTab === 'student' ? 'bg-indigo-50 text-indigo-700' : 'bg-stone-200 text-stone-600'
+          }`}>
+            {studentOrderedCount}/{totalStudents}
+          </span>
+        </button>
+      </div>
+
       {/* Stat Cards Row */}
       <div className="grid grid-cols-3 gap-3">
         <div className="p-4 rounded-xl bg-white border border-stone-200 text-center shadow-xs">
@@ -268,13 +319,17 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
         </div>
 
         <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center shadow-xs">
-          <div className="text-[10px] text-emerald-800 uppercase tracking-wider font-semibold">Ordered</div>
-          <div className="text-2xl font-bold text-emerald-950 mt-1 font-mono">{orderedCount}</div>
+          <div className="text-[10px] text-emerald-800 uppercase tracking-wider font-semibold">
+            {phaseTab === 'parent' ? 'Parents Ordered' : 'Students Ordered'}
+          </div>
+          <div className="text-2xl font-bold text-emerald-950 mt-1 font-mono">{activeOrderedCount}</div>
         </div>
 
         <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-center shadow-xs">
-          <div className="text-[10px] text-amber-800 uppercase tracking-wider font-semibold">Remaining</div>
-          <div className="text-2xl font-bold text-amber-950 mt-1 font-mono">{remainingCount}</div>
+          <div className="text-[10px] text-amber-800 uppercase tracking-wider font-semibold">
+            {phaseTab === 'parent' ? 'Parents Remaining' : 'Students Remaining'}
+          </div>
+          <div className="text-2xl font-bold text-amber-950 mt-1 font-mono">{activeRemainingCount}</div>
         </div>
       </div>
 
@@ -693,7 +748,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                 <span>Student: {wipeModal.student.fullName}</span>
               </div>
               <div className="text-red-700">
-                Order Token:{' '}
+                Phase: <span className="font-bold uppercase">{wipeModal.order?.orderType || 'Parent'}</span> | Order Token:{' '}
                 <span className="font-mono font-bold">
                   #{wipeModal.order?.orderNumber || 'Active'}
                 </span>{' '}
@@ -703,7 +758,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                 </span>
               </div>
               <p className="text-[11px] text-red-600/90 pt-1">
-                ⚠️ This will permanently delete this order and allow the student to place a fresh order.
+                ⚠️ This will permanently delete this {wipeModal.order?.orderType || 'parent'} order and allow them to place a fresh order.
               </p>
             </div>
 
