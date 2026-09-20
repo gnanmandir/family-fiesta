@@ -141,8 +141,10 @@ const CircularClockDial: React.FC<CircularClockDialProps> = ({
   const handlePointer = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!dialRef.current) return;
     const rect = dialRef.current.getBoundingClientRect();
-    const dx = e.clientX - rect.left - cx;
-    const dy = e.clientY - rect.top - cy;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const dx = e.clientX - rect.left - centerX;
+    const dy = e.clientY - rect.top - centerY;
 
     let angle = (Math.atan2(dy, dx) * 180) / Math.PI + 90;
     if (angle < 0) angle += 360;
@@ -175,9 +177,6 @@ const CircularClockDial: React.FC<CircularClockDialProps> = ({
     try {
       (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
     } catch (err) {}
-    if (mode === 'hours') {
-      setTimeout(() => setMode('minutes'), 250);
-    }
   };
 
   // Hand position
@@ -298,15 +297,31 @@ const CircularClockDial: React.FC<CircularClockDialProps> = ({
         </div>
       </div>
 
-      {/* Mode Subtitle Guide */}
-      <span className="text-[10px] font-bold text-slate-400 mb-1 tracking-wide flex items-center space-x-1">
-        <Clock className="w-3 h-3 text-slate-400" />
-        <span>
-          {mode === 'hours'
-            ? 'Tap or drag hour on circular clock'
-            : 'Tap, drag or use +1m to set exact minute'}
-        </span>
-      </span>
+      {/* Mode Switcher Buttons */}
+      <div className="flex items-center space-x-1.5 mb-1.5">
+        <button
+          type="button"
+          onClick={() => setMode('hours')}
+          className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            mode === 'hours'
+              ? `${themeConfig.bg} text-white shadow-xs`
+              : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+          }`}
+        >
+          ⏰ Hour ({String(hour12).padStart(2, '0')})
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode('minutes')}
+          className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            mode === 'minutes'
+              ? `${themeConfig.bg} text-white shadow-xs`
+              : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+          }`}
+        >
+          ⏱️ Minute ({String(minute).padStart(2, '0')})
+        </button>
+      </div>
 
       {/* Circular Clock Dial */}
       <div
@@ -509,15 +524,17 @@ interface DateTimePickerProps {
 
 function parseDateTimeParts(val: string) {
   if (!val) return null;
-  const parts = val.split('T');
-  if (parts.length < 2) return null;
-  const dateStr = parts[0];
-  const timeStr = parts[1];
-  const timeParts = timeStr.split(':');
-  if (timeParts.length < 2) return null;
-  const h24 = parseInt(timeParts[0], 10);
-  const min = parseInt(timeParts[1], 10);
-  if (isNaN(h24) || isNaN(min)) return null;
+  const d = new Date(val);
+  if (isNaN(d.getTime())) return null;
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const year = d.getFullYear();
+  const month = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  const dateStr = `${year}-${month}-${day}`;
+
+  const h24 = d.getHours();
+  const min = d.getMinutes();
   const ampm: 'AM' | 'PM' = h24 >= 12 ? 'PM' : 'AM';
   const hour12 = h24 % 12 || 12;
   return { dateStr, hour12, minute: min, ampm, h24 };
@@ -540,12 +557,17 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   const parsed = parseDateTimeParts(value);
 
   const commit = (dateStr: string, hour12: number, minute: number, ampm: 'AM' | 'PM') => {
-    const pad = (n: number) => String(n).padStart(2, '0');
     let targetDate = dateStr;
-    if (!dateStr) return;
+    if (!targetDate) {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      targetDate = `${y}-${m}-${d}`;
+    }
     let h24 = hour12 % 12;
     if (ampm === 'PM') h24 += 12;
-    const [y, mon, d] = dateStr.split('-').map(Number);
+    const [y, mon, d] = targetDate.split('-').map(Number);
     const target = new Date(y, mon - 1, d, h24, minute, 0, 0);
     onChange(target.toISOString());
   };
@@ -573,6 +595,22 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   const currentHour = parsed ? parsed.hour12 : defaultTime.hour;
   const currentMinute = parsed ? parsed.minute : defaultTime.minute;
   const currentAmpm = parsed ? parsed.ampm : defaultTime.ampm;
+
+  const presets = themeColor === 'rose'
+    ? [
+        { label: '10:00 PM', h: 10, m: 0, ap: 'PM' as const },
+        { label: '11:00 PM', h: 11, m: 0, ap: 'PM' as const },
+        { label: '11:59 PM', h: 11, m: 59, ap: 'PM' as const },
+        { label: '12:00 AM', h: 12, m: 0, ap: 'AM' as const },
+      ]
+    : [
+        { label: '08:00 AM', h: 8, m: 0, ap: 'AM' as const },
+        { label: '09:00 AM', h: 9, m: 0, ap: 'AM' as const },
+        { label: '12:00 PM', h: 12, m: 0, ap: 'PM' as const },
+        { label: '06:00 PM', h: 6, m: 0, ap: 'PM' as const },
+      ];
+
+  const current24Hour = currentAmpm === 'PM' ? (currentHour % 12) + 12 : currentHour % 12;
 
   return (
     <div className="p-3 sm:p-3.5 rounded-2xl bg-slate-50/90 border border-slate-200/90 space-y-2.5">
@@ -640,8 +678,8 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
       {/* Expanded 2-Column: Calendar for Date & Circular Clock Dial for Time */}
       {isExpanded && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
-          {/* Column 1: Calendar for Date & Selection Preview */}
-          <div className="space-y-3">
+          {/* Column 1: Calendar for Date, Native Time & Presets */}
+          <div className="space-y-2.5">
             <div>
               <label className="block text-[10.5px] font-bold text-slate-700 mb-1 flex items-center justify-between">
                 <span className="flex items-center space-x-1">
@@ -661,6 +699,57 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
                 }}
                 className="w-full px-3 py-2 bg-white border border-slate-300 hover:border-indigo-400 focus:border-indigo-500 rounded-xl text-xs sm:text-sm font-bold text-slate-800 shadow-2xs cursor-pointer outline-none transition-all"
               />
+            </div>
+
+            {/* Native Time Input Companion */}
+            <div>
+              <label className="block text-[10.5px] font-bold text-slate-700 mb-1 flex items-center justify-between">
+                <span className="flex items-center space-x-1">
+                  <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Time Picker</span>
+                </span>
+                <span className="text-[9.5px] text-slate-400 font-normal">Native time input</span>
+              </label>
+              <input
+                type="time"
+                value={`${String(current24Hour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`}
+                onChange={(e) => {
+                  if (!e.target.value) return;
+                  const [hStr, mStr] = e.target.value.split(':');
+                  const h = parseInt(hStr, 10);
+                  const m = parseInt(mStr, 10);
+                  if (isNaN(h) || isNaN(m)) return;
+                  const ap: 'AM' | 'PM' = h >= 12 ? 'PM' : 'AM';
+                  const h12 = h % 12 || 12;
+                  commit(parsed?.dateStr || '', h12, m, ap);
+                }}
+                className="w-full px-3 py-2 bg-white border border-slate-300 hover:border-indigo-400 focus:border-indigo-500 rounded-xl text-xs sm:text-sm font-bold text-slate-800 shadow-2xs cursor-pointer outline-none transition-all"
+              />
+            </div>
+
+            {/* Quick Time Preset Buttons */}
+            <div>
+              <span className="text-[10px] font-bold text-slate-500 block mb-1">Quick Presets:</span>
+              <div className="grid grid-cols-2 gap-1.5">
+                {presets.map((p) => {
+                  const isMatch =
+                    currentHour === p.h && currentMinute === p.m && currentAmpm === p.ap;
+                  return (
+                    <button
+                      key={p.label}
+                      type="button"
+                      onClick={() => commit(parsed?.dateStr || '', p.h, p.m, p.ap)}
+                      className={`px-2 py-1.5 rounded-lg text-[11px] font-extrabold border transition-all cursor-pointer shadow-2xs ${
+                        isMatch
+                          ? 'bg-indigo-600 border-indigo-600 text-white'
+                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300'
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Selected preview */}
