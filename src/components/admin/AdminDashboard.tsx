@@ -169,8 +169,8 @@ function RollerWheelColumn<T extends string | number>({
               <span
                 className={`transition-all duration-150 font-mono ${
                   isSelected
-                    ? 'text-white text-2xl font-black scale-105'
-                    : 'text-slate-500 text-sm font-semibold hover:text-slate-300'
+                    ? 'text-slate-900 text-2xl font-black scale-105'
+                    : 'text-slate-400 text-sm font-semibold hover:text-slate-600'
                 }`}
               >
                 {typeof item === 'number' ? String(item).padStart(2, '0') : item}
@@ -199,20 +199,20 @@ const RollerTimePicker: React.FC<RollerTimePickerProps> = ({
   const ampmList: ('AM' | 'PM')[] = ['AM', 'PM'];
 
   const themeAccent = {
-    indigo: 'border-indigo-500/50 bg-indigo-500/15 text-indigo-400',
-    emerald: 'border-emerald-500/50 bg-emerald-500/15 text-emerald-400',
-    rose: 'border-rose-500/50 bg-rose-500/15 text-rose-400',
+    indigo: 'border-indigo-400 bg-indigo-50/90 text-indigo-700 shadow-xs',
+    emerald: 'border-emerald-400 bg-emerald-50/90 text-emerald-700 shadow-xs',
+    rose: 'border-rose-400 bg-rose-50/90 text-rose-700 shadow-xs',
   }[theme];
 
   return (
-    <div className="relative flex items-center justify-center bg-slate-950 rounded-2xl px-3 py-2 border border-slate-800 shadow-2xl overflow-hidden select-none w-full max-w-[260px]">
+    <div className="relative flex items-center justify-center bg-white rounded-2xl px-3 py-2 border border-slate-200/90 shadow-md overflow-hidden select-none w-full max-w-[260px]">
       {/* Top Fading Mask Overlay */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-slate-950 via-slate-950/80 to-transparent z-10" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-white via-white/85 to-transparent z-10" />
 
       {/* Bottom Fading Mask Overlay */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent z-10" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white via-white/85 to-transparent z-10" />
 
-      {/* Center Highlight Bar (matching user's reference image) */}
+      {/* Center Highlight Bar (matching user's reference image in white theme) */}
       <div className={`pointer-events-none absolute inset-x-2.5 top-[88px] h-[40px] rounded-xl border backdrop-blur-xs z-5 ${themeAccent}`} />
 
       {/* Roller Columns */}
@@ -226,7 +226,7 @@ const RollerTimePicker: React.FC<RollerTimePickerProps> = ({
         />
 
         {/* Colon Separator */}
-        <div className="flex items-center justify-center w-4 h-[40px] text-slate-400 font-mono font-bold text-xl select-none z-15">
+        <div className="flex items-center justify-center w-4 h-[40px] text-slate-500 font-mono font-bold text-xl select-none z-15">
           :
         </div>
 
@@ -248,8 +248,8 @@ const RollerTimePicker: React.FC<RollerTimePickerProps> = ({
             <span
               className={`transition-all duration-150 text-xs tracking-wider font-extrabold ${
                 isSelected
-                  ? 'text-white text-sm font-black scale-110'
-                  : 'text-slate-500 text-xs font-semibold hover:text-slate-300'
+                  ? 'text-slate-900 text-sm font-black scale-110'
+                  : 'text-slate-400 text-xs font-semibold hover:text-slate-600'
               }`}
             >
               {val}
