@@ -29,6 +29,7 @@ import {
   Check,
   Calendar,
   Clock,
+  History,
 } from 'lucide-react';
 import {
   evaluateSchedule,
@@ -42,6 +43,7 @@ import { StudentManager } from './StudentManager';
 import { GuestManager } from './GuestManager';
 import { FoodManager } from './FoodManager';
 import { PricingManager } from './PricingManager';
+import { LoginHistoryManager } from './LoginHistoryManager';
 
 interface AdminDashboardProps {
   orders: Order[];
@@ -857,6 +859,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             ] : []),
             ...(isBoss ? [
               { id: 'boss_controls', label: 'System Control', icon: <ShieldCheck className="w-4 h-4" /> },
+              { id: 'login_history', label: 'Login History', icon: <History className="w-4 h-4" /> },
             ] : []),
           ].map((tab) => {
             const isActive = activeTab === tab.id;
@@ -1650,7 +1653,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 );
               })}
             </div>
+
+            {/* Quick Link Card to Login History */}
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-white shadow-xl">
+              <div className="flex items-center space-x-3.5">
+                <div className="w-11 h-11 rounded-2xl bg-amber-400/20 text-amber-300 border border-amber-400/30 flex items-center justify-center shrink-0">
+                  <History className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-sm sm:text-base text-white">
+                    Admin Login History & Audit Trail
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    View real-time records of every Normal Admin and Super Admin login, with exact dates, times, and device footprints.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab('login_history' as any)}
+                className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs flex items-center space-x-2 transition-all cursor-pointer shrink-0 shadow-sm active:scale-95"
+              >
+                <span>View Full Login History</span>
+                <span>→</span>
+              </button>
+            </div>
           </div>
+        )}
+
+        {/* Tab 7: Boss Exclusive Login History & Audit Trail */}
+        {activeTab === 'login_history' && isBoss && (
+          <LoginHistoryManager />
         )}
 
       </div>

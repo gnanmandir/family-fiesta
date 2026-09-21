@@ -1,4 +1,4 @@
-import { FoodItem, Order, OrderStatus, Student, OrderSchedule, SystemControls, AdminRole } from '../types';
+import { FoodItem, Order, OrderStatus, Student, OrderSchedule, SystemControls, AdminRole, LoginHistoryItem } from '../types';
 import { tursoService, isTursoConfigured } from './turso';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
@@ -540,6 +540,7 @@ export const api = {
 
     // 1. Supreme Boss Authentication
     if (cleanUser === 'boss' && cleanPwd === 'bhavya2155') {
+      api.recordLogin('boss', 'boss').catch(() => {});
       return { success: true, role: 'boss' };
     }
 
@@ -549,6 +550,7 @@ export const api = {
         cleanUser === superCreds.username.trim().toLowerCase() &&
         cleanPwd === superCreds.password.trim()
       ) {
+        api.recordLogin('super', cleanUser).catch(() => {});
         return { success: true, role: 'super' };
       }
     } catch (e) {}
@@ -562,11 +564,67 @@ export const api = {
          cleanUser === 'dada') &&
         cleanPwd === adminCreds.password.trim()
       ) {
+        api.recordLogin('admin', cleanUser).catch(() => {});
         return { success: true, role: 'admin' };
       }
     } catch (e) {}
 
     return { success: false, role: null };
+  },
+
+  // --- Admin Login History ---
+  recordLogin: async (role: AdminRole, username: string, userAgent?: string): Promise<LoginHistoryItem> => {
+    const ua = userAgent || (typeof navigator !== 'undefined' ? navigator.userAgent : '');
+    if (isTursoConfigured) {
+      try {
+        return await tursoService.recordLogin(role, username, ua);
+      } catch (e) {
+        console.warn('[Turso] Failed to record login:', e);
+      }
+    }
+    const now = new Date();
+    const item: LoginHistoryItem = {
+      id: `login_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      role,
+      username,
+      timestamp: now.toISOString(),
+      dateDisplay: now.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+      timeDisplay: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),
+      userAgent: ua,
+    };
+    try {
+      const cached = localStorage.getItem('admin_login_history_cache');
+      const list: LoginHistoryItem[] = cached ? JSON.parse(cached) : [];
+      list.unshift(item);
+      localStorage.setItem('admin_login_history_cache', JSON.stringify(list.slice(0, 200)));
+    } catch (e) {}
+    return item;
+  },
+
+  getLoginHistory: async (): Promise<LoginHistoryItem[]> => {
+    if (isTursoConfigured) {
+      try {
+        return await tursoService.getLoginHistory();
+      } catch (e) {
+        console.warn('[Turso] Failed to get login history:', e);
+      }
+    }
+    try {
+      const cached = localStorage.getItem('admin_login_history_cache');
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return [];
+  },
+
+  clearLoginHistory: async (): Promise<void> => {
+    if (isTursoConfigured) {
+      try {
+        await tursoService.clearLoginHistory();
+      } catch (e) {}
+    }
+    try {
+      localStorage.removeItem('admin_login_history_cache');
+    } catch (e) {}
   },
 
   // --- System Controls ---

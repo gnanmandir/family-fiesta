@@ -96,3 +96,14 @@ export interface SystemControls {
   allowOrderEditing?: boolean;   // Users editing already-submitted orders (legacy/optional)
   allowSuperAdminLogin?: boolean;// Allowing non-boss admins to log in (legacy/optional)
 }
+
+export interface LoginHistoryItem {
+  id: string;
+  role: AdminRole;
+  username: string;
+  timestamp: string; // ISO string
+  dateDisplay: string; // e.g. "21 Sep 2026"
+  timeDisplay: string; // e.g. "09:21 PM"
+  userAgent?: string;
+  device?: string; // e.g. "Windows PC (Chrome)", "Android Mobile (Chrome)"
+}

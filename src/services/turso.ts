@@ -1,4 +1,4 @@
-import { FoodItem, Order, OrderStatus, Student, OrderSchedule, SystemControls } from '../types';
+import { FoodItem, Order, OrderStatus, Student, OrderSchedule, SystemControls, LoginHistoryItem, AdminRole } from '../types';
 
 let TURSO_URL = (import.meta.env.VITE_TURSO_DATABASE_URL || '').trim();
 if (TURSO_URL.startsWith('libsql://')) {
@@ -857,4 +857,139 @@ export const tursoService = {
       [JSON.stringify(controls), now]
     );
   },
+
+  // --- Admin Login History ---
+  recordLogin: async (role: AdminRole, username: string, userAgent?: string): Promise<LoginHistoryItem> => {
+    const now = new Date();
+    const id = `login_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const dateDisplay = now.toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+    const timeDisplay = now.toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+    const ua = userAgent || (typeof navigator !== 'undefined' ? navigator.userAgent : '');
+    const device = parseDeviceFromUserAgent(ua);
+
+    const item: LoginHistoryItem = {
+      id,
+      role,
+      username,
+      timestamp: now.toISOString(),
+      dateDisplay,
+      timeDisplay,
+      userAgent: ua,
+      device,
+    };
+
+    try {
+      await tursoQuery(
+        `CREATE TABLE IF NOT EXISTS admin_login_history (
+          id TEXT PRIMARY KEY,
+          role TEXT NOT NULL,
+          username TEXT NOT NULL,
+          timestamp TEXT NOT NULL,
+          date_display TEXT,
+          time_display TEXT,
+          user_agent TEXT,
+          device TEXT,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )`
+      );
+
+      await tursoQuery(
+        `INSERT INTO admin_login_history (id, role, username, timestamp, date_display, time_display, user_agent, device)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [item.id, item.role, item.username, item.timestamp, item.dateDisplay, item.timeDisplay, item.userAgent || '', item.device || '']
+      );
+    } catch (e) {
+      console.warn('[Turso] Failed to persist login history to table:', e);
+    }
+
+    try {
+      const cachedRaw = localStorage.getItem('admin_login_history_cache');
+      const list: LoginHistoryItem[] = cachedRaw ? JSON.parse(cachedRaw) : [];
+      list.unshift(item);
+      localStorage.setItem('admin_login_history_cache', JSON.stringify(list.slice(0, 200)));
+    } catch (e) {}
+
+    return item;
+  },
+
+  getLoginHistory: async (): Promise<LoginHistoryItem[]> => {
+    try {
+      await tursoQuery(
+        `CREATE TABLE IF NOT EXISTS admin_login_history (
+          id TEXT PRIMARY KEY,
+          role TEXT NOT NULL,
+          username TEXT NOT NULL,
+          timestamp TEXT NOT NULL,
+          date_display TEXT,
+          time_display TEXT,
+          user_agent TEXT,
+          device TEXT,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )`
+      );
+
+      const rows = await tursoQuery<any>(
+        'SELECT * FROM admin_login_history ORDER BY timestamp DESC LIMIT 200'
+      );
+      if (rows && rows.length > 0) {
+        const items: LoginHistoryItem[] = rows.map((r: any) => ({
+          id: r.id,
+          role: r.role,
+          username: r.username,
+          timestamp: r.timestamp,
+          dateDisplay: r.date_display,
+          timeDisplay: r.time_display,
+          userAgent: r.user_agent,
+          device: r.device || parseDeviceFromUserAgent(r.user_agent),
+        }));
+        try {
+          localStorage.setItem('admin_login_history_cache', JSON.stringify(items));
+        } catch (e) {}
+        return items;
+      }
+    } catch (e) {
+      console.warn('[Turso] Failed to get login history:', e);
+    }
+
+    try {
+      const cachedRaw = localStorage.getItem('admin_login_history_cache');
+      if (cachedRaw) return JSON.parse(cachedRaw);
+    } catch (e) {}
+    return [];
+  },
+
+  clearLoginHistory: async (): Promise<void> => {
+    try {
+      await tursoQuery('DELETE FROM admin_login_history');
+    } catch (e) {}
+    try {
+      localStorage.removeItem('admin_login_history_cache');
+    } catch (e) {}
+  },
 };
+
+export function parseDeviceFromUserAgent(ua?: string): string {
+  if (!ua) return 'Unknown Device';
+  let os = 'Unknown OS';
+  if (/windows/i.test(ua)) os = 'Windows PC';
+  else if (/android/i.test(ua)) os = 'Android Mobile';
+  else if (/iphone|ipad|ipod/i.test(ua)) os = 'iOS Device';
+  else if (/macintosh|mac os x/i.test(ua)) os = 'Mac OS';
+  else if (/linux/i.test(ua)) os = 'Linux';
+
+  let browser = 'Browser';
+  if (/edg/i.test(ua)) browser = 'Edge';
+  else if (/chrome|crios/i.test(ua)) browser = 'Chrome';
+  else if (/firefox|fxios/i.test(ua)) browser = 'Firefox';
+  else if (/safari/i.test(ua)) browser = 'Safari';
+
+  return `${os} • ${browser}`;
+}
