@@ -297,31 +297,7 @@ const CircularClockDial: React.FC<CircularClockDialProps> = ({
         </div>
       </div>
 
-      {/* Mode Switcher Buttons */}
-      <div className="flex items-center space-x-1.5 mb-1.5">
-        <button
-          type="button"
-          onClick={() => setMode('hours')}
-          className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            mode === 'hours'
-              ? `${themeConfig.bg} text-white shadow-xs`
-              : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
-          }`}
-        >
-          ⏰ Hour ({String(hour12).padStart(2, '0')})
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode('minutes')}
-          className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            mode === 'minutes'
-              ? `${themeConfig.bg} text-white shadow-xs`
-              : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
-          }`}
-        >
-          ⏱️ Minute ({String(minute).padStart(2, '0')})
-        </button>
-      </div>
+
 
       {/* Circular Clock Dial */}
       <div
