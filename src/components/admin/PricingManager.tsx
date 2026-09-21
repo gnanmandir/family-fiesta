@@ -26,13 +26,26 @@ export const PricingManager: React.FC<PricingManagerProps> = ({ adminRole = 'adm
     } catch (e) {}
   }, [activeGroup]);
 
-  const [tiersByGroup, setTiersByGroup] = useState<Record<IntakeGroup, (number | '')[]>>({
-    parent: [230, 230, 140, 80],
-    student: [230],
-    guest: [230],
+  const [tiersByGroup, setTiersByGroup] = useState<Record<IntakeGroup, (number | '')[]>>(() => {
+    try {
+      const p = localStorage.getItem('app_parent_tiers');
+      const s = localStorage.getItem('app_student_tiers');
+      const g = localStorage.getItem('app_guest_tiers') || localStorage.getItem('app_staff_tiers');
+      return {
+        parent: p ? JSON.parse(p) : [230, 230, 140, 80],
+        student: s ? JSON.parse(s) : [230],
+        guest: g ? JSON.parse(g) : [230],
+      };
+    } catch (e) {
+      return {
+        parent: [230, 230, 140, 80],
+        student: [230],
+        guest: [230],
+      };
+    }
   });
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccessMessage, setSaveSuccessMessage] = useState('');
 
@@ -47,22 +60,21 @@ export const PricingManager: React.FC<PricingManagerProps> = ({ adminRole = 'adm
   }, []);
 
   const loadAllTiers = async () => {
-    setIsLoading(true);
     try {
-      const [parentTiers, studentTiers, guestTiers] = await Promise.all([
-        api.getRoleTiers('parent'),
-        api.getRoleTiers('student'),
-        api.getRoleTiers('guest'),
-      ]);
-      setTiersByGroup({
-        parent: parentTiers && parentTiers.length > 0 ? parentTiers : [230, 230, 140, 80],
-        student: studentTiers && studentTiers.length > 0 ? studentTiers : [230],
-        guest: guestTiers && guestTiers.length > 0 ? guestTiers : [230],
-      });
+      const allTiers = await api.getAllRoleTiers();
+      if (allTiers) {
+        setTiersByGroup({
+          parent: allTiers.parent && allTiers.parent.length > 0 ? allTiers.parent : [230, 230, 140, 80],
+          student: allTiers.student && allTiers.student.length > 0 ? allTiers.student : [230],
+          guest: allTiers.guest && allTiers.guest.length > 0 ? allTiers.guest : [230],
+        });
+        localStorage.setItem('app_parent_tiers', JSON.stringify(allTiers.parent));
+        localStorage.setItem('app_student_tiers', JSON.stringify(allTiers.student));
+        localStorage.setItem('app_guest_tiers', JSON.stringify(allTiers.guest));
+        localStorage.setItem('app_staff_tiers', JSON.stringify(allTiers.guest));
+      }
     } catch (e) {
       console.error(e);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -164,15 +176,6 @@ export const PricingManager: React.FC<PricingManagerProps> = ({ adminRole = 'adm
         return 'Staff';
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20 text-slate-400">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mr-3"></div>
-        Loading configuration...
-      </div>
-    );
-  }
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">

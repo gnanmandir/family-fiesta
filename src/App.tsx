@@ -214,7 +214,7 @@ export default function App() {
     // Asynchronously fetch fresh data from backend
     const loadBackendData = async () => {
       try {
-        const [stList, menuList, orderList, isOpen, schedule, currentPhase, guestsList, parentTiers, studentTiers, guestTiers, controls] = await Promise.all([
+        const [stList, menuList, orderList, isOpen, schedule, currentPhase, guestsList, allTiers, controls] = await Promise.all([
           fetchStudents(),
           fetchMenuItems(),
           fetchOrders(),
@@ -222,9 +222,7 @@ export default function App() {
           api.getOrderSchedule(),
           api.getIntakePhase(),
           api.getGuests(),
-          api.getRoleTiers('parent'),
-          api.getRoleTiers('student'),
-          api.getRoleTiers('guest'),
+          api.getAllRoleTiers(),
           api.getSystemControls(),
         ]);
         setStudents(stList);
@@ -233,11 +231,11 @@ export default function App() {
         setOrders(orderList);
         setIntakePhase(currentPhase);
         if (controls) setSystemControls(controls);
-        if (parentTiers) localStorage.setItem('app_parent_tiers', JSON.stringify(parentTiers));
-        if (studentTiers) localStorage.setItem('app_student_tiers', JSON.stringify(studentTiers));
-        if (guestTiers) {
-          localStorage.setItem('app_guest_tiers', JSON.stringify(guestTiers));
-          localStorage.setItem('app_staff_tiers', JSON.stringify(guestTiers));
+        if (allTiers?.parent) localStorage.setItem('app_parent_tiers', JSON.stringify(allTiers.parent));
+        if (allTiers?.student) localStorage.setItem('app_student_tiers', JSON.stringify(allTiers.student));
+        if (allTiers?.guest) {
+          localStorage.setItem('app_guest_tiers', JSON.stringify(allTiers.guest));
+          localStorage.setItem('app_staff_tiers', JSON.stringify(allTiers.guest));
         }
 
         // Check if schedule is already completed/done in real time

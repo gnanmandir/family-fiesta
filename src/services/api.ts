@@ -91,6 +91,32 @@ export const api = {
     }
   },
 
+  getAllRoleTiers: async (): Promise<{ parent: number[]; student: number[]; guest: number[] }> => {
+    if (isTursoConfigured) {
+      try {
+        return await tursoService.getAllRoleTiers();
+      } catch (e) {
+        console.warn('[Turso] Failed to get all role tiers:', e);
+      }
+    }
+    try {
+      const p = localStorage.getItem('app_parent_tiers');
+      const s = localStorage.getItem('app_student_tiers');
+      const g = localStorage.getItem('app_guest_tiers') || localStorage.getItem('app_staff_tiers');
+      return {
+        parent: p ? JSON.parse(p) : [230, 230, 140, 80],
+        student: s ? JSON.parse(s) : [230],
+        guest: g ? JSON.parse(g) : [230],
+      };
+    } catch (e) {
+      return {
+        parent: [230, 230, 140, 80],
+        student: [230],
+        guest: [230],
+      };
+    }
+  },
+
   getRoleTiers: async (role: 'parent' | 'student' | 'guest' | 'staff'): Promise<number[]> => {
     if (isTursoConfigured) {
       try {

@@ -501,37 +501,52 @@ export const tursoService = {
   },
 
   // --- Role Tiers (Parent, Student, Staff / Guest) ---
+  getAllRoleTiers: async (): Promise<{ parent: number[]; student: number[]; guest: number[] }> => {
+    try {
+      const rows = await tursoQuery<{ key: string; value: string }>(
+        "SELECT key, value FROM app_settings WHERE key IN ('parent_tiers', 'student_tiers', 'guest_tiers', 'staff_tiers')"
+      );
+      const result = {
+        parent: [230, 230, 140, 80],
+        student: [230],
+        guest: [230],
+      };
+      if (rows && rows.length > 0) {
+        rows.forEach((r) => {
+          try {
+            const parsed = JSON.parse(r.value);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              if (r.key === 'parent_tiers') result.parent = parsed;
+              if (r.key === 'student_tiers') result.student = parsed;
+              if (r.key === 'guest_tiers' || r.key === 'staff_tiers') result.guest = parsed;
+            }
+          } catch (e) {}
+        });
+      }
+      return result;
+    } catch (e) {
+      return {
+        parent: [230, 230, 140, 80],
+        student: [230],
+        guest: [230],
+      };
+    }
+  },
+
   getRoleTiers: async (role: 'parent' | 'student' | 'guest' | 'staff'): Promise<number[]> => {
-    const key = role === 'staff' ? 'staff_tiers' : `${role}_tiers`;
-    const rows = await tursoQuery(`SELECT value FROM app_settings WHERE key = ?`, [key]);
+    const keys = role === 'staff' || role === 'guest'
+      ? "('guest_tiers', 'staff_tiers')"
+      : role === 'parent'
+      ? "('parent_tiers')"
+      : "('student_tiers')";
+    const rows = await tursoQuery<{ value: string }>(`SELECT value FROM app_settings WHERE key IN ${keys} ORDER BY updated_at DESC LIMIT 1`);
     if (rows && rows.length > 0 && rows[0].value) {
       try {
         const parsed = JSON.parse(rows[0].value);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       } catch (e) {}
     }
-    // Fallbacks
-    if (role === 'staff' || role === 'guest') {
-      const fallbackRows = await tursoQuery(`SELECT value FROM app_settings WHERE key IN ('staff_tiers', 'guest_tiers') ORDER BY updated_at DESC LIMIT 1`);
-      if (fallbackRows && fallbackRows.length > 0 && fallbackRows[0].value) {
-        try {
-          const parsed = JSON.parse(fallbackRows[0].value);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        } catch (e) {}
-      }
-      return [230];
-    }
-    if (role === 'parent') {
-      const legacy = await tursoQuery("SELECT value FROM app_settings WHERE key = 'parent_tiers'");
-      if (legacy && legacy.length > 0 && legacy[0].value) {
-        try {
-          const parsed = JSON.parse(legacy[0].value);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        } catch (e) {}
-      }
-      return [230, 230, 140, 80];
-    }
-    if (role === 'student') return [230];
+    if (role === 'parent') return [230, 230, 140, 80];
     return [230];
   },
 
