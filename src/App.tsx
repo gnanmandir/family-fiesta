@@ -242,13 +242,11 @@ export default function App() {
 
         // Check if schedule is already completed/done in real time
         if (schedule && schedule.enabled && isScheduleDone(schedule)) {
-          const isStartOnly = schedule.startTime && !schedule.endTime;
-          const targetOpen = isStartOnly ? true : false;
           api.setOrderSchedule(DEFAULT_SCHEDULE).catch(() => {});
-          api.setOrderingStatus(targetOpen).catch(() => {});
-          setRawOrdersOpen(targetOpen);
           setOrderSchedule(DEFAULT_SCHEDULE);
-          setOrdersOpen(targetOpen);
+          setRawOrdersOpen(isOpen);
+          const effective = evaluateSchedule(DEFAULT_SCHEDULE, isOpen);
+          setOrdersOpen(effective.isOpen);
         } else {
           setRawOrdersOpen(isOpen);
           setOrderSchedule(schedule);
@@ -394,13 +392,11 @@ export default function App() {
           }
 
           if (schedule && schedule.enabled && isScheduleDone(schedule)) {
-            const isStartOnly = schedule.startTime && !schedule.endTime;
-            const targetOpen = isStartOnly ? true : false;
             api.setOrderSchedule(DEFAULT_SCHEDULE).catch(() => {});
-            api.setOrderingStatus(targetOpen).catch(() => {});
-            setRawOrdersOpen(targetOpen);
             setOrderSchedule(DEFAULT_SCHEDULE);
-            setOrdersOpen(targetOpen);
+            setRawOrdersOpen((prev) => (prev === isOpen ? prev : isOpen));
+            const effective = evaluateSchedule(DEFAULT_SCHEDULE, isOpen);
+            setOrdersOpen((prev) => (prev === effective.isOpen ? prev : effective.isOpen));
           } else {
             setRawOrdersOpen((prev) => (prev === isOpen ? prev : isOpen));
             setOrderSchedule((prev) => {
@@ -430,13 +426,11 @@ export default function App() {
           }
 
           if (schedule && schedule.enabled && isScheduleDone(schedule)) {
-            const isStartOnly = schedule.startTime && !schedule.endTime;
-            const targetOpen = isStartOnly ? true : false;
             api.setOrderSchedule(DEFAULT_SCHEDULE).catch(() => {});
-            api.setOrderingStatus(targetOpen).catch(() => {});
-            setRawOrdersOpen(targetOpen);
             setOrderSchedule(DEFAULT_SCHEDULE);
-            setOrdersOpen(targetOpen);
+            setRawOrdersOpen((prev) => (prev === isOpen ? prev : isOpen));
+            const effective = evaluateSchedule(DEFAULT_SCHEDULE, isOpen);
+            setOrdersOpen((prev) => (prev === effective.isOpen ? prev : effective.isOpen));
           } else {
             setRawOrdersOpen((prev) => (prev === isOpen ? prev : isOpen));
             setOrderSchedule((prev) => {
@@ -487,17 +481,14 @@ export default function App() {
       if (!orderSchedule || !orderSchedule.enabled) return;
 
       if (isScheduleDone(orderSchedule)) {
-        const isStartOnly = orderSchedule.startTime && !orderSchedule.endTime;
-        const targetOpen = isStartOnly ? true : false;
         try {
           await api.setOrderSchedule(DEFAULT_SCHEDULE);
-          await api.setOrderingStatus(targetOpen);
         } catch (e) {
           // Silent
         }
         setOrderSchedule(DEFAULT_SCHEDULE);
-        setRawOrdersOpen(targetOpen);
-        setOrdersOpen(targetOpen);
+        const effective = evaluateSchedule(DEFAULT_SCHEDULE, rawOrdersOpen);
+        setOrdersOpen(effective.isOpen);
       } else {
         const effective = evaluateSchedule(orderSchedule, rawOrdersOpen);
         setOrdersOpen(effective.isOpen);
@@ -1134,15 +1125,16 @@ export default function App() {
       setRawOrdersOpen(isOpen);
       setOrdersOpen(isOpen);
 
-      // If halting ordering, turn off active schedule so it doesn't immediately re-open
-      if (!isOpen && orderSchedule?.enabled) {
-        const offSchedule: OrderSchedule = { ...orderSchedule, enabled: false };
-        setOrderSchedule(offSchedule);
-        api.setOrderSchedule(offSchedule).catch(() => {});
+      // If halting ordering, turn off and clear active schedule so it doesn't re-open
+      if (!isOpen) {
+        setOrderSchedule(DEFAULT_SCHEDULE);
+        try {
+          await api.setOrderSchedule(DEFAULT_SCHEDULE);
+        } catch (e) {}
       }
 
       await api.setOrderingStatus(isOpen);
-      const effective = evaluateSchedule(!isOpen ? { ...orderSchedule, enabled: false } : orderSchedule, isOpen);
+      const effective = evaluateSchedule(!isOpen ? DEFAULT_SCHEDULE : orderSchedule, isOpen);
       setOrdersOpen(effective.isOpen);
     } catch (e) {
       console.error('Error toggling ordering status:', e);
@@ -1158,12 +1150,14 @@ export default function App() {
     try {
       await api.setOrderSchedule(newSchedule);
       setOrderSchedule(newSchedule);
-      if (newSchedule.enabled) {
-        await api.setOrderingStatus(true);
-        setRawOrdersOpen(true);
+      const effective = evaluateSchedule(newSchedule, rawOrdersOpen);
+      if (newSchedule.enabled && effective.isOpen !== ordersOpen) {
+        await api.setOrderingStatus(effective.isOpen);
+        setRawOrdersOpen(effective.isOpen);
+        setOrdersOpen(effective.isOpen);
+      } else {
+        setOrdersOpen(effective.isOpen);
       }
-      const effective = evaluateSchedule(newSchedule, true);
-      setOrdersOpen(effective.isOpen);
     } catch (e) {
       console.error('Error saving order schedule:', e);
       alert('Failed to update intake schedule. Please try again.');
