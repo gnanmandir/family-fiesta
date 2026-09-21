@@ -98,23 +98,28 @@ function RollerWheelColumn<T extends string | number>({
 }: RollerWheelColumnProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const isScrollingRef = useRef(false);
+  const isProgrammaticRef = useRef(false);
   const scrollTimeoutRef = useRef<any>(null);
   const ITEM_HEIGHT = 40; // px
 
   // Sync scroll position when external value changes
   useEffect(() => {
-    if (!containerRef.current || isScrollingRef.current) return;
+    if (!containerRef.current) return;
     const idx = items.indexOf(value);
     if (idx !== -1) {
       const targetTop = idx * ITEM_HEIGHT;
-      if (Math.abs(containerRef.current.scrollTop - targetTop) > 2) {
-        containerRef.current.scrollTo({ top: targetTop, behavior: 'smooth' });
+      if (Math.abs(containerRef.current.scrollTop - targetTop) > 1) {
+        isProgrammaticRef.current = true;
+        containerRef.current.scrollTop = targetTop;
+        setTimeout(() => {
+          isProgrammaticRef.current = false;
+        }, 80);
       }
     }
   }, [value, items]);
 
   const handleScroll = () => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || isProgrammaticRef.current) return;
     isScrollingRef.current = true;
     clearTimeout(scrollTimeoutRef.current);
 
@@ -126,10 +131,14 @@ function RollerWheelColumn<T extends string | number>({
 
     scrollTimeoutRef.current = setTimeout(() => {
       isScrollingRef.current = false;
-      if (containerRef.current) {
+      if (containerRef.current && !isProgrammaticRef.current) {
         const snapIdx = Math.round(containerRef.current.scrollTop / ITEM_HEIGHT);
         if (snapIdx >= 0 && snapIdx < items.length) {
-          containerRef.current.scrollTo({ top: snapIdx * ITEM_HEIGHT, behavior: 'smooth' });
+          isProgrammaticRef.current = true;
+          containerRef.current.scrollTop = snapIdx * ITEM_HEIGHT;
+          setTimeout(() => {
+            isProgrammaticRef.current = false;
+          }, 80);
           if (items[snapIdx] !== value) {
             onChange(items[snapIdx]);
           }
@@ -140,7 +149,11 @@ function RollerWheelColumn<T extends string | number>({
 
   const handleItemClick = (item: T, idx: number) => {
     if (containerRef.current) {
-      containerRef.current.scrollTo({ top: idx * ITEM_HEIGHT, behavior: 'smooth' });
+      isProgrammaticRef.current = true;
+      containerRef.current.scrollTop = idx * ITEM_HEIGHT;
+      setTimeout(() => {
+        isProgrammaticRef.current = false;
+      }, 80);
     }
     onChange(item);
   };
@@ -309,18 +322,32 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const parsed = parseDateTimeParts(value);
 
-  const commit = (dateStr: string, hour12: number, minute: number, ampm: 'AM' | 'PM') => {
-    let targetDate = dateStr;
-    if (!targetDate) {
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = String(now.getMonth() + 1).padStart(2, '0');
-      const d = String(now.getDate()).padStart(2, '0');
-      targetDate = `${y}-${m}-${d}`;
+  // Local state for time wheels when no date has been selected yet
+  const [localHour, setLocalHour] = useState(defaultTime.hour);
+  const [localMinute, setLocalMinute] = useState(defaultTime.minute);
+  const [localAmpm, setLocalAmpm] = useState(defaultTime.ampm);
+
+  useEffect(() => {
+    if (parsed) {
+      setLocalHour(parsed.hour12);
+      setLocalMinute(parsed.minute);
+      setLocalAmpm(parsed.ampm);
+    } else {
+      setLocalHour(defaultTime.hour);
+      setLocalMinute(defaultTime.minute);
+      setLocalAmpm(defaultTime.ampm);
     }
+  }, [value]);
+
+  const currentHour = parsed ? parsed.hour12 : localHour;
+  const currentMinute = parsed ? parsed.minute : localMinute;
+  const currentAmpm = parsed ? parsed.ampm : localAmpm;
+
+  const commit = (dateStr: string, hour12: number, minute: number, ampm: 'AM' | 'PM') => {
+    if (!dateStr) return; // Never auto-commit or synthesize a date if no date was picked!
     let h24 = hour12 % 12;
     if (ampm === 'PM') h24 += 12;
-    const [y, mon, d] = targetDate.split('-').map(Number);
+    const [y, mon, d] = dateStr.split('-').map(Number);
     const target = new Date(y, mon - 1, d, h24, minute, 0, 0);
     onChange(target.toISOString());
   };
@@ -330,10 +357,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
       onClear?.();
       return;
     }
-    const h = parsed ? parsed.hour12 : defaultTime.hour;
-    const m = parsed ? parsed.minute : defaultTime.minute;
-    const ap = parsed ? parsed.ampm : defaultTime.ampm;
-    commit(newDate, h, m, ap);
+    commit(newDate, currentHour, currentMinute, currentAmpm);
   };
 
   const setQuickDayOffset = (offsetDays: number) => {
@@ -345,9 +369,14 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
     handleDateChange(`${year}-${month}-${day}`);
   };
 
-  const currentHour = parsed ? parsed.hour12 : defaultTime.hour;
-  const currentMinute = parsed ? parsed.minute : defaultTime.minute;
-  const currentAmpm = parsed ? parsed.ampm : defaultTime.ampm;
+  const handleTimeChange = (h: number, m: number, ap: 'AM' | 'PM') => {
+    setLocalHour(h);
+    setLocalMinute(m);
+    setLocalAmpm(ap);
+    if (parsed?.dateStr) {
+      commit(parsed.dateStr, h, m, ap);
+    }
+  };
 
 
 
@@ -464,9 +493,9 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
               hour12={currentHour}
               minute={currentMinute}
               ampm={currentAmpm}
-              onChangeHour={(h) => commit(parsed?.dateStr || '', h, currentMinute, currentAmpm)}
-              onChangeMinute={(m) => commit(parsed?.dateStr || '', currentHour, m, currentAmpm)}
-              onChangeAmpm={(ap) => commit(parsed?.dateStr || '', currentHour, currentMinute, ap)}
+              onChangeHour={(h) => handleTimeChange(h, currentMinute, currentAmpm)}
+              onChangeMinute={(m) => handleTimeChange(currentHour, m, currentAmpm)}
+              onChangeAmpm={(ap) => handleTimeChange(currentHour, currentMinute, ap)}
               theme={themeColor}
             />
           </div>
