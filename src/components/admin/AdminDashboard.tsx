@@ -686,7 +686,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     } catch (err) {}
 
     const isAuthorized =
-      isBoss ||
       entered === validPass ||
       entered === 'niruma0212' ||
       entered === 'niurma0212' ||
@@ -698,7 +697,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       entered === 'super5868';
 
     if (!isAuthorized) {
-      setSystemPasswordError('Incorrect password. Please enter your Admin, Super Admin, Boss, or System password.');
+      setSystemPasswordError('Incorrect system authorization password. Please try again.');
       return;
     }
     setIsProcessingAction(true);
@@ -1158,24 +1157,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <button
                         type="button"
                         disabled={!isBoss && systemControls?.allowOrderPortal === false}
-                        onClick={async () => {
+                        onClick={() => {
                           const newState = !ordersOpen;
-                          if (isBoss) {
-                            if (onToggleOrdering) await onToggleOrdering(newState);
-                            return;
-                          }
                           openProtectedAction(
-                            newState ? 'Open Ordering System' : 'Close Ordering System',
+                            newState ? 'Resume Ordering System' : 'Halt Ordering System',
                             newState
-                              ? 'Enter admin, boss, or system password to re-open ordering for students.'
-                              : 'Enter admin, boss, or system password to halt ordering. Students will only be able to view and download existing receipts.',
+                              ? 'Enter system authorization password to resume and re-open food ordering.'
+                              : 'Enter system authorization password to halt ordering. Students will only be able to view and download existing receipts.',
                             async () => {
                               if (onToggleOrdering) {
                                 await onToggleOrdering(newState);
                               }
                             },
                             !newState,
-                            newState ? 'Open Ordering' : 'Close Ordering'
+                            newState ? 'Resume Ordering' : 'Halt Ordering'
                           );
                         }}
                         className={`px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center justify-center space-x-1.5 active:scale-95 ${
@@ -1663,7 +1658,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <form onSubmit={handleVerifyProtectedPassword} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Password
+                  System Authorization Password
                 </label>
                 <div className="relative">
                   <input
@@ -1673,7 +1668,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       setSystemPassword(e.target.value);
                       if (systemPasswordError) setSystemPasswordError('');
                     }}
-                    placeholder="Enter password..."
+                    placeholder="Enter system authorization password..."
                     autoFocus
                     required
                     className={`w-full pl-3 pr-10 py-2.5 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all ${
@@ -1709,9 +1704,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <button
                   type="submit"
                   disabled={isProcessingAction}
-                  className={`px-5 py-2.5 rounded-xl text-white font-bold text-xs transition-colors shadow-sm disabled:opacity-50 ${
+                  className={`px-5 py-2.5 rounded-xl text-white font-bold text-xs transition-colors shadow-sm disabled:opacity-50 cursor-pointer ${
                     protectedModal.isDanger
                       ? 'bg-red-600 hover:bg-red-700'
+                      : protectedModal.confirmText?.toLowerCase().includes('resume')
+                      ? 'bg-emerald-600 hover:bg-emerald-700'
                       : 'bg-indigo-600 hover:bg-indigo-700'
                   }`}
                 >
