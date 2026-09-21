@@ -589,7 +589,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     };
 
     ping();
-    const interval = setInterval(ping, 30000);
+    const interval = setInterval(ping, 12000);
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {

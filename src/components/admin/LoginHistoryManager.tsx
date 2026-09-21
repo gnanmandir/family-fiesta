@@ -68,11 +68,53 @@ export const LoginHistoryManager: React.FC = () => {
   const [onlineAdmins, setOnlineAdmins] = useState<AdminPresence[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isLiveSyncing, setIsLiveSyncing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | AdminRole>('all');
   const [actionFilter, setActionFilter] = useState<'all' | AdminActionType>('all');
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+
+  // Background silent synchronization without UI-locking spinners
+  const silentSync = async () => {
+    try {
+      setIsLiveSyncing(true);
+      const [actLogs, loginLogs, onlineList] = await Promise.all([
+        api.getActivityLogs(),
+        api.getLoginHistory(),
+        api.getOnlineAdmins(),
+      ]);
+      setActivities((prev) => {
+        if (
+          prev.length !== actLogs.length ||
+          prev[0]?.id !== actLogs[0]?.id ||
+          JSON.stringify(prev) !== JSON.stringify(actLogs)
+        ) {
+          return actLogs;
+        }
+        return prev;
+      });
+      setHistory((prev) => {
+        if (
+          prev.length !== loginLogs.length ||
+          prev[0]?.id !== loginLogs[0]?.id ||
+          JSON.stringify(prev) !== JSON.stringify(loginLogs)
+        ) {
+          return loginLogs;
+        }
+        return prev;
+      });
+      setOnlineAdmins((prev) => {
+        if (JSON.stringify(prev) !== JSON.stringify(onlineList)) {
+          return onlineList;
+        }
+        return prev;
+      });
+    } catch (e) {
+    } finally {
+      setIsLiveSyncing(false);
+    }
+  };
 
   const fetchAllData = async () => {
     setIsLoading(true);
@@ -94,14 +136,55 @@ export const LoginHistoryManager: React.FC = () => {
 
   useEffect(() => {
     fetchAllData();
-    // Poll online presence every 10 seconds while Boss views this tab
-    const interval = setInterval(async () => {
-      try {
-        const list = await api.getOnlineAdmins();
-        setOnlineAdmins(list);
-      } catch (e) {}
-    }, 10000);
-    return () => clearInterval(interval);
+
+    // 1. Instant 0ms Cross-tab sync via BroadcastChannel
+    let bc: BroadcastChannel | null = null;
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        bc = new BroadcastChannel('admin_audit_channel');
+        bc.onmessage = (event) => {
+          if (event.data?.type === 'NEW_ACTIVITY' && event.data.item) {
+            setActivities((prev) => [event.data.item, ...prev.filter((a) => a.id !== event.data.item.id)]);
+          } else if (event.data?.type === 'NEW_LOGIN' && event.data.item) {
+            setHistory((prev) => [event.data.item, ...prev.filter((h) => h.id !== event.data.item.id)]);
+          }
+          silentSync();
+        };
+      }
+    } catch (e) {}
+
+    // 2. Instant same-window custom event & storage event
+    const handleActivityEvent = (e: any) => {
+      if (e.detail?.actionType) {
+        setActivities((prev) => [e.detail, ...prev.filter((a) => a.id !== e.detail.id)]);
+      } else if (e.detail?.role && !e.detail?.actionType) {
+        setHistory((prev) => [e.detail, ...prev.filter((h) => h.id !== e.detail.id)]);
+      }
+      silentSync();
+    };
+    window.addEventListener('admin_activity_updated', handleActivityEvent);
+    window.addEventListener('storage', silentSync);
+
+    // 3. Fast 2-second real-time polling across devices
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        silentSync();
+      }
+    }, 2000);
+
+    // 4. Refresh immediately on window focus/tab switch
+    const handleFocus = () => {
+      silentSync();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      if (bc) bc.close();
+      window.removeEventListener('admin_activity_updated', handleActivityEvent);
+      window.removeEventListener('storage', silentSync);
+      window.removeEventListener('focus', handleFocus);
+      clearInterval(interval);
+    };
   }, []);
 
   const handleClear = async () => {
@@ -294,12 +377,20 @@ export const LoginHistoryManager: React.FC = () => {
 
           {/* Action Buttons */}
           <div className="flex items-center space-x-2 shrink-0">
+            <div className="hidden sm:inline-flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200/90 text-xs font-bold">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span>Live Auto-Sync</span>
+            </div>
+
             <button
               type="button"
               onClick={fetchAllData}
               disabled={isLoading}
               className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs shadow-2xs flex items-center space-x-1.5 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
-              title="Refresh live activity and logins"
+              title="Force sync live activity and logins"
             >
               <RotateCcw className={`w-3.5 h-3.5 text-indigo-600 ${isLoading ? 'animate-spin' : ''}`} />
               <span>{isLoading ? 'Syncing...' : 'Refresh'}</span>

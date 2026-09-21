@@ -929,6 +929,17 @@ export const tursoService = {
       localStorage.setItem('admin_login_history_cache', JSON.stringify(list.slice(0, 200)));
     } catch (e) {}
 
+    try {
+      if (typeof window !== 'undefined') {
+        if ('BroadcastChannel' in window) {
+          const bc = new BroadcastChannel('admin_audit_channel');
+          bc.postMessage({ type: 'NEW_LOGIN', item });
+          setTimeout(() => bc.close(), 200);
+        }
+        window.dispatchEvent(new CustomEvent('admin_activity_updated', { detail: item }));
+      }
+    } catch (e) {}
+
     return item;
   },
 
@@ -1061,6 +1072,17 @@ export const tursoService = {
       const list: AdminActivityLog[] = cachedRaw ? JSON.parse(cachedRaw) : [];
       list.unshift(item);
       localStorage.setItem('admin_activity_logs_cache', JSON.stringify(list.slice(0, 300)));
+    } catch (e) {}
+
+    try {
+      if (typeof window !== 'undefined') {
+        if ('BroadcastChannel' in window) {
+          const bc = new BroadcastChannel('admin_audit_channel');
+          bc.postMessage({ type: 'NEW_ACTIVITY', item });
+          setTimeout(() => bc.close(), 200);
+        }
+        window.dispatchEvent(new CustomEvent('admin_activity_updated', { detail: item }));
+      }
     } catch (e) {}
 
     return item;
