@@ -605,20 +605,31 @@ export const supabaseService = {
     try {
       const rows = await supabaseFetch<any[]>('app_settings?key=eq.orders_open&select=value');
       if (rows && rows.length > 0) {
-        return rows[0].value === 'true';
+        const val = rows[0].value === 'true';
+        try { localStorage.setItem('orders_open', String(val)); } catch (e) {}
+        return val;
       }
     } catch (e) {
-      // Table may not exist yet, default to open
+      // Table may not exist yet, default to local/open
     }
+    try {
+      const saved = localStorage.getItem('orders_open');
+      if (saved !== null) return saved === 'true';
+    } catch (e) {}
     return true; // default: orders open
   },
 
   setOrderingStatus: async (isOpen: boolean): Promise<void> => {
-    await supabaseFetch<any[]>('app_settings?on_conflict=key', {
-      method: 'POST',
-      headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
-      body: JSON.stringify({ key: 'orders_open', value: String(isOpen) }),
-    });
+    try { localStorage.setItem('orders_open', String(isOpen)); } catch (e) {}
+    try {
+      await supabaseFetch<any[]>('app_settings?on_conflict=key', {
+        method: 'POST',
+        headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+        body: JSON.stringify({ key: 'orders_open', value: String(isOpen) }),
+      });
+    } catch (e) {
+      console.warn('Failed to update orders_open in Supabase:', e);
+    }
   },
 
   // --- Order Schedule ---

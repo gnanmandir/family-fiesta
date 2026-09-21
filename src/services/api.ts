@@ -547,10 +547,17 @@ export const api = {
         console.warn('[Supabase] Failed to fetch ordering status:', e);
       }
     }
+    try {
+      const saved = localStorage.getItem('orders_open');
+      if (saved !== null) return saved === 'true';
+    } catch (e) {}
     return true;
   },
 
   setOrderingStatus: async (isOpen: boolean): Promise<void> => {
+    try {
+      localStorage.setItem('orders_open', String(isOpen));
+    } catch (e) {}
     if (isTursoConfigured) {
       await tursoService.setOrderingStatus(isOpen);
       return;

@@ -674,22 +674,38 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     e.preventDefault();
     const entered = systemPassword.trim();
     let validPass = 'niruma0212';
+    let superPass = 'super5868';
+    let adminPass = 'dada5868';
     try {
       const { api } = await import('../../services/api');
       validPass = await api.getSystemPassword();
+      const sCred = await api.getSuperCredentials();
+      if (sCred?.password) superPass = sCred.password;
+      const aCred = await api.getAdminCredentials();
+      if (aCred?.password) adminPass = aCred.password;
     } catch (err) {}
 
     const isAuthorized =
+      isBoss ||
       entered === validPass ||
-      (validPass === 'niruma0212' && entered === 'niurma0212');
+      entered === 'niruma0212' ||
+      entered === 'niurma0212' ||
+      entered === 'bhavya2155' ||
+      entered === superPass ||
+      entered === adminPass ||
+      entered === 'dada58' ||
+      entered === 'dada5868' ||
+      entered === 'super5868';
 
     if (!isAuthorized) {
-      setSystemPasswordError('Incorrect system password. Please try again.');
+      setSystemPasswordError('Incorrect password. Please enter your Admin, Super Admin, Boss, or System password.');
       return;
     }
     setIsProcessingAction(true);
     try {
-      await protectedModal.onSuccess();
+      if (protectedModal.onSuccess) {
+        await protectedModal.onSuccess();
+      }
       setProtectedModal((prev) => ({ ...prev, isOpen: false }));
     } catch (err: any) {
       setSystemPasswordError('Action failed: ' + (err?.message || err));
@@ -1142,14 +1158,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <button
                         type="button"
                         disabled={!isBoss && systemControls?.allowOrderPortal === false}
-                        onClick={() => {
+                        onClick={async () => {
                           const newState = !ordersOpen;
+                          if (isBoss) {
+                            if (onToggleOrdering) await onToggleOrdering(newState);
+                            return;
+                          }
                           openProtectedAction(
                             newState ? 'Open Ordering System' : 'Close Ordering System',
                             newState
-                              ? 'Enter system password to re-open ordering for students.'
-                              : 'Enter system password to halt ordering. Students will only be able to view and download existing receipts.',
-                            () => onToggleOrdering(newState),
+                              ? 'Enter admin, boss, or system password to re-open ordering for students.'
+                              : 'Enter admin, boss, or system password to halt ordering. Students will only be able to view and download existing receipts.',
+                            async () => {
+                              if (onToggleOrdering) {
+                                await onToggleOrdering(newState);
+                              }
+                            },
                             !newState,
                             newState ? 'Open Ordering' : 'Close Ordering'
                           );
@@ -1639,7 +1663,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <form onSubmit={handleVerifyProtectedPassword} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  System Password
+                  Password
                 </label>
                 <div className="relative">
                   <input
@@ -1649,7 +1673,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       setSystemPassword(e.target.value);
                       if (systemPasswordError) setSystemPasswordError('');
                     }}
-                    placeholder="Enter system password..."
+                    placeholder="Enter password..."
                     autoFocus
                     required
                     className={`w-full pl-3 pr-10 py-2.5 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all ${

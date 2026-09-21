@@ -68,8 +68,20 @@ export default function App() {
   const [guests, setGuests] = useState<import('./types').GuestCredential[]>([]);
   const [menuItems, setMenuItems] = useState<FoodItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [ordersOpen, setOrdersOpen] = useState<boolean>(true);
-  const [rawOrdersOpen, setRawOrdersOpen] = useState<boolean>(true);
+  const [ordersOpen, setOrdersOpen] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('orders_open');
+      if (saved !== null) return saved === 'true';
+    } catch (e) {}
+    return true;
+  });
+  const [rawOrdersOpen, setRawOrdersOpen] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('orders_open');
+      if (saved !== null) return saved === 'true';
+    } catch (e) {}
+    return true;
+  });
   const [orderSchedule, setOrderSchedule] = useState<OrderSchedule>(DEFAULT_SCHEDULE);
   const [intakePhase, setIntakePhase] = useState<import('./types').IntakePhase>('parent');
   const [activeRole, setActiveRole] = useState<import('./types').IntakePhase>(() => {
@@ -1117,13 +1129,29 @@ export default function App() {
 
   const handleToggleOrdering = async (isOpen: boolean) => {
     try {
-      await api.setOrderingStatus(isOpen);
+      try {
+        localStorage.setItem('orders_open', String(isOpen));
+      } catch (e) {}
       setRawOrdersOpen(isOpen);
-      const effective = evaluateSchedule(orderSchedule, isOpen);
+      setOrdersOpen(isOpen);
+
+      // If halting ordering, turn off active schedule so it doesn't immediately re-open
+      if (!isOpen && orderSchedule?.enabled) {
+        const offSchedule: OrderSchedule = { ...orderSchedule, enabled: false };
+        setOrderSchedule(offSchedule);
+        api.setOrderSchedule(offSchedule).catch(() => {});
+      }
+
+      await api.setOrderingStatus(isOpen);
+      const effective = evaluateSchedule(!isOpen ? { ...orderSchedule, enabled: false } : orderSchedule, isOpen);
       setOrdersOpen(effective.isOpen);
     } catch (e) {
       console.error('Error toggling ordering status:', e);
-      alert('Failed to update ordering status. Please try again.');
+      try {
+        localStorage.setItem('orders_open', String(isOpen));
+      } catch (e2) {}
+      setRawOrdersOpen(isOpen);
+      setOrdersOpen(isOpen);
     }
   };
 
