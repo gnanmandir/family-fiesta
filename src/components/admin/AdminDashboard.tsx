@@ -71,7 +71,7 @@ interface AdminDashboardProps {
   onSetIntakePhase?: (phase: import('../types').IntakePhase) => void;
 }
 
-interface CircularClockDialProps {
+interface RollerTimePickerProps {
   hour12: number;
   minute: number;
   ampm: 'AM' | 'PM';
@@ -81,7 +81,111 @@ interface CircularClockDialProps {
   theme?: 'rose' | 'emerald' | 'indigo';
 }
 
-const CircularClockDial: React.FC<CircularClockDialProps> = ({
+interface RollerWheelColumnProps<T> {
+  items: T[];
+  value: T;
+  onChange: (val: T) => void;
+  renderItem?: (val: T, isSelected: boolean) => React.ReactNode;
+  widthClass?: string;
+}
+
+function RollerWheelColumn<T extends string | number>({
+  items,
+  value,
+  onChange,
+  renderItem,
+  widthClass = 'w-16',
+}: RollerWheelColumnProps<T>) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isScrollingRef = useRef(false);
+  const scrollTimeoutRef = useRef<any>(null);
+  const ITEM_HEIGHT = 40; // px
+
+  // Sync scroll position when external value changes
+  useEffect(() => {
+    if (!containerRef.current || isScrollingRef.current) return;
+    const idx = items.indexOf(value);
+    if (idx !== -1) {
+      const targetTop = idx * ITEM_HEIGHT;
+      if (Math.abs(containerRef.current.scrollTop - targetTop) > 2) {
+        containerRef.current.scrollTo({ top: targetTop, behavior: 'smooth' });
+      }
+    }
+  }, [value, items]);
+
+  const handleScroll = () => {
+    if (!containerRef.current) return;
+    isScrollingRef.current = true;
+    clearTimeout(scrollTimeoutRef.current);
+
+    const scrollTop = containerRef.current.scrollTop;
+    const idx = Math.round(scrollTop / ITEM_HEIGHT);
+    if (idx >= 0 && idx < items.length && items[idx] !== value) {
+      onChange(items[idx]);
+    }
+
+    scrollTimeoutRef.current = setTimeout(() => {
+      isScrollingRef.current = false;
+      if (containerRef.current) {
+        const snapIdx = Math.round(containerRef.current.scrollTop / ITEM_HEIGHT);
+        if (snapIdx >= 0 && snapIdx < items.length) {
+          containerRef.current.scrollTo({ top: snapIdx * ITEM_HEIGHT, behavior: 'smooth' });
+          if (items[snapIdx] !== value) {
+            onChange(items[snapIdx]);
+          }
+        }
+      }
+    }, 120);
+  };
+
+  const handleItemClick = (item: T, idx: number) => {
+    if (containerRef.current) {
+      containerRef.current.scrollTo({ top: idx * ITEM_HEIGHT, behavior: 'smooth' });
+    }
+    onChange(item);
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      onScroll={handleScroll}
+      className={`h-[200px] ${widthClass} overflow-y-auto scrollbar-none snap-y snap-mandatory relative`}
+      style={{ scrollBehavior: 'smooth' }}
+    >
+      {/* 80px spacer on top so index 0 centers at 80px */}
+      <div style={{ height: '80px' }} className="shrink-0" />
+      {items.map((item, idx) => {
+        const isSelected = item === value;
+        return (
+          <div
+            key={String(item)}
+            onClick={() => handleItemClick(item, idx)}
+            style={{ height: `${ITEM_HEIGHT}px` }}
+            className="flex items-center justify-center snap-center cursor-pointer select-none transition-all duration-150"
+          >
+            {renderItem ? (
+              renderItem(item, isSelected)
+            ) : (
+              <span
+                className={`transition-all duration-150 font-mono ${
+                  isSelected
+                    ? 'text-white text-2xl font-black scale-105'
+                    : 'text-slate-500 text-sm font-semibold hover:text-slate-300'
+                }`}
+              >
+                {typeof item === 'number' ? String(item).padStart(2, '0') : item}
+              </span>
+            )}
+          </div>
+        );
+      })}
+      {/* 80px spacer on bottom so last index centers at 80px */}
+      <div style={{ height: '80px' }} className="shrink-0" />
+    </div>
+  );
+}
+
+const RollerTimePicker: React.FC<RollerTimePickerProps> = ({
   hour12,
   minute,
   ampm,
@@ -90,395 +194,68 @@ const CircularClockDial: React.FC<CircularClockDialProps> = ({
   onChangeAmpm,
   theme = 'indigo',
 }) => {
-  const [mode, setMode] = useState<'hours' | 'minutes'>('hours');
-  const dialRef = useRef<HTMLDivElement>(null);
-  const isDragging = useRef(false);
+  const hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  const minutes = Array.from({ length: 60 }, (_, i) => i);
+  const ampmList: ('AM' | 'PM')[] = ['AM', 'PM'];
 
-  // Editable numeric inputs
-  const [editingHour, setEditingHour] = useState(false);
-  const [tempHour, setTempHour] = useState(String(hour12));
-  const [editingMinute, setEditingMinute] = useState(false);
-  const [tempMinute, setTempMinute] = useState(String(minute).padStart(2, '0'));
-
-  useEffect(() => {
-    if (!editingHour) {
-      setTempHour(String(hour12).padStart(2, '0'));
-    }
-  }, [hour12, editingHour]);
-
-  useEffect(() => {
-    if (!editingMinute) {
-      setTempMinute(String(minute).padStart(2, '0'));
-    }
-  }, [minute, editingMinute]);
-
-  const themeConfig = {
-    indigo: {
-      bg: 'bg-indigo-600',
-      activeText: 'text-indigo-600',
-      stroke: '#4f46e5',
-      bubble: 'bg-indigo-600 text-white',
-    },
-    emerald: {
-      bg: 'bg-emerald-600',
-      activeText: 'text-emerald-600',
-      stroke: '#059669',
-      bubble: 'bg-emerald-600 text-white',
-    },
-    rose: {
-      bg: 'bg-rose-600',
-      activeText: 'text-rose-600',
-      stroke: '#e11d48',
-      bubble: 'bg-rose-600 text-white',
-    },
+  const themeAccent = {
+    indigo: 'border-indigo-500/50 bg-indigo-500/15 text-indigo-400',
+    emerald: 'border-emerald-500/50 bg-emerald-500/15 text-emerald-400',
+    rose: 'border-rose-500/50 bg-rose-500/15 text-rose-400',
   }[theme];
 
-  // Dimensions
-  const cx = 90;
-  const cy = 90;
-  const rNum = 64;
-
-  const handlePointer = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!dialRef.current) return;
-    const rect = dialRef.current.getBoundingClientRect();
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const dx = e.clientX - rect.left - centerX;
-    const dy = e.clientY - rect.top - centerY;
-
-    let angle = (Math.atan2(dy, dx) * 180) / Math.PI + 90;
-    if (angle < 0) angle += 360;
-
-    if (mode === 'hours') {
-      let h = Math.round(angle / 30) % 12;
-      if (h === 0) h = 12;
-      onChangeHour(h);
-    } else {
-      // Exact minute 0-59 (each 6 degrees is 1 minute)
-      let m = Math.round(angle / 6) % 60;
-      onChangeMinute(m);
-    }
-  };
-
-  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    isDragging.current = true;
-    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-    handlePointer(e);
-  };
-
-  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDragging.current) return;
-    handlePointer(e);
-  };
-
-  const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDragging.current) return;
-    isDragging.current = false;
-    try {
-      (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
-    } catch (err) {}
-  };
-
-  // Hand position
-  const handAngleDeg = mode === 'hours' ? hour12 * 30 - 90 : minute * 6 - 90;
-  const handRad = (handAngleDeg * Math.PI) / 180;
-  const handX = cx + rNum * Math.cos(handRad);
-  const handY = cy + rNum * Math.sin(handRad);
-
-  const hoursList = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-  const minutesList = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
-
   return (
-    <div className="flex flex-col items-center select-none py-1">
-      {/* Digital Readout & Unit Switcher */}
-      <div className="flex items-center space-x-2 mb-1.5">
-        <div className="flex items-center bg-slate-200/80 p-0.5 rounded-xl shadow-2xs">
-          {/* Hour Input / Button */}
-          <input
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            maxLength={2}
-            value={editingHour ? tempHour : String(hour12).padStart(2, '0')}
-            onFocus={() => {
-              setMode('hours');
-              setEditingHour(true);
-              setTempHour(String(hour12));
-            }}
-            onChange={(e) => {
-              const val = e.target.value.replace(/\D/g, '').slice(0, 2);
-              setTempHour(val);
-              const num = parseInt(val, 10);
-              if (!isNaN(num) && num >= 1 && num <= 12) {
-                onChangeHour(num);
-              }
-            }}
-            onBlur={() => {
-              setEditingHour(false);
-              const num = parseInt(tempHour, 10);
-              if (isNaN(num) || num < 1 || num > 12) {
-                setTempHour(String(hour12).padStart(2, '0'));
-              } else {
-                onChangeHour(num);
-              }
-            }}
-            className={`w-9 h-7 text-center rounded-lg text-xs sm:text-sm font-black transition-all cursor-pointer outline-none ${
-              mode === 'hours'
-                ? `${themeConfig.bg} text-white shadow-xs`
-                : 'text-slate-700 hover:text-slate-900 bg-transparent'
-            }`}
-            title="Click to type exact hour (1-12)"
-          />
+    <div className="relative flex items-center justify-center bg-slate-950 rounded-2xl px-3 py-2 border border-slate-800 shadow-2xl overflow-hidden select-none w-full max-w-[260px]">
+      {/* Top Fading Mask Overlay */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-slate-950 via-slate-950/80 to-transparent z-10" />
 
-          <span className="px-0.5 text-slate-400 font-bold text-xs sm:text-sm">:</span>
+      {/* Bottom Fading Mask Overlay */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent z-10" />
 
-          {/* Minute Input / Button */}
-          <input
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            maxLength={2}
-            value={editingMinute ? tempMinute : String(minute).padStart(2, '0')}
-            onFocus={() => {
-              setMode('minutes');
-              setEditingMinute(true);
-              setTempMinute(String(minute));
-            }}
-            onChange={(e) => {
-              const val = e.target.value.replace(/\D/g, '').slice(0, 2);
-              setTempMinute(val);
-              const num = parseInt(val, 10);
-              if (!isNaN(num) && num >= 0 && num <= 59) {
-                onChangeMinute(num);
-              }
-            }}
-            onBlur={() => {
-              setEditingMinute(false);
-              const num = parseInt(tempMinute, 10);
-              if (isNaN(num) || num < 0 || num > 59) {
-                setTempMinute(String(minute).padStart(2, '0'));
-              } else {
-                onChangeMinute(num);
-              }
-            }}
-            className={`w-9 h-7 text-center rounded-lg text-xs sm:text-sm font-black transition-all cursor-pointer outline-none ${
-              mode === 'minutes'
-                ? `${themeConfig.bg} text-white shadow-xs`
-                : 'text-slate-700 hover:text-slate-900 bg-transparent'
-            }`}
-            title="Click to type exact minute (0-59)"
-          />
-        </div>
+      {/* Center Highlight Bar (matching user's reference image) */}
+      <div className={`pointer-events-none absolute inset-x-2.5 top-[88px] h-[40px] rounded-xl border backdrop-blur-xs z-5 ${themeAccent}`} />
 
-        {/* AM / PM Segmented Control */}
-        <div className="flex items-center bg-slate-200/80 p-0.5 rounded-xl h-[33px]">
-          <button
-            type="button"
-            onClick={() => onChangeAmpm('AM')}
-            className={`px-2.5 h-full rounded-lg text-xs font-black transition-all cursor-pointer ${
-              ampm === 'AM'
-                ? 'bg-white text-slate-900 shadow-xs ring-1 ring-slate-200'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            AM
-          </button>
-          <button
-            type="button"
-            onClick={() => onChangeAmpm('PM')}
-            className={`px-2.5 h-full rounded-lg text-xs font-black transition-all cursor-pointer ${
-              ampm === 'PM'
-                ? 'bg-white text-slate-900 shadow-xs ring-1 ring-slate-200'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            PM
-          </button>
-        </div>
-      </div>
-
-
-
-      {/* Circular Clock Dial */}
-      <div
-        ref={dialRef}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        className="w-[180px] h-[180px] rounded-full bg-white border-2 border-slate-200/90 relative shadow-inner flex items-center justify-center select-none cursor-pointer touch-none"
-        title="Tap or drag anywhere to set exact time"
-      >
-        {/* All 60 Minute Ticks */}
-        {Array.from({ length: 60 }, (_, i) => i).map((i) => {
-          const isFiveMin = i % 5 === 0;
-          const isCurrent = mode === 'minutes' && i === minute;
-          const ang = (i * 6 - 90) * (Math.PI / 180);
-          const dist = isFiveMin ? rNum + 10 : rNum + 8;
-          const x = cx + dist * Math.cos(ang);
-          const y = cy + dist * Math.sin(ang);
-          return (
-            <div
-              key={i}
-              className={`absolute rounded-full pointer-events-none -translate-x-1/2 -translate-y-1/2 transition-all ${
-                isCurrent
-                  ? `w-2.5 h-2.5 ${themeConfig.bg} ring-2 ring-white shadow-xs z-20`
-                  : isFiveMin
-                  ? 'w-1.5 h-1.5 bg-slate-400'
-                  : 'w-1 h-1 bg-slate-300'
-              }`}
-              style={{ left: `${x}px`, top: `${y}px` }}
-            />
-          );
-        })}
-
-        {/* SVG Clock Hand Line */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">
-          <line
-            x1={cx}
-            y1={cy}
-            x2={handX}
-            y2={handY}
-            stroke={themeConfig.stroke}
-            strokeWidth="2.5"
-            strokeLinecap="round"
-          />
-        </svg>
-
-        {/* Center Pivot */}
-        <div
-          className={`absolute w-3 h-3 rounded-full ${themeConfig.bg} z-20 pointer-events-none shadow-xs`}
-          style={{ left: `${cx}px`, top: `${cy}px`, transform: 'translate(-50%, -50%)' }}
+      {/* Roller Columns */}
+      <div className="flex items-center justify-center space-x-1 relative z-8">
+        {/* Hours Column */}
+        <RollerWheelColumn
+          items={hours}
+          value={hour12}
+          onChange={onChangeHour}
+          widthClass="w-16"
         />
 
-        {/* Selected Pointer Bubble (displays exact hour or minute) */}
-        <div
-          className={`absolute w-6.5 h-6.5 rounded-full ${themeConfig.bg} text-white font-black text-[11px] flex items-center justify-center z-15 pointer-events-none shadow-md`}
-          style={{ left: `${handX}px`, top: `${handY}px`, transform: 'translate(-50%, -50%)' }}
-        >
-          {mode === 'hours' ? hour12 : String(minute).padStart(2, '0')}
+        {/* Colon Separator */}
+        <div className="flex items-center justify-center w-4 h-[40px] text-slate-400 font-mono font-bold text-xl select-none z-15">
+          :
         </div>
 
-        {/* Clock Numbers (pointer-events-none so dial pointer drag/tap is continuous and exact) */}
-        {mode === 'hours'
-          ? hoursList.map((h) => {
-              const ang = (h * 30 - 90) * (Math.PI / 180);
-              const x = cx + rNum * Math.cos(ang);
-              const y = cy + rNum * Math.sin(ang);
-              const isSelected = h === hour12;
-              return (
-                <div
-                  key={h}
-                  className={`absolute w-6.5 h-6.5 rounded-full flex items-center justify-center text-xs font-black transition-colors pointer-events-none ${
-                    isSelected ? 'text-white' : 'text-slate-700'
-                  }`}
-                  style={{
-                    left: `${x}px`,
-                    top: `${y}px`,
-                    transform: 'translate(-50%, -50%)',
-                  }}
-                >
-                  {h}
-                </div>
-              );
-            })
-          : minutesList.map((m) => {
-              const ang = (m * 6 - 90) * (Math.PI / 180);
-              const x = cx + rNum * Math.cos(ang);
-              const y = cy + rNum * Math.sin(ang);
-              const isSelected = m === minute;
-              return (
-                <div
-                  key={m}
-                  className={`absolute w-6.5 h-6.5 rounded-full flex items-center justify-center text-[10.5px] font-black transition-colors pointer-events-none ${
-                    isSelected ? 'text-white' : 'text-slate-700'
-                  }`}
-                  style={{
-                    left: `${x}px`,
-                    top: `${y}px`,
-                    transform: 'translate(-50%, -50%)',
-                  }}
-                >
-                  {String(m).padStart(2, '0')}
-                </div>
-              );
-            })}
-      </div>
+        {/* Minutes Column */}
+        <RollerWheelColumn
+          items={minutes}
+          value={minute}
+          onChange={onChangeMinute}
+          widthClass="w-16"
+        />
 
-      {/* Fine-Tuning Stepper Controls Below Clock */}
-      <div className="w-full max-w-[210px] mt-2 flex items-center justify-between px-1">
-        {mode === 'minutes' ? (
-          <>
-            <div className="flex items-center space-x-1">
-              <button
-                type="button"
-                onClick={() => onChangeMinute((minute - 5 + 60) % 60)}
-                className="px-2 py-1 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-[10.5px] font-bold shadow-2xs transition-all cursor-pointer"
-                title="Minus 5 minutes"
-              >
-                -5m
-              </button>
-              <button
-                type="button"
-                onClick={() => onChangeMinute((minute - 1 + 60) % 60)}
-                className="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 text-[11px] font-extrabold shadow-2xs transition-all cursor-pointer"
-                title="Minus 1 minute"
-              >
-                −1m
-              </button>
-            </div>
-
-            <div className="text-center px-2 py-0.5 rounded-md bg-white border border-slate-200 shadow-2xs">
-              <span className="text-[11.5px] font-black text-slate-900 font-mono">
-                :{String(minute).padStart(2, '0')}
-              </span>
-            </div>
-
-            <div className="flex items-center space-x-1">
-              <button
-                type="button"
-                onClick={() => onChangeMinute((minute + 1) % 60)}
-                className={`px-2.5 py-1 rounded-lg text-white font-extrabold text-[11px] shadow-2xs transition-all cursor-pointer ${themeConfig.bg}`}
-                title="Plus 1 minute"
-              >
-                +1m
-              </button>
-              <button
-                type="button"
-                onClick={() => onChangeMinute((minute + 5) % 60)}
-                className="px-2 py-1 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-[10.5px] font-bold shadow-2xs transition-all cursor-pointer"
-                title="Plus 5 minutes"
-              >
-                +5m
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <button
-              type="button"
-              onClick={() => onChangeHour(hour12 === 1 ? 12 : hour12 - 1)}
-              className="px-3 py-1 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 text-[11px] font-extrabold shadow-2xs transition-all cursor-pointer"
-              title="Minus 1 hour"
+        {/* AM / PM Column */}
+        <RollerWheelColumn
+          items={ampmList}
+          value={ampm}
+          onChange={onChangeAmpm}
+          widthClass="w-16"
+          renderItem={(val, isSelected) => (
+            <span
+              className={`transition-all duration-150 text-xs tracking-wider font-extrabold ${
+                isSelected
+                  ? 'text-white text-sm font-black scale-110'
+                  : 'text-slate-500 text-xs font-semibold hover:text-slate-300'
+              }`}
             >
-              −1 hr
-            </button>
-
-            <div className="text-center px-2.5 py-0.5 rounded-md bg-white border border-slate-200 shadow-2xs">
-              <span className="text-[11.5px] font-black text-slate-900 font-mono">
-                {String(hour12).padStart(2, '0')} hr
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => onChangeHour(hour12 === 12 ? 1 : hour12 + 1)}
-              className={`px-3 py-1 rounded-lg text-white font-extrabold text-[11px] shadow-2xs transition-all cursor-pointer ${themeConfig.bg}`}
-              title="Plus 1 hour"
-            >
-              +1 hr
-            </button>
-          </>
-        )}
+              {val}
+            </span>
+          )}
+        />
       </div>
     </div>
   );
@@ -681,9 +458,9 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
             )}
           </div>
 
-          {/* Column 2: Actual Circular Clock Style */}
-          <div className="bg-slate-100/60 p-2.5 rounded-2xl border border-slate-200/80 flex flex-col items-center">
-            <CircularClockDial
+          {/* Column 2: 12-Hour AM/PM Vertical Roller Time Picker */}
+          <div className="bg-slate-900/5 p-2.5 rounded-2xl border border-slate-200/80 flex flex-col items-center">
+            <RollerTimePicker
               hour12={currentHour}
               minute={currentMinute}
               ampm={currentAmpm}
