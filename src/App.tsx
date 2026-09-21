@@ -169,6 +169,25 @@ export default function App() {
     if (savedAdminToken || savedView === 'admin') {
       setIsAdminLoggedIn(true);
       setCurrentView('admin');
+
+      // Check if we need to record a session resumption for this browser session
+      try {
+        const alreadyNotified = sessionStorage.getItem('admin_session_resumed');
+        if (!alreadyNotified) {
+          sessionStorage.setItem('admin_session_resumed', 'true');
+          const role = (localStorage.getItem('admin_role') as AdminRole) || 'admin';
+          const username =
+            localStorage.getItem('admin_username') ||
+            (role === 'boss' ? 'boss' : role === 'super' ? 'superadmin' : 'admin');
+          api.recordActivity(
+            'session_resume',
+            'Admin Session Resumed / Re-opened',
+            `Admin accessed the dashboard with an existing active ${role} session (${username})`,
+            role,
+            username
+          ).catch(() => {});
+        }
+      } catch (e) {}
     } else {
       // 2. Student session flow
       const activeStudentId = localStorage.getItem('active_student_id');
@@ -1062,6 +1081,12 @@ export default function App() {
       localStorage.removeItem('active_order_number');
       localStorage.removeItem('app_device_order');
     }
+    api.recordActivity(
+      'order_wipe',
+      'Wiped Student Order',
+      `Wiped order ${order?.orderNumber || ''} for student ${student.fullName}`,
+      adminRole || 'admin'
+    ).catch(() => {});
   };
 
   const handleResetDeviceLock = async () => {
@@ -1105,6 +1130,14 @@ export default function App() {
           }
         }
       }
+      api.recordActivity(
+        'order_wipe',
+        role === 'all' ? 'Full Order Register Wipe' : `Cleared All ${role.toUpperCase()} Orders`,
+        role === 'all'
+          ? 'All orders across all categories were wiped from database'
+          : `All orders belonging to ${role} were deleted`,
+        adminRole || 'admin'
+      ).catch(() => {});
       // Ensure admin remains firmly on admin dashboard
       localStorage.setItem('admin_token', 'admin_session_' + Date.now());
       localStorage.setItem('app_current_view', 'admin');
@@ -1134,6 +1167,15 @@ export default function App() {
       await api.setOrderingStatus(isOpen);
       const effective = evaluateSchedule(!isOpen ? DEFAULT_SCHEDULE : orderSchedule, isOpen);
       setOrdersOpen(effective.isOpen);
+
+      api.recordActivity(
+        'portal_toggle',
+        isOpen ? 'Opened Food Ordering Portal' : 'Halted Food Ordering Portal',
+        isOpen
+          ? 'Admins opened live food ordering for all users'
+          : 'Admins halted live food ordering. Ordering portal is now closed.',
+        adminRole || 'admin'
+      ).catch(() => {});
     } catch (e) {
       console.error('Error toggling ordering status:', e);
       try {
@@ -1156,6 +1198,15 @@ export default function App() {
       } else {
         setOrdersOpen(effective.isOpen);
       }
+
+      api.recordActivity(
+        'schedule_change',
+        newSchedule.enabled ? 'Updated Ordering Schedule' : 'Turned Off Ordering Schedule',
+        newSchedule.enabled
+          ? `Automated intake schedule enabled from ${newSchedule.startTime} to ${newSchedule.endTime}`
+          : 'Automated intake schedule disabled / turned off',
+        adminRole || 'admin'
+      ).catch(() => {});
     } catch (e) {
       console.error('Error saving order schedule:', e);
       alert('Failed to update intake schedule. Please try again.');
@@ -1289,6 +1340,12 @@ export default function App() {
             onSetIntakePhase={async (phase) => {
               await api.setIntakePhase(phase);
               setIntakePhase(phase);
+              api.recordActivity(
+                'phase_change',
+                `Switched Intake Phase to ${phase.toUpperCase()}`,
+                `Admins switched active intake phase to "${phase}"`,
+                adminRole || 'admin'
+              ).catch(() => {});
             }}
           />
         )}

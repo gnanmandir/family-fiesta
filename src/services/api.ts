@@ -1,4 +1,16 @@
-import { FoodItem, Order, OrderStatus, Student, OrderSchedule, SystemControls, AdminRole, LoginHistoryItem } from '../types';
+import {
+  FoodItem,
+  Order,
+  OrderStatus,
+  Student,
+  OrderSchedule,
+  SystemControls,
+  AdminRole,
+  LoginHistoryItem,
+  AdminActionType,
+  AdminActivityLog,
+  AdminPresence,
+} from '../types';
 import { tursoService, isTursoConfigured } from './turso';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
@@ -541,6 +553,7 @@ export const api = {
     // 1. Supreme Boss Authentication
     if (cleanUser === 'boss' && cleanPwd === 'bhavya2155') {
       api.recordLogin('boss', 'boss').catch(() => {});
+      api.recordActivity('login', 'Boss Logged In', 'Supreme Boss logged into administration portal', 'boss', 'boss').catch(() => {});
       return { success: true, role: 'boss' };
     }
 
@@ -551,6 +564,7 @@ export const api = {
         cleanPwd === superCreds.password.trim()
       ) {
         api.recordLogin('super', cleanUser).catch(() => {});
+        api.recordActivity('login', 'Super Admin Logged In', `Super Admin logged into portal (${cleanUser})`, 'super', cleanUser).catch(() => {});
         return { success: true, role: 'super' };
       }
     } catch (e) {}
@@ -565,6 +579,7 @@ export const api = {
         cleanPwd === adminCreds.password.trim()
       ) {
         api.recordLogin('admin', cleanUser).catch(() => {});
+        api.recordActivity('login', 'Normal Admin Logged In', `Normal Admin logged into stall portal (${cleanUser})`, 'admin', cleanUser).catch(() => {});
         return { success: true, role: 'admin' };
       }
     } catch (e) {}
@@ -625,6 +640,99 @@ export const api = {
     try {
       localStorage.removeItem('admin_login_history_cache');
     } catch (e) {}
+  },
+
+  // --- Admin Activity & Audit Trail ---
+  recordActivity: async (
+    actionType: AdminActionType,
+    title: string,
+    details: string,
+    role?: AdminRole,
+    username?: string,
+    userAgent?: string
+  ): Promise<AdminActivityLog> => {
+    if (isTursoConfigured) {
+      try {
+        return await tursoService.recordActivity(actionType, title, details, role, username, userAgent);
+      } catch (e) {
+        console.warn('[Turso] Failed to record activity:', e);
+      }
+    }
+    const finalRole: AdminRole = role || (localStorage.getItem('admin_role') as AdminRole) || 'admin';
+    const finalUser: string =
+      username ||
+      localStorage.getItem('admin_username') ||
+      (finalRole === 'boss' ? 'boss' : finalRole === 'super' ? 'superadmin' : 'admin');
+    const ua = userAgent || (typeof navigator !== 'undefined' ? navigator.userAgent : '');
+    const now = new Date();
+    const item: AdminActivityLog = {
+      id: `act_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      role: finalRole,
+      username: finalUser,
+      actionType,
+      title,
+      details,
+      timestamp: now.toISOString(),
+      dateDisplay: now.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+      timeDisplay: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),
+      userAgent: ua,
+      device: typeof navigator !== 'undefined' ? (await import('./turso')).parseDeviceFromUserAgent(ua) : 'Browser',
+    };
+    try {
+      const cached = localStorage.getItem('admin_activity_logs_cache');
+      const list: AdminActivityLog[] = cached ? JSON.parse(cached) : [];
+      list.unshift(item);
+      localStorage.setItem('admin_activity_logs_cache', JSON.stringify(list.slice(0, 300)));
+    } catch (e) {}
+    return item;
+  },
+
+  getActivityLogs: async (): Promise<AdminActivityLog[]> => {
+    if (isTursoConfigured) {
+      try {
+        return await tursoService.getActivityLogs();
+      } catch (e) {
+        console.warn('[Turso] Failed to get activity logs:', e);
+      }
+    }
+    try {
+      const cached = localStorage.getItem('admin_activity_logs_cache');
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return [];
+  },
+
+  clearActivityLogs: async (): Promise<void> => {
+    if (isTursoConfigured) {
+      try {
+        await tursoService.clearActivityLogs();
+      } catch (e) {}
+    }
+    try {
+      localStorage.removeItem('admin_activity_logs_cache');
+    } catch (e) {}
+  },
+
+  // --- Admin Live Online Presence ---
+  pingPresence: async (role?: AdminRole, username?: string): Promise<void> => {
+    if (isTursoConfigured) {
+      try {
+        await tursoService.pingPresence(role, username);
+      } catch (e) {
+        console.warn('[Turso] Failed to ping presence:', e);
+      }
+    }
+  },
+
+  getOnlineAdmins: async (): Promise<AdminPresence[]> => {
+    if (isTursoConfigured) {
+      try {
+        return await tursoService.getOnlineAdmins();
+      } catch (e) {
+        console.warn('[Turso] Failed to get online admins:', e);
+      }
+    }
+    return [];
   },
 
   // --- System Controls ---

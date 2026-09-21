@@ -1,4 +1,16 @@
-import { FoodItem, Order, OrderStatus, Student, OrderSchedule, SystemControls, LoginHistoryItem, AdminRole } from '../types';
+import {
+  FoodItem,
+  Order,
+  OrderStatus,
+  Student,
+  OrderSchedule,
+  SystemControls,
+  LoginHistoryItem,
+  AdminRole,
+  AdminActionType,
+  AdminActivityLog,
+  AdminPresence,
+} from '../types';
 
 let TURSO_URL = (import.meta.env.VITE_TURSO_DATABASE_URL || '').trim();
 if (TURSO_URL.startsWith('libsql://')) {
@@ -973,6 +985,213 @@ export const tursoService = {
     try {
       localStorage.removeItem('admin_login_history_cache');
     } catch (e) {}
+  },
+
+  // --- Admin Activity & Audit Trail ---
+  recordActivity: async (
+    actionType: AdminActionType,
+    title: string,
+    details: string,
+    role?: AdminRole,
+    username?: string,
+    userAgent?: string
+  ): Promise<AdminActivityLog> => {
+    const ua = userAgent || (typeof navigator !== 'undefined' ? navigator.userAgent : '');
+    const finalRole: AdminRole = role || (localStorage.getItem('admin_role') as AdminRole) || 'admin';
+    const finalUser: string =
+      username ||
+      localStorage.getItem('admin_username') ||
+      (finalRole === 'boss' ? 'boss' : finalRole === 'super' ? 'superadmin' : 'admin');
+    const now = new Date();
+    const item: AdminActivityLog = {
+      id: `act_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      role: finalRole,
+      username: finalUser,
+      actionType,
+      title,
+      details,
+      timestamp: now.toISOString(),
+      dateDisplay: now.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+      timeDisplay: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),
+      userAgent: ua,
+      device: parseDeviceFromUserAgent(ua),
+    };
+
+    try {
+      await tursoQuery(
+        `CREATE TABLE IF NOT EXISTS admin_activity_logs (
+          id TEXT PRIMARY KEY,
+          role TEXT NOT NULL,
+          username TEXT NOT NULL,
+          action_type TEXT NOT NULL,
+          title TEXT NOT NULL,
+          details TEXT,
+          timestamp TEXT NOT NULL,
+          date_display TEXT,
+          time_display TEXT,
+          user_agent TEXT,
+          device TEXT,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )`
+      );
+
+      await tursoQuery(
+        `INSERT INTO admin_activity_logs (id, role, username, action_type, title, details, timestamp, date_display, time_display, user_agent, device)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          item.id,
+          item.role,
+          item.username,
+          item.actionType,
+          item.title,
+          item.details,
+          item.timestamp,
+          item.dateDisplay,
+          item.timeDisplay,
+          item.userAgent || '',
+          item.device || '',
+        ]
+      );
+    } catch (e) {
+      console.warn('[Turso] Failed to persist activity log to table:', e);
+    }
+
+    try {
+      const cachedRaw = localStorage.getItem('admin_activity_logs_cache');
+      const list: AdminActivityLog[] = cachedRaw ? JSON.parse(cachedRaw) : [];
+      list.unshift(item);
+      localStorage.setItem('admin_activity_logs_cache', JSON.stringify(list.slice(0, 300)));
+    } catch (e) {}
+
+    return item;
+  },
+
+  getActivityLogs: async (): Promise<AdminActivityLog[]> => {
+    try {
+      await tursoQuery(
+        `CREATE TABLE IF NOT EXISTS admin_activity_logs (
+          id TEXT PRIMARY KEY,
+          role TEXT NOT NULL,
+          username TEXT NOT NULL,
+          action_type TEXT NOT NULL,
+          title TEXT NOT NULL,
+          details TEXT,
+          timestamp TEXT NOT NULL,
+          date_display TEXT,
+          time_display TEXT,
+          user_agent TEXT,
+          device TEXT,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )`
+      );
+
+      const rows = await tursoQuery<any>(
+        'SELECT * FROM admin_activity_logs ORDER BY timestamp DESC LIMIT 300'
+      );
+      if (rows && rows.length > 0) {
+        const items: AdminActivityLog[] = rows.map((r: any) => ({
+          id: r.id,
+          role: r.role,
+          username: r.username,
+          actionType: r.action_type,
+          title: r.title,
+          details: r.details,
+          timestamp: r.timestamp,
+          dateDisplay: r.date_display,
+          timeDisplay: r.time_display,
+          userAgent: r.user_agent,
+          device: r.device || parseDeviceFromUserAgent(r.user_agent),
+        }));
+        try {
+          localStorage.setItem('admin_activity_logs_cache', JSON.stringify(items));
+        } catch (e) {}
+        return items;
+      }
+    } catch (e) {
+      console.warn('[Turso] Failed to get activity logs:', e);
+    }
+
+    try {
+      const cachedRaw = localStorage.getItem('admin_activity_logs_cache');
+      if (cachedRaw) return JSON.parse(cachedRaw);
+    } catch (e) {}
+    return [];
+  },
+
+  clearActivityLogs: async (): Promise<void> => {
+    try {
+      await tursoQuery('DELETE FROM admin_activity_logs');
+    } catch (e) {}
+    try {
+      localStorage.removeItem('admin_activity_logs_cache');
+    } catch (e) {}
+  },
+
+  // --- Admin Live Online Presence ---
+  pingPresence: async (role?: AdminRole, username?: string): Promise<void> => {
+    const finalRole: AdminRole = role || (localStorage.getItem('admin_role') as AdminRole) || 'admin';
+    const finalUser: string =
+      username ||
+      localStorage.getItem('admin_username') ||
+      (finalRole === 'boss' ? 'boss' : finalRole === 'super' ? 'superadmin' : 'admin');
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    const device = parseDeviceFromUserAgent(ua);
+    const now = new Date().toISOString();
+
+    try {
+      await tursoQuery(
+        `CREATE TABLE IF NOT EXISTS admin_presence (
+          username TEXT PRIMARY KEY,
+          role TEXT NOT NULL,
+          last_seen TEXT NOT NULL,
+          user_agent TEXT,
+          device TEXT
+        )`
+      );
+
+      await tursoQuery(
+        `INSERT OR REPLACE INTO admin_presence (username, role, last_seen, user_agent, device)
+         VALUES (?, ?, ?, ?, ?)`,
+        [finalUser, finalRole, now, ua, device]
+      );
+    } catch (e) {
+      console.warn('[Turso] Failed to ping admin presence:', e);
+    }
+  },
+
+  getOnlineAdmins: async (): Promise<AdminPresence[]> => {
+    try {
+      await tursoQuery(
+        `CREATE TABLE IF NOT EXISTS admin_presence (
+          username TEXT PRIMARY KEY,
+          role TEXT NOT NULL,
+          last_seen TEXT NOT NULL,
+          user_agent TEXT,
+          device TEXT
+        )`
+      );
+
+      const rows = await tursoQuery<any>('SELECT * FROM admin_presence');
+      if (rows && rows.length > 0) {
+        const now = Date.now();
+        // Considered active if seen in the last 120 seconds (2 minutes)
+        return rows
+          .map((r: any) => ({
+            username: r.username,
+            role: r.role,
+            lastSeen: r.last_seen,
+            userAgent: r.user_agent,
+            device: r.device || parseDeviceFromUserAgent(r.user_agent),
+          }))
+          .filter((p: AdminPresence) => {
+            const seen = new Date(p.lastSeen).getTime();
+            return !isNaN(seen) && now - seen < 120000;
+          });
+      }
+    } catch (e) {
+      console.warn('[Turso] Failed to get online admins:', e);
+    }
+    return [];
   },
 };
 

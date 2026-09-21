@@ -126,6 +126,11 @@ export const PricingManager: React.FC<PricingManagerProps> = ({ adminRole = 'adm
       if (activeGroup === 'parent') {
         localStorage.setItem('app_guest_tiers', JSON.stringify(numericTiers));
       }
+      api.recordActivity(
+        'tier_update',
+        `Updated ${activeGroup.toUpperCase()} Meal Allowance Tiers`,
+        `Saved budget tiers: ${numericTiers.map((t, idx) => `Guest ${idx + 1}: ₹${t}`).join(', ')}`
+      ).catch(() => {});
       setIsAuthModalOpen(false);
       setAuthPassword('');
       setAuthError('');

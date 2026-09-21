@@ -44,6 +44,7 @@ import { GuestManager } from './GuestManager';
 import { FoodManager } from './FoodManager';
 import { PricingManager } from './PricingManager';
 import { LoginHistoryManager } from './LoginHistoryManager';
+import { api } from '../../services/api';
 
 interface AdminDashboardProps {
   orders: Order[];
@@ -577,6 +578,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, [activeTab]);
+
+  // Live Presence Heartbeat: Ping Turso every 30s and on tab focus
+  React.useEffect(() => {
+    const ping = () => {
+      const storedUser =
+        localStorage.getItem('admin_username') ||
+        (adminRole === 'boss' ? 'boss' : adminRole === 'super' ? 'superadmin' : 'admin');
+      api.pingPresence(adminRole, storedUser).catch(() => {});
+    };
+
+    ping();
+    const interval = setInterval(ping, 30000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        ping();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [adminRole]);
 
   // Protect restricted tabs
   React.useEffect(() => {
@@ -2061,6 +2087,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   }
 
                   await api.setSystemPassword(next);
+                  api.recordActivity(
+                    'credential_change',
+                    'Updated System Authorization Password',
+                    'Admins updated master system authorization password',
+                    adminRole || 'admin'
+                  ).catch(() => {});
                   alert('System Authorization Password successfully updated! Use your new password for future order wipes and system overrides.');
                   setSysPassModalOpen(false);
                 } catch (err: any) {

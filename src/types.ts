@@ -107,3 +107,35 @@ export interface LoginHistoryItem {
   userAgent?: string;
   device?: string; // e.g. "Windows PC (Chrome)", "Android Mobile (Chrome)"
 }
+
+export type AdminActionType =
+  | 'portal_toggle'
+  | 'schedule_change'
+  | 'phase_change'
+  | 'order_wipe'
+  | 'tier_update'
+  | 'credential_change'
+  | 'session_resume'
+  | 'login';
+
+export interface AdminActivityLog {
+  id: string;
+  role: AdminRole;
+  username: string;
+  actionType: AdminActionType;
+  title: string;
+  details: string;
+  timestamp: string; // ISO string
+  dateDisplay: string; // e.g. "21 Sep 2026"
+  timeDisplay: string; // e.g. "09:21 PM"
+  device?: string;
+  userAgent?: string;
+}
+
+export interface AdminPresence {
+  username: string;
+  role: AdminRole;
+  lastSeen: string; // ISO string
+  device?: string;
+  userAgent?: string;
+}

@@ -36,6 +36,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
       if (authResult.success && authResult.role) {
         localStorage.setItem('admin_token', 'session_' + Date.now());
         localStorage.setItem('admin_role', authResult.role);
+        localStorage.setItem('admin_username', cleanUser);
         setError(false);
         setPassword('');
         onLoginSuccess(authResult.role);
@@ -56,6 +57,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
           const role = (data.role as AdminRole) || 'admin';
           localStorage.setItem('admin_token', data.token);
           localStorage.setItem('admin_role', role);
+          localStorage.setItem('admin_username', cleanUser);
           setError(false);
           setPassword('');
           onLoginSuccess(role);
