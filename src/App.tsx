@@ -33,7 +33,6 @@ import {
   setCachedSystemControls,
 } from './services/storage';
 import { api } from './services/api';
-import { isSupabaseConfigured } from './services/supabase';
 import { isTursoConfigured } from './services/turso';
 
 import { Header } from './components/Header';
@@ -340,7 +339,7 @@ export default function App() {
 
   // Sync orders with backend using SSE only when dedicated backend URL is configured
   useEffect(() => {
-    if (isSupabaseConfigured || isTursoConfigured || !import.meta.env.VITE_API_URL) return;
+    if (isTursoConfigured || !import.meta.env.VITE_API_URL) return;
 
     try {
       const sseUrl = (import.meta.env.VITE_API_URL || '/api') + '/orders/stream';

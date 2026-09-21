@@ -441,6 +441,21 @@ export const tursoService = {
     await tursoQuery('DELETE FROM device_locks WHERE device_id = ?', [deviceId]).catch(() => {});
   },
 
+  wipeStudentOrder: async (studentId: string, studentFullName?: string, orderNumber?: string): Promise<void> => {
+    if (orderNumber) {
+      await tursoQuery('DELETE FROM orders WHERE order_number = ?', [orderNumber]).catch(() => {});
+      await tursoQuery('DELETE FROM device_locks WHERE order_number = ?', [orderNumber]).catch(() => {});
+    }
+    if (studentId) {
+      await tursoQuery('DELETE FROM orders WHERE student_id = ? OR LOWER(student_id) = LOWER(?)', [studentId, studentId]).catch(() => {});
+      await tursoQuery('DELETE FROM device_locks WHERE student_id = ? OR LOWER(student_id) = LOWER(?)', [studentId, studentId]).catch(() => {});
+    }
+    if (studentFullName) {
+      await tursoQuery('DELETE FROM orders WHERE full_name = ? OR LOWER(full_name) = LOWER(?)', [studentFullName, studentFullName]).catch(() => {});
+      await tursoQuery('DELETE FROM orders WHERE student_name = ? OR LOWER(student_name) = LOWER(?)', [studentFullName, studentFullName]).catch(() => {});
+    }
+  },
+
   // --- Admin Credentials ---
   getAdminCredentials: async (): Promise<{ username: string; password: string }> => {
     const rows = await tursoQuery("SELECT key, value FROM app_settings WHERE key IN ('admin_username', 'admin_password')");

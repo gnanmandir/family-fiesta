@@ -1,6 +1,5 @@
 import { FoodItem, Order, OrderStatus, Student, OrderSchedule, SystemControls, AdminRole } from '../types';
 import { tursoService, isTursoConfigured } from './turso';
-import { supabaseService, isSupabaseConfigured } from './supabase';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
@@ -37,23 +36,14 @@ export const api = {
         console.error('Turso getStudents error:', e);
       }
     }
-    if (isSupabaseConfigured) {
-      return await supabaseService.getStudents();
-    }
     try {
       const res = await fetchJson<{ success: boolean; data: Student[] }>(`${API_BASE}/students`);
       return res.data || [];
     } catch (e) {
-      // Fallback
       if (isTursoConfigured) {
-        const all = await tursoService.getStudents();
-        return all;
+        return await tursoService.getStudents();
       }
-      if (isSupabaseConfigured) {
-        const all = await supabaseService.getStudents();
-        return all;
-      }
-      throw e;
+      return [];
     }
   },
 
@@ -61,18 +51,12 @@ export const api = {
     if (isTursoConfigured) {
       return await tursoService.saveStudent(student);
     }
-    if (isSupabaseConfigured) {
-      return await supabaseService.saveStudent(student);
-    }
-    return student; // fallback
+    return student;
   },
 
   deleteStudent: async (studentId: string, fullName?: string): Promise<void> => {
     if (isTursoConfigured) {
       await tursoService.deleteStudent(studentId, fullName).catch(() => {});
-    }
-    if (isSupabaseConfigured) {
-      await supabaseService.deleteStudent(studentId, fullName).catch(() => {});
     }
     await fetchJson(`${API_BASE}/students/${encodeURIComponent(studentId)}`, {
       method: 'DELETE',
@@ -85,11 +69,6 @@ export const api = {
         return await tursoService.getDeletedStudents();
       } catch (e) {}
     }
-    if (isSupabaseConfigured) {
-      try {
-        return await supabaseService.getDeletedStudents();
-      } catch (e) {}
-    }
     return [];
   },
 
@@ -97,27 +76,17 @@ export const api = {
     if (isTursoConfigured) {
       await tursoService.addDeletedStudent(entry).catch(() => {});
     }
-    if (isSupabaseConfigured) {
-      await supabaseService.addDeletedStudent(entry).catch(() => {});
-    }
   },
 
   removeDeletedStudent: async (studentId: string, fullName?: string): Promise<void> => {
     if (isTursoConfigured) {
       await tursoService.removeDeletedStudent(studentId, fullName).catch(() => {});
     }
-    if (isSupabaseConfigured) {
-      await supabaseService.removeDeletedStudent(studentId, fullName).catch(() => {});
-    }
   },
 
   setAdminCredentials: async (username: string, password: string) => {
     if (isTursoConfigured) {
       await tursoService.setAdminCredentials(username, password);
-      return;
-    }
-    if (isSupabaseConfigured) {
-      await supabaseService.setAdminCredentials(username, password);
       return;
     }
   },
@@ -154,11 +123,6 @@ export const api = {
       const found = all.find((s) => s.id.toLowerCase() === id.toLowerCase());
       if (found) return found;
     }
-    if (isSupabaseConfigured) {
-      const all = await supabaseService.getStudents();
-      const found = all.find((s) => s.id.toLowerCase() === id.toLowerCase());
-      if (found) return found;
-    }
     const res = await fetchJson<{ success: boolean; data: Student }>(`${API_BASE}/students/${encodeURIComponent(id)}`);
     return res.data;
   },
@@ -172,13 +136,6 @@ export const api = {
         console.warn('[Turso] Failed to fetch menu, trying fallback:', e);
       }
     }
-    if (isSupabaseConfigured) {
-      try {
-        return await supabaseService.getMenuItems();
-      } catch (e) {
-        console.warn('[Supabase] Failed to fetch menu, trying fallback:', e);
-      }
-    }
     const res = await fetchJson<{ success: boolean; data: FoodItem[] }>(`${API_BASE}/menu`);
     return res.data;
   },
@@ -187,23 +144,6 @@ export const api = {
     if (isTursoConfigured) {
       for (const item of items) {
         await tursoService.saveMenuItem(item);
-      }
-      return items;
-    }
-    if (isSupabaseConfigured) {
-      try {
-        const existing = await supabaseService.getMenuItems();
-        const incomingIds = new Set(items.map((i) => i.id));
-        for (const ex of existing) {
-          if (!incomingIds.has(ex.id)) {
-            await supabaseService.deleteMenuItem(ex.id);
-          }
-        }
-      } catch (e) {
-        console.warn('Error syncing deleted menu items with Supabase:', e);
-      }
-      for (const item of items) {
-        await supabaseService.saveMenuItem(item);
       }
       return items;
     }
@@ -218,9 +158,6 @@ export const api = {
     if (isTursoConfigured) {
       return await tursoService.saveMenuItem(item);
     }
-    if (isSupabaseConfigured) {
-      return await supabaseService.saveMenuItem(item);
-    }
     const res = await fetchJson<{ success: boolean; data: FoodItem }>(`${API_BASE}/menu`, {
       method: 'POST',
       body: JSON.stringify(item),
@@ -231,9 +168,6 @@ export const api = {
   updateMenuItem: async (id: string, updates: Partial<FoodItem>): Promise<FoodItem> => {
     if (isTursoConfigured) {
       return await tursoService.updateMenuItem(id, updates);
-    }
-    if (isSupabaseConfigured) {
-      return await supabaseService.updateMenuItem(id, updates);
     }
     const res = await fetchJson<{ success: boolean; data: FoodItem }>(`${API_BASE}/menu/${encodeURIComponent(id)}`, {
       method: 'PUT',
@@ -250,13 +184,6 @@ export const api = {
         return await tursoService.updateMenuItem(id, { isAvailable: !target.isAvailable });
       }
     }
-    if (isSupabaseConfigured) {
-      const items = await supabaseService.getMenuItems();
-      const target = items.find((i) => i.id === id);
-      if (target) {
-        return await supabaseService.updateMenuItem(id, { isAvailable: !target.isAvailable });
-      }
-    }
     const res = await fetchJson<{ success: boolean; data: FoodItem }>(`${API_BASE}/menu/${encodeURIComponent(id)}/toggle`, {
       method: 'PATCH',
     });
@@ -266,10 +193,6 @@ export const api = {
   deleteMenuItem: async (id: string): Promise<void> => {
     if (isTursoConfigured) {
       await tursoService.deleteMenuItem(id);
-      return;
-    }
-    if (isSupabaseConfigured) {
-      await supabaseService.deleteMenuItem(id);
       return;
     }
     await fetchJson<{ success: boolean }>(`${API_BASE}/menu/${encodeURIComponent(id)}`, {
@@ -286,13 +209,6 @@ export const api = {
         console.warn('[Turso] Failed to fetch orders, trying fallback:', e);
       }
     }
-    if (isSupabaseConfigured) {
-      try {
-        return await supabaseService.getOrders();
-      } catch (e) {
-        console.warn('[Supabase] Failed to fetch orders, trying fallback:', e);
-      }
-    }
     const res = await fetchJson<{ success: boolean; data: Order[] }>(`${API_BASE}/orders`);
     return res.data;
   },
@@ -301,11 +217,6 @@ export const api = {
     if (isTursoConfigured) {
       try {
         return await tursoService.getOrderByStudent(studentId, role);
-      } catch (e) {}
-    }
-    if (isSupabaseConfigured) {
-      try {
-        return await supabaseService.getOrderByStudent(studentId);
       } catch (e) {}
     }
     try {
@@ -324,11 +235,6 @@ export const api = {
         return await tursoService.getOrderByDevice(deviceId);
       } catch (e) {}
     }
-    if (isSupabaseConfigured) {
-      try {
-        return await supabaseService.getOrderByDevice(deviceId);
-      } catch (e) {}
-    }
     try {
       const res = await fetchJson<{ success: boolean; data: Order }>(
         `${API_BASE}/orders/device/${encodeURIComponent(deviceId)}`
@@ -343,9 +249,6 @@ export const api = {
     if (isTursoConfigured) {
       return await tursoService.placeOrder(orderPayload as Order);
     }
-    if (isSupabaseConfigured) {
-      return await supabaseService.placeOrder(orderPayload as Order);
-    }
     const res = await fetchJson<{ success: boolean; data: Order }>(`${API_BASE}/orders`, {
       method: 'POST',
       body: JSON.stringify(orderPayload),
@@ -356,9 +259,6 @@ export const api = {
   updateOrder: async (orderNumber: string, orderPayload: Partial<Order>): Promise<Order> => {
     if (isTursoConfigured) {
       return await tursoService.updateOrder(orderNumber, orderPayload);
-    }
-    if (isSupabaseConfigured) {
-      return await supabaseService.updateOrder(orderNumber, orderPayload);
     }
     const res = await fetchJson<{ success: boolean; data: Order }>(
       `${API_BASE}/orders/${encodeURIComponent(orderNumber)}`,
@@ -376,11 +276,6 @@ export const api = {
       const orders = await tursoService.getOrders();
       return orders.find((o) => o.orderNumber === orderNumber)!;
     }
-    if (isSupabaseConfigured) {
-      await supabaseService.updateOrderStatus(orderNumber, status);
-      const orders = await supabaseService.getOrders();
-      return orders.find((o) => o.orderNumber === orderNumber)!;
-    }
     const res = await fetchJson<{ success: boolean; data: Order }>(
       `${API_BASE}/orders/${encodeURIComponent(orderNumber)}/status`,
       {
@@ -396,28 +291,20 @@ export const api = {
       await tursoService.deleteOrder(orderNumber);
       return;
     }
-    if (isSupabaseConfigured) {
-      await supabaseService.deleteOrder(orderNumber);
-      return;
-    }
     await fetchJson<{ success: boolean }>(`${API_BASE}/orders/${encodeURIComponent(orderNumber)}`, {
       method: 'DELETE',
     });
   },
 
-  wipeStudentOrder: async (studentId: string, studentFullName?: string): Promise<void> => {
-    if (isSupabaseConfigured) {
-      await supabaseService.wipeStudentOrder(studentId, studentFullName);
+  wipeStudentOrder: async (studentId: string, studentFullName?: string, orderNumber?: string): Promise<void> => {
+    if (isTursoConfigured) {
+      await tursoService.wipeStudentOrder(studentId, studentFullName, orderNumber);
     }
   },
 
   deleteCompletedOrders: async (): Promise<void> => {
     if (isTursoConfigured) {
       await tursoService.deleteCompletedOrders();
-      return;
-    }
-    if (isSupabaseConfigured) {
-      await supabaseService.deleteCompletedOrders();
       return;
     }
     await fetchJson<{ success: boolean }>(`${API_BASE}/orders/completed`, {
@@ -430,10 +317,6 @@ export const api = {
       await tursoService.deleteAllOrders();
       return;
     }
-    if (isSupabaseConfigured) {
-      await supabaseService.deleteAllOrders();
-      return;
-    }
     await fetchJson<{ success: boolean }>(`${API_BASE}/orders`, {
       method: 'DELETE',
     });
@@ -444,10 +327,6 @@ export const api = {
       await tursoService.deleteOrdersByRole(role);
       return;
     }
-    if (isSupabaseConfigured) {
-      await supabaseService.deleteOrdersByRole(role);
-      return;
-    }
     await fetchJson<{ success: boolean }>(`${API_BASE}/orders/role/${encodeURIComponent(role)}`, {
       method: 'DELETE',
     }).catch(() => {});
@@ -456,10 +335,6 @@ export const api = {
   clearDeviceLock: async (deviceId: string): Promise<void> => {
     if (isTursoConfigured) {
       await tursoService.clearDeviceLock(deviceId);
-      return;
-    }
-    if (isSupabaseConfigured) {
-      await supabaseService.clearDeviceLock(deviceId);
       return;
     }
     try {
@@ -473,10 +348,6 @@ export const api = {
   resetDatabase: async (): Promise<void> => {
     if (isTursoConfigured) {
       await tursoService.deleteAllOrders();
-      return;
-    }
-    if (isSupabaseConfigured) {
-      await supabaseService.deleteAllOrders();
       return;
     }
     await fetchJson<{ success: boolean }>(`${API_BASE}/admin/reset`, {
@@ -506,27 +377,6 @@ export const api = {
         },
       };
     }
-    if (isSupabaseConfigured) {
-      const orders = await supabaseService.getOrders();
-      const students = await supabaseService.getStudents();
-      const totalRevenue = orders.reduce((s, o) => s + o.totalAmount, 0);
-      const orderedStudentIds = new Set(orders.map((o) => o.studentId));
-      return {
-        database: 'Supabase PostgreSQL',
-        totalOrders: orders.length,
-        totalRevenue,
-        avgOrderBill: orders.length > 0 ? Math.round(totalRevenue / orders.length) : 0,
-        totalStudents: students.length,
-        studentsOrdered: orderedStudentIds.size,
-        studentsRemaining: students.length - orderedStudentIds.size,
-        statusCounts: {
-          Pending: orders.filter((o) => o.status === 'Pending').length,
-          Preparing: orders.filter((o) => o.status === 'Preparing').length,
-          Ready: orders.filter((o) => o.status === 'Ready').length,
-          Completed: orders.filter((o) => o.status === 'Completed').length,
-        },
-      };
-    }
     const res = await fetchJson<{ success: boolean; data: any }>(`${API_BASE}/admin/stats`);
     return res.data;
   },
@@ -538,13 +388,6 @@ export const api = {
         return await tursoService.getOrderingStatus();
       } catch (e) {
         console.warn('[Turso] Failed to fetch ordering status:', e);
-      }
-    }
-    if (isSupabaseConfigured) {
-      try {
-        return await supabaseService.getOrderingStatus();
-      } catch (e) {
-        console.warn('[Supabase] Failed to fetch ordering status:', e);
       }
     }
     try {
@@ -562,10 +405,6 @@ export const api = {
       await tursoService.setOrderingStatus(isOpen);
       return;
     }
-    if (isSupabaseConfigured) {
-      await supabaseService.setOrderingStatus(isOpen);
-      return;
-    }
   },
 
   // --- Intake Phase ---
@@ -577,7 +416,6 @@ export const api = {
         console.warn('[Turso] Failed to fetch intake phase:', e);
       }
     }
-    // Supabase fallback not fully implemented for this yet, defaulting to parent
     return 'parent';
   },
 
@@ -597,13 +435,6 @@ export const api = {
         console.warn('[Turso] Failed to fetch order schedule:', e);
       }
     }
-    if (isSupabaseConfigured) {
-      try {
-        return await supabaseService.getOrderSchedule();
-      } catch (e) {
-        console.warn('[Supabase] Failed to fetch order schedule:', e);
-      }
-    }
     const saved = localStorage.getItem('order_intake_schedule');
     if (saved) {
       try {
@@ -614,21 +445,15 @@ export const api = {
   },
 
   setOrderSchedule: async (schedule: OrderSchedule): Promise<void> => {
-    localStorage.setItem('order_intake_schedule', JSON.stringify(schedule));
+    try {
+      localStorage.setItem('order_intake_schedule', JSON.stringify(schedule));
+    } catch (e) {}
     if (isTursoConfigured) {
       try {
         await tursoService.setOrderSchedule(schedule);
         return;
       } catch (e) {
         console.warn('[Turso] Failed to save order schedule:', e);
-      }
-    }
-    if (isSupabaseConfigured) {
-      try {
-        await supabaseService.setOrderSchedule(schedule);
-        return;
-      } catch (e) {
-        console.warn('[Supabase] Failed to save order schedule:', e);
       }
     }
   },
@@ -640,13 +465,6 @@ export const api = {
         return await tursoService.getAdminCredentials();
       } catch (e) {
         console.warn('[Turso] Failed to fetch admin credentials:', e);
-      }
-    }
-    if (isSupabaseConfigured) {
-      try {
-        return await supabaseService.getAdminCredentials();
-      } catch (e) {
-        console.warn('[Supabase] Failed to fetch admin credentials:', e);
       }
     }
     return { username: 'dadaji', password: 'dada5868' };
@@ -699,7 +517,6 @@ export const api = {
       return { success: true, role: 'boss' };
     }
 
-
     try {
       const superCreds = await api.getSuperCredentials();
       if (
@@ -733,11 +550,6 @@ export const api = {
         return await tursoService.getSystemControls();
       } catch (e) {}
     }
-    if (isSupabaseConfigured) {
-      try {
-        return await supabaseService.getSystemControls();
-      } catch (e) {}
-    }
     const { getCachedSystemControls } = await import('./storage');
     return getCachedSystemControls();
   },
@@ -748,11 +560,6 @@ export const api = {
     if (isTursoConfigured) {
       try {
         await tursoService.setSystemControls(controls);
-      } catch (e) {}
-    }
-    if (isSupabaseConfigured) {
-      try {
-        await supabaseService.setSystemControls(controls);
       } catch (e) {}
     }
   },
