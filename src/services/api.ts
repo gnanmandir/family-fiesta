@@ -851,7 +851,9 @@ export const api = {
       }
     });
 
-    const fullList = Array.from(staffMap.values());
+    const fullList = Array.from(staffMap.values()).sort((a, b) =>
+      a.guestName.localeCompare(b.guestName, undefined, { sensitivity: 'base' })
+    );
 
     // Step D: Background seed to Turso if remote is missing staff members
     if (isTursoConfigured && remoteGuests.length < fullList.length) {

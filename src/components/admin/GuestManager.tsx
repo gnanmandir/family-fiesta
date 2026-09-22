@@ -74,9 +74,13 @@ const getInitialStaffList = (fallbackList?: GuestCredential[]): GuestCredential[
       }
     } catch (e) {}
 
-    return Array.from(staffMap.values());
+    return Array.from(staffMap.values()).sort((a, b) =>
+      a.guestName.localeCompare(b.guestName, undefined, { sensitivity: 'base' })
+    );
   } catch (e) {
-    return INITIAL_STAFF;
+    return [...INITIAL_STAFF].sort((a, b) =>
+      a.guestName.localeCompare(b.guestName, undefined, { sensitivity: 'base' })
+    );
   }
 };
 
@@ -191,7 +195,7 @@ export const GuestManager: React.FC<GuestManagerProps> = ({
     const q = searchQuery.trim().toLowerCase();
     const qNorm = normalize(searchQuery);
 
-    return guests.filter((g) => {
+    const list = guests.filter((g) => {
       const ord = getStaffOrder(g);
       const isOrdered = Boolean(ord);
 
@@ -210,6 +214,10 @@ export const GuestManager: React.FC<GuestManagerProps> = ({
 
       return nameMatch || pwdMatch || orderMatch;
     });
+
+    return list.sort((a, b) =>
+      a.guestName.localeCompare(b.guestName, undefined, { sensitivity: 'base' })
+    );
   }, [guests, orders, searchQuery, filter]);
 
   // Handlers
