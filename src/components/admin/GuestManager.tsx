@@ -260,300 +260,196 @@ export const GuestManager: React.FC<GuestManagerProps> = ({
   };
 
   return (
-    <div className="space-y-6">
-      {/* 1. Header & Quick Statistics Row */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="flex items-center space-x-2.5">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-500/20 flex items-center justify-center font-black">
-              <Users className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-xl font-black tracking-tight text-slate-900">
-                Staff Order
-              </h2>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Manage credentials, monitor order placement status, and oversee dining vouchers.
-              </p>
-            </div>
-          </div>
+    <div className="space-y-4">
+      {/* 1. Stat Cards Row */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="p-4 rounded-xl bg-white border border-stone-200 text-center shadow-xs">
+          <div className="text-[10px] text-stone-500 uppercase tracking-wider font-semibold">Total Staff</div>
+          <div className="text-2xl font-bold text-stone-900 mt-1 font-mono">{stats.total}</div>
         </div>
 
-        <button
-          type="button"
-          disabled={!canEdit}
-          onClick={() => setIsAddModalOpen(true)}
-          className={`px-4 py-2.5 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center space-x-2 shrink-0 ${
-            canEdit
-              ? 'bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer active:scale-98'
-              : 'bg-slate-100 text-slate-400 opacity-50 cursor-not-allowed pointer-events-none'
-          }`}
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Staff Member</span>
-        </button>
-      </div>
-
-      {/* 2. KPI Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs">
-          <span className="text-xs font-semibold text-slate-500 block">Total Staff</span>
-          <div className="flex items-baseline space-x-2 mt-1">
-            <span className="text-2xl font-black text-slate-900">{stats.total}</span>
-            <span className="text-[11px] font-bold text-slate-400">members</span>
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center shadow-xs">
+          <div className="text-[10px] text-emerald-800 uppercase tracking-wider font-semibold">
+            Staff Ordered
           </div>
+          <div className="text-2xl font-bold text-emerald-950 mt-1 font-mono">{stats.ordered}</div>
         </div>
 
-        <div className="bg-white border border-emerald-200/80 rounded-2xl p-4 shadow-2xs bg-gradient-to-br from-emerald-50/40 to-white">
-          <span className="text-xs font-semibold text-emerald-700 block">Orders Placed</span>
-          <div className="flex items-baseline space-x-2 mt-1">
-            <span className="text-2xl font-black text-emerald-700">{stats.ordered}</span>
-            <span className="text-[11px] font-bold text-emerald-600">
-              ({stats.total > 0 ? Math.round((stats.ordered / stats.total) * 100) : 0}%)
-            </span>
+        <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-center shadow-xs">
+          <div className="text-[10px] text-amber-800 uppercase tracking-wider font-semibold">
+            Staff Remaining
           </div>
-        </div>
-
-        <div className="bg-white border border-amber-200/80 rounded-2xl p-4 shadow-2xs bg-gradient-to-br from-amber-50/40 to-white">
-          <span className="text-xs font-semibold text-amber-800 block">Remaining / Not Ordered</span>
-          <div className="flex items-baseline space-x-2 mt-1">
-            <span className="text-2xl font-black text-amber-800">{stats.remaining}</span>
-            <span className="text-[11px] font-bold text-amber-700">pending</span>
-          </div>
+          <div className="text-2xl font-bold text-amber-950 mt-1 font-mono">{stats.remaining}</div>
         </div>
       </div>
 
-      {/* 3. Search & Filter Bar */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
-        {/* Search Box */}
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by name, password, or order #..."
-            className="w-full pl-9 pr-8 py-2 bg-slate-50 hover:bg-slate-100/80 focus:bg-white border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all"
-          />
-          {searchQuery && (
+      {/* 2. Filter & Search Bar */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-stone-200 shadow-xs">
+        <div className="flex w-full sm:w-auto items-center gap-2">
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search staff, password, order #..."
+              className="w-full pl-9 pr-3 py-2 bg-stone-50 border border-stone-200 rounded-lg text-stone-900 placeholder-stone-400 text-xs focus:outline-none focus:border-indigo-600 focus:bg-white transition-all"
+            />
+          </div>
+          <button
+            type="button"
+            disabled={!canEdit}
+            onClick={() => setIsAddModalOpen(true)}
+            className={`px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm whitespace-nowrap transition-colors cursor-pointer ${
+              !canEdit ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
+            }`}
+          >
+            + Add Staff
+          </button>
+        </div>
+
+        <div className="flex items-center space-x-1.5">
+          {(['All', 'Ordered', 'Remaining'] as const).map((f) => (
             <button
+              key={f}
               type="button"
-              onClick={() => setSearchQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+              onClick={() => setFilter(f)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                filter === f
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
+                  : 'bg-stone-100 text-stone-600 hover:bg-stone-200 hover:text-stone-900'
+              }`}
             >
-              <X className="w-3.5 h-3.5" />
+              {f}
             </button>
-          )}
-        </div>
-
-        {/* Filter Pills */}
-        <div className="flex items-center space-x-1.5 w-full sm:w-auto overflow-x-auto">
-          {(['All', 'Ordered', 'Remaining'] as const).map((tab) => {
-            const count =
-              tab === 'All'
-                ? stats.total
-                : tab === 'Ordered'
-                ? stats.ordered
-                : stats.remaining;
-            const isActive = filter === tab;
-            return (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setFilter(tab)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center space-x-1.5 cursor-pointer ${
-                  isActive
-                    ? 'bg-indigo-600 text-white shadow-xs'
-                    : 'bg-slate-100 hover:bg-slate-200/80 text-slate-600'
-                }`}
-              >
-                <span>{tab}</span>
-                <span
-                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                    isActive ? 'bg-indigo-500/40 text-white' : 'bg-slate-200 text-slate-700'
-                  }`}
-                >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
+          ))}
         </div>
       </div>
 
-      {/* 4. Table Area */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
-        {isLoading ? (
-          <div className="text-center py-16 text-slate-400 text-xs">
-            Loading staff orders and statuses...
-          </div>
-        ) : filteredGuests.length === 0 ? (
-          <div className="text-center py-16 space-y-2">
-            <div className="w-12 h-12 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
-              <Users className="w-6 h-6" />
-            </div>
-            <p className="font-bold text-slate-800 text-sm">No staff members found</p>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto">
-              {searchQuery
-                ? 'No staff match your search criteria.'
-                : 'No staff members exist in this view.'}
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-slate-200/90 bg-slate-50/80 text-slate-600 font-bold uppercase tracking-wider text-[10.5px]">
-                  <th className="py-3.5 px-4 sm:px-5 w-12 text-center">#</th>
-                  <th className="py-3.5 px-4 sm:px-5">Staff Member</th>
-                  <th className="py-3.5 px-4 sm:px-5">Password Code</th>
-                  <th className="py-3.5 px-4 sm:px-5">Order Status</th>
-                  <th className="py-3.5 px-4 sm:px-5">Order Details</th>
-                  <th className="py-3.5 px-4 sm:px-5 text-right">Actions</th>
+      {/* 3. Staff List Table */}
+      <div className="bg-white border border-stone-200 rounded-xl overflow-hidden shadow-xs">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs table-fixed min-w-[800px]">
+            <colgroup>
+              <col className="w-[8%]" />
+              <col className="w-[30%]" />
+              <col className="w-[18%]" />
+              <col className="w-[14%]" />
+              <col className="w-[10%]" />
+              <col className="w-[6%]" />
+              <col className="w-[10%]" />
+              <col className="w-[4%]" />
+            </colgroup>
+            <thead>
+              <tr className="bg-stone-50 border-b border-stone-200 text-stone-600 font-semibold uppercase tracking-wider text-[11px]">
+                <th className="py-3 px-3 text-center">#</th>
+                <th className="py-3 px-4">Staff Name</th>
+                <th className="py-3 px-3">Password</th>
+                <th className="py-3 px-3 text-center">Order Status</th>
+                <th className="py-3 px-3 text-right">Order Total</th>
+                <th className="py-3 px-1 text-center whitespace-nowrap">Edit</th>
+                <th className="py-3 px-1 text-center whitespace-nowrap">Wipe Order</th>
+                <th className="py-3 px-1 text-center whitespace-nowrap">Delete</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-stone-100 text-stone-700">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={8} className="text-center py-16 text-stone-400 text-xs">
+                    Loading staff orders and statuses...
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredGuests.map((staff, idx) => {
+              ) : filteredGuests.length > 0 ? (
+                filteredGuests.map((staff, idx) => {
                   const ord = getStaffOrder(staff);
                   const isOrdered = Boolean(ord);
 
                   return (
-                    <tr
-                      key={staff.id}
-                      className="hover:bg-slate-50/80 transition-colors group"
-                    >
-                      {/* Row Index */}
-                      <td className="py-3.5 px-4 sm:px-5 text-center text-slate-400 font-mono text-[11px]">
+                    <tr key={staff.id} className="hover:bg-stone-50/80 transition-colors">
+                      <td className="py-3 px-3 font-mono text-stone-900 font-bold text-center whitespace-nowrap">
                         {idx + 1}
                       </td>
-
-                      {/* Staff Name & ID */}
-                      <td className="py-3.5 px-4 sm:px-5">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 font-black text-xs flex items-center justify-center shrink-0 border border-amber-200/60">
-                            {staff.guestName.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="font-bold text-slate-900 text-xs sm:text-sm">
-                              {staff.guestName}
-                            </div>
-                            <div className="text-[10px] text-slate-400 font-mono">
-                              {staff.id}
-                            </div>
-                          </div>
-                        </div>
+                      <td className="py-3 px-4 font-bold text-stone-900 truncate">
+                        {staff.guestName}
                       </td>
-
-                      {/* Password Code */}
-                      <td className="py-3.5 px-4 sm:px-5 whitespace-nowrap">
-                        <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-slate-800 font-mono font-bold text-xs">
-                          <KeyRound className="w-3 h-3 text-slate-400" />
-                          <span>{staff.password}</span>
-                        </div>
+                      <td className="py-3 px-3 font-mono text-indigo-600 font-bold whitespace-nowrap">
+                        {staff.password}
                       </td>
-
-                      {/* Order Status */}
-                      <td className="py-3.5 px-4 sm:px-5 whitespace-nowrap">
-                        {isOrdered && ord ? (
-                          <div className="space-y-1">
-                            <div className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                              <span>ORDERED</span>
-                            </div>
-                            <div>{getStatusBadge(ord.status)}</div>
-                          </div>
+                      <td className="py-3 px-3 whitespace-nowrap text-center">
+                        {isOrdered ? (
+                          <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-medium text-[11px] inline-flex items-center space-x-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-700" />
+                            <span>Ordered</span>
+                          </span>
                         ) : (
-                          <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-slate-500 bg-slate-100 border border-slate-200 font-semibold text-[11px]">
-                            <Clock className="w-3 h-3 text-slate-400" />
-                            <span>Remaining</span>
-                          </div>
+                          <span className="px-2.5 py-1 rounded-full bg-stone-100 text-stone-600 border border-stone-200 font-medium text-[11px] inline-flex items-center space-x-1">
+                            <Clock className="w-3 h-3 text-stone-400" />
+                            <span>Pending</span>
+                          </span>
                         )}
                       </td>
-
-                      {/* Order Details */}
-                      <td className="py-3.5 px-4 sm:px-5 whitespace-nowrap">
+                      <td className="py-3 px-3 text-right font-bold text-stone-900 whitespace-nowrap font-mono">
+                        {isOrdered && ord ? `₹${ord.totalAmount}` : '-'}
+                      </td>
+                      <td className="py-3 px-1 text-center whitespace-nowrap">
+                        <button
+                          type="button"
+                          disabled={!canEdit}
+                          onClick={() => handleOpenEdit(staff)}
+                          className="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                        >
+                          Edit
+                        </button>
+                      </td>
+                      <td className="py-3 px-1 text-center whitespace-nowrap">
                         {isOrdered && ord ? (
-                          <div className="space-y-0.5">
-                            <div className="font-mono font-bold text-indigo-600 text-xs">
-                              {ord.orderNumber}
-                            </div>
-                            <div className="text-[11px] text-slate-500 font-medium">
-                              {ord.items?.length || 0} item(s) • ₹{ord.totalAmount}
-                            </div>
-                            {(ord.dateDisplay || ord.timeDisplay) && (
-                              <div className="text-[10px] text-slate-400 font-medium">
-                                {ord.dateDisplay} {ord.timeDisplay}
-                              </div>
-                            )}
-                          </div>
+                          <button
+                            type="button"
+                            disabled={!canWipe}
+                            onClick={() => {
+                              setWipeModal({ staff, order: ord });
+                              setWipePassword('');
+                              setWipePasswordError('');
+                              setShowWipePassword(false);
+                            }}
+                            title={!canWipe ? 'Order wiping is disabled' : `Wipe order #${ord.orderNumber}`}
+                            className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors inline-flex items-center space-x-1 ${
+                              !canWipe
+                                ? 'bg-stone-100 text-stone-400 border border-stone-200 opacity-40 cursor-not-allowed pointer-events-none select-none'
+                                : 'bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 border border-rose-200 cursor-pointer'
+                            }`}
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                            <span>Wipe Order</span>
+                          </button>
                         ) : (
-                          <span className="text-slate-400 text-xs italic">No order placed</span>
+                          <span className="text-stone-300 font-mono text-xs">-</span>
                         )}
                       </td>
-
-                      {/* Actions */}
-                      <td className="py-3.5 px-4 sm:px-5 whitespace-nowrap text-right">
-                        <div className="flex items-center justify-end space-x-1.5">
-                          {/* Edit Staff Button */}
-                          <button
-                            type="button"
-                            disabled={!canEdit}
-                            onClick={() => handleOpenEdit(staff)}
-                            title="Edit Staff Credentials"
-                            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                              canEdit
-                                ? 'text-indigo-600 hover:bg-indigo-50 border border-transparent hover:border-indigo-200'
-                                : 'text-slate-300 cursor-not-allowed'
-                            }`}
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-
-                          {/* Wipe Order Button (only if ordered) */}
-                          {isOrdered && ord && (
-                            <button
-                              type="button"
-                              disabled={!canWipe}
-                              onClick={() => {
-                                setWipeModal({ staff, order: ord });
-                                setWipePassword('');
-                                setWipePasswordError('');
-                                setShowWipePassword(false);
-                              }}
-                              title="Wipe / Reset Staff Order"
-                              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                                canWipe
-                                  ? 'text-amber-600 hover:bg-amber-50 border border-transparent hover:border-amber-200'
-                                  : 'text-slate-300 cursor-not-allowed'
-                              }`}
-                            >
-                              <RotateCcw className="w-4 h-4" />
-                            </button>
-                          )}
-
-                          {/* Delete Staff Member Button */}
-                          <button
-                            type="button"
-                            disabled={!canEdit}
-                            onClick={() => setDeletingGuest(staff)}
-                            title="Delete Staff Member"
-                            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                              canEdit
-                                ? 'text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200'
-                                : 'text-slate-300 cursor-not-allowed'
-                            }`}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                      <td className="py-3 px-1 text-center whitespace-nowrap">
+                        <button
+                          type="button"
+                          disabled={!canEdit}
+                          onClick={() => setDeletingGuest(staff)}
+                          title={`Permanently remove ${staff.guestName} from directory`}
+                          className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 border border-red-200 rounded-lg transition-all inline-flex items-center justify-center cursor-pointer active:scale-95"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-600" />
+                        </button>
                       </td>
                     </tr>
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+                })
+              ) : (
+                <tr>
+                  <td colSpan={8} className="text-center py-16 text-stone-400 text-xs">
+                    {searchQuery ? 'No staff match your search criteria.' : 'No staff members exist in this view.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* 5. Add Staff Modal */}
