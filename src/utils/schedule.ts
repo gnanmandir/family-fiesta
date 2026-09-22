@@ -37,8 +37,8 @@ export function isScheduleWithinWindow(
   const hasEnd = !isNaN(endMs);
 
   const isBefore = hasStart && currentMs < startMs;
-  const isAfter = hasEnd && currentMs > endMs;
-  const isWithin = (!hasStart || currentMs >= startMs) && (!hasEnd || currentMs <= endMs);
+  const isAfter = hasEnd && currentMs >= endMs;
+  const isWithin = (!hasStart || currentMs >= startMs) && (!hasEnd || currentMs < endMs);
 
   return { isWithin, isBefore, isAfter, hasStart, hasEnd };
 }
@@ -97,7 +97,7 @@ export function evaluateSchedule(
   headline: string;
   subtext: string;
 } {
-  if (!schedule || !schedule.enabled || isScheduleDone(schedule, now)) {
+  if (!schedule || !schedule.enabled) {
     return {
       isOpen: manualOpen,
       scheduleActive: false,
@@ -111,7 +111,7 @@ export function evaluateSchedule(
     };
   }
 
-  const { isWithin, isBefore, isAfter } = isScheduleWithinWindow(schedule, now);
+  const { isWithin, isBefore, isAfter, hasEnd } = isScheduleWithinWindow(schedule, now);
 
   if (isBefore) {
     return {
@@ -125,10 +125,10 @@ export function evaluateSchedule(
     };
   }
 
-  if (isAfter) {
+  if (isAfter || (hasEnd && isScheduleDone(schedule, now))) {
     return {
       isOpen: false,
-      scheduleActive: true,
+      scheduleActive: false,
       isBeforeStart: false,
       isAfterEnd: true,
       isWithinWindow: false,

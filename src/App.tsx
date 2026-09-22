@@ -302,11 +302,13 @@ export default function App() {
 
         // Check if schedule is already completed/done in real time
         if (schedule && schedule.enabled && isScheduleDone(schedule)) {
+          const shouldHalt = Boolean(schedule.endTime);
+          const newOpenState = shouldHalt ? false : (schedule.startTime ? true : isOpen);
+          api.setOrderingStatus(newOpenState).catch(() => {});
           api.setOrderSchedule(DEFAULT_SCHEDULE).catch(() => {});
           setOrderSchedule(DEFAULT_SCHEDULE);
-          setRawOrdersOpen(isOpen);
-          const effective = evaluateSchedule(DEFAULT_SCHEDULE, isOpen);
-          setOrdersOpen(effective.isOpen);
+          setRawOrdersOpen(newOpenState);
+          setOrdersOpen(newOpenState);
         } else {
           setRawOrdersOpen(isOpen);
           setOrderSchedule(schedule);
@@ -452,11 +454,13 @@ export default function App() {
           }
 
           if (schedule && schedule.enabled && isScheduleDone(schedule)) {
+            const shouldHalt = Boolean(schedule.endTime);
+            const newOpenState = shouldHalt ? false : (schedule.startTime ? true : isOpen);
+            api.setOrderingStatus(newOpenState).catch(() => {});
             api.setOrderSchedule(DEFAULT_SCHEDULE).catch(() => {});
             setOrderSchedule(DEFAULT_SCHEDULE);
-            setRawOrdersOpen((prev) => (prev === isOpen ? prev : isOpen));
-            const effective = evaluateSchedule(DEFAULT_SCHEDULE, isOpen);
-            setOrdersOpen((prev) => (prev === effective.isOpen ? prev : effective.isOpen));
+            setRawOrdersOpen(newOpenState);
+            setOrdersOpen(newOpenState);
           } else {
             setRawOrdersOpen((prev) => (prev === isOpen ? prev : isOpen));
             setOrderSchedule((prev) => {
@@ -486,11 +490,13 @@ export default function App() {
           }
 
           if (schedule && schedule.enabled && isScheduleDone(schedule)) {
+            const shouldHalt = Boolean(schedule.endTime);
+            const newOpenState = shouldHalt ? false : (schedule.startTime ? true : isOpen);
+            api.setOrderingStatus(newOpenState).catch(() => {});
             api.setOrderSchedule(DEFAULT_SCHEDULE).catch(() => {});
             setOrderSchedule(DEFAULT_SCHEDULE);
-            setRawOrdersOpen((prev) => (prev === isOpen ? prev : isOpen));
-            const effective = evaluateSchedule(DEFAULT_SCHEDULE, isOpen);
-            setOrdersOpen((prev) => (prev === effective.isOpen ? prev : effective.isOpen));
+            setRawOrdersOpen(newOpenState);
+            setOrdersOpen(newOpenState);
           } else {
             setRawOrdersOpen((prev) => (prev === isOpen ? prev : isOpen));
             setOrderSchedule((prev) => {
@@ -535,30 +541,49 @@ export default function App() {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [currentView]);
 
-  // 6. Keep effective ordersOpen updated and auto-remove completed schedule
+  // 6. Keep effective ordersOpen updated and auto-execute completed schedules
   useEffect(() => {
     const updateEffective = async () => {
       if (!orderSchedule || !orderSchedule.enabled) return;
 
       if (isScheduleDone(orderSchedule)) {
-        try {
-          await api.setOrderSchedule(DEFAULT_SCHEDULE);
-        } catch (e) {
-          // Silent
-        }
+        const shouldHalt = Boolean(orderSchedule.endTime);
+        const newOpenState = shouldHalt ? false : true;
+
+        setOrdersOpen(newOpenState);
+        setRawOrdersOpen(newOpenState);
         setOrderSchedule(DEFAULT_SCHEDULE);
-        const effective = evaluateSchedule(DEFAULT_SCHEDULE, rawOrdersOpen);
+
+        try {
+          await api.setOrderingStatus(newOpenState);
+          await api.setOrderSchedule(DEFAULT_SCHEDULE);
+          api.recordActivity(
+            shouldHalt ? 'schedule_halt' : 'schedule_open',
+            shouldHalt ? 'Ordering Auto-Halted by Schedule' : 'Ordering Auto-Opened by Schedule',
+            shouldHalt
+              ? `Automated schedule reached end time (${orderSchedule.endTime}) and ordering was closed.`
+              : `Automated schedule reached start time (${orderSchedule.startTime}) and ordering was opened.`,
+            adminRole || 'admin'
+          ).catch(() => {});
+        } catch (e) {
+          console.error('Error auto-updating schedule:', e);
+        }
+        return;
+      }
+
+      const effective = evaluateSchedule(orderSchedule, rawOrdersOpen);
+      if (effective.isOpen !== ordersOpen) {
         setOrdersOpen(effective.isOpen);
-      } else {
-        const effective = evaluateSchedule(orderSchedule, rawOrdersOpen);
-        setOrdersOpen(effective.isOpen);
+        try {
+          await api.setOrderingStatus(effective.isOpen);
+        } catch (e) {}
       }
     };
 
     updateEffective();
-    const ticker = setInterval(updateEffective, 4000);
+    const ticker = setInterval(updateEffective, 2000);
     return () => clearInterval(ticker);
-  }, [orderSchedule, rawOrdersOpen]);
+  }, [orderSchedule, rawOrdersOpen, ordersOpen, adminRole]);
 
   // Persist session navigation state to localStorage so refresh keeps current view
   useEffect(() => {
@@ -1056,10 +1081,20 @@ export default function App() {
         api.getOrderSchedule(),
       ]);
       if (fresh) setOrders(fresh);
-      setRawOrdersOpen(isOpen);
-      setOrderSchedule(schedule);
-      const effective = evaluateSchedule(schedule, isOpen);
-      setOrdersOpen(effective.isOpen);
+      if (schedule && schedule.enabled && isScheduleDone(schedule)) {
+        const shouldHalt = Boolean(schedule.endTime);
+        const newOpenState = shouldHalt ? false : (schedule.startTime ? true : isOpen);
+        api.setOrderingStatus(newOpenState).catch(() => {});
+        api.setOrderSchedule(DEFAULT_SCHEDULE).catch(() => {});
+        setOrderSchedule(DEFAULT_SCHEDULE);
+        setRawOrdersOpen(newOpenState);
+        setOrdersOpen(newOpenState);
+      } else {
+        setRawOrdersOpen(isOpen);
+        setOrderSchedule(schedule);
+        const effective = evaluateSchedule(schedule, isOpen);
+        setOrdersOpen(effective.isOpen);
+      }
     } catch (e) {
       console.error('Failed to refresh orders:', e);
     }
