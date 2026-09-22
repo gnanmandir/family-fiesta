@@ -538,8 +538,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const isBoss = adminRole === 'boss';
   const isSuper = adminRole === 'super' || isBoss;
 
-  type AdminTab = 'overview' | 'orders' | 'students' | 'staff' | 'food' | 'settings' | 'pricing' | 'login_history';
-  const VALID_ADMIN_TABS: AdminTab[] = ['overview', 'orders', 'students', 'staff', 'food', 'settings', 'pricing', 'login_history'];
+  type AdminTab = 'overview' | 'orders' | 'students' | 'staff' | 'food' | 'settings' | 'pricing' | 'login_history' | 'controls';
+  const VALID_ADMIN_TABS: AdminTab[] = ['overview', 'orders', 'students', 'staff', 'food', 'settings', 'pricing', 'login_history', 'controls'];
 
   const [activeTab, setActiveTab] = useState<AdminTab>(() => {
     try {
@@ -884,6 +884,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               { id: 'settings', label: 'Operations & Wipe', icon: <RotateCcw className="w-4 h-4" /> },
             ] : []),
             ...(isBoss ? [
+              { id: 'controls', label: 'System Controls', icon: <ShieldCheck className="w-4 h-4" /> },
               { id: 'login_history', label: 'Login History', icon: <History className="w-4 h-4" /> },
             ] : []),
           ].map((tab) => {
@@ -1570,6 +1571,129 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
             </div>
 
+          </div>
+        )}
+
+        {/* Tab: Boss Exclusive System Control Switchboard */}
+        {activeTab === 'controls' && isBoss && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            {/* Header Banner */}
+            <div className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-7 shadow-xl text-white">
+              <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 relative z-10">
+                <div className="flex items-center space-x-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-600/30 border border-indigo-400/30 flex items-center justify-center text-indigo-400 shadow-inner shrink-0">
+                    <ShieldCheck className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+                        System Control Switchboard
+                      </h2>
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                        Boss Authority
+                      </span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-slate-400 font-medium mt-1">
+                      Master toggle controls for platform operations. When disabled, features are grayed out for Super Admins without revealing system overrides.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Controls Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[
+                {
+                  key: 'allowOrderPortal' as const,
+                  title: 'Food Ordering Portal & Schedule',
+                  desc: 'Allow Super Admins to manually open/halt ordering and configure automated intake schedules. When disabled, the portal switch and schedule buttons are locked.',
+                  icon: <Power className="w-5 h-5" />,
+                },
+                {
+                  key: 'allowPhaseChange' as const,
+                  title: 'Intake Phase Switching',
+                  desc: 'Allow Super Admins to change the active intake phase (Parent, Student, Staff, Closed). When disabled, phase selection is locked.',
+                  icon: <Settings className="w-5 h-5" />,
+                },
+                {
+                  key: 'allowOrderWipe' as const,
+                  title: 'Order Wipe Controls',
+                  desc: 'Allow Super Admins to wipe individual orders and registers. When disabled, every order wipe button across the system is locked and grayed out.',
+                  icon: <Trash2 className="w-5 h-5" />,
+                },
+                {
+                  key: 'allowRosterEdit' as const,
+                  title: 'Roster Management',
+                  desc: 'Allow Super Admins to add, update, or remove Students and Staff credentials. When disabled, rosters cannot be altered.',
+                  icon: <Users className="w-5 h-5" />,
+                },
+              ].map((ctrl) => {
+                const isEnabled = systemControls ? systemControls[ctrl.key] !== false : true;
+                return (
+                  <div
+                    key={ctrl.key}
+                    className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-4"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2.5">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center border shadow-2xs ${
+                            isEnabled
+                              ? 'bg-emerald-50 text-emerald-600 border-emerald-200/80'
+                              : 'bg-rose-50 text-rose-600 border-rose-200/80'
+                          }`}>
+                            {ctrl.icon}
+                          </div>
+                          <h3 className="font-bold text-slate-900 text-sm">{ctrl.title}</h3>
+                        </div>
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-2xs ${
+                          isEnabled
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : 'bg-rose-50 text-rose-700 border-rose-200'
+                        }`}>
+                          {isEnabled ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 leading-relaxed">{ctrl.desc}</p>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-[11px] font-semibold text-slate-400">
+                        {isEnabled ? 'Currently permitted' : 'Currently restricted'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const current = systemControls || {
+                            allowPhaseChange: true,
+                            allowOrderWipe: true,
+                            allowRosterEdit: true,
+                            allowOrderPortal: true,
+                          };
+                          const updated = {
+                            ...current,
+                            [ctrl.key]: !isEnabled,
+                          };
+                          if (onUpdateSystemControls) {
+                            await onUpdateSystemControls(updated);
+                          }
+                        }}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-2xs active:scale-95 border ${
+                          isEnabled
+                            ? 'bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border-rose-200 hover:border-rose-600'
+                            : 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600 shadow-sm'
+                        }`}
+                      >
+                        <Power className="w-3.5 h-3.5" />
+                        <span>{isEnabled ? 'Disable Control' : 'Enable Control'}</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
