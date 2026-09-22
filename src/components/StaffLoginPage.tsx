@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Student, GuestCredential } from '../types';
 import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
-import { AlertCircle, User, Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, User, Eye, EyeOff, Info } from 'lucide-react';
 import { api } from '../services/api';
 
 interface StaffLoginPageProps {
@@ -144,6 +144,21 @@ export const StaffLoginPage: React.FC<StaffLoginPageProps> = ({
           alt="Family Fiesta 2026"
           className="w-48 sm:w-56 max-h-[190px] sm:max-h-[200px] object-contain mx-auto mb-3 sm:mb-4"
         />
+
+        {/* Orders Closed / On Halt Notice Banner */}
+        {!ordersOpen && (
+          <div className="p-3.5 rounded-xl bg-amber-50/90 border border-amber-200 text-amber-900 text-xs flex items-start space-x-2.5 font-medium animate-in fade-in shadow-xs text-left">
+            <Info className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-600" />
+            <div className="space-y-1">
+              <span className="font-bold text-amber-950 block text-[12.5px] leading-snug">
+                🎪 Online Ordering Has Concluded for Family Fiesta 2026!
+              </span>
+              <span className="block text-amber-800 leading-relaxed text-[11.5px]">
+                Thank you for the wonderful response! If you have already placed your order, please sign in below to download your official receipt. See you at the fiesta! ✨
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Login Form */}
         <form onSubmit={handleLogin} autoComplete="off" className="w-full space-y-3">
