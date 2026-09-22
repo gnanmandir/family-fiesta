@@ -792,35 +792,71 @@ export const api = {
       }
     }
 
-    const nameMap = new Map<string, import('../types').GuestCredential>();
+    // 1. Deleted staff check
+    let deletedStaff: any[] = [];
+    try {
+      const raw = localStorage.getItem('family_fiesta_deleted_staff_v1');
+      if (raw) deletedStaff = JSON.parse(raw);
+    } catch (e) {}
 
-    // 1. Base from INITIAL_STAFF
+    const isDeleted = (id: string, name?: string) => {
+      const cleanId = (id || '').toLowerCase().trim();
+      const normName = (name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      return deletedStaff.some((d: any) => {
+        if (typeof d === 'string') {
+          return d.toLowerCase().trim() === cleanId || (normName && d.toLowerCase().replace(/[^a-z0-9]/g, '') === normName);
+        }
+        if (d && typeof d === 'object') {
+          if (cleanId && d.id && d.id.toLowerCase().trim() === cleanId) return true;
+          if (normName && d.normalizedName && d.normalizedName === normName) return true;
+        }
+        return false;
+      });
+    };
+
+    // 2. ID-based Map
+    const staffMap = new Map<string, import('../types').GuestCredential>();
+
+    // Step A: Base from INITIAL_STAFF
     INITIAL_STAFF.forEach((s) => {
-      nameMap.set(s.guestName.toLowerCase().trim(), s);
+      if (!isDeleted(s.id, s.guestName)) {
+        staffMap.set(s.id, s);
+      }
     });
 
-    // 2. Local storage overrides / additions
+    // Step B: Local storage overrides / additions
     try {
-      const local = localStorage.getItem('local_staff_credentials');
+      const local = localStorage.getItem('local_staff_credentials_v2');
       if (local) {
         const parsed: import('../types').GuestCredential[] = JSON.parse(local);
         parsed.forEach((p) => {
-          nameMap.set(p.guestName.toLowerCase().trim(), p);
+          if (!isDeleted(p.id, p.guestName)) {
+            staffMap.set(p.id, { ...(staffMap.get(p.id) || {}), ...p });
+          }
         });
       }
     } catch (e) {}
 
-    // 3. Remote Turso overrides / additions
+    // Step C: Remote Turso overrides / additions (keyed strictly by ID!)
     remoteGuests.forEach((r) => {
-      nameMap.set(r.guestName.toLowerCase().trim(), r);
+      if (!isDeleted(r.id, r.guestName)) {
+        const existing = staffMap.get(r.id);
+        staffMap.set(r.id, {
+          id: r.id,
+          guestName: r.guestName,
+          staffName: r.guestName,
+          password: r.password,
+          createdAt: r.createdAt || existing?.createdAt || new Date().toISOString(),
+        });
+      }
     });
 
-    const fullList = Array.from(nameMap.values());
+    const fullList = Array.from(staffMap.values());
 
-    // 4. Background seed to Turso if remote is missing staff members
+    // Step D: Background seed to Turso if remote is missing staff members
     if (isTursoConfigured && remoteGuests.length < fullList.length) {
-      const existingNames = new Set(remoteGuests.map((r) => r.guestName.toLowerCase().trim()));
-      const toSeed = fullList.filter((s) => !existingNames.has(s.guestName.toLowerCase().trim()));
+      const existingIds = new Set(remoteGuests.map((r) => r.id));
+      const toSeed = fullList.filter((s) => !existingIds.has(s.id));
       if (toSeed.length > 0) {
         (async () => {
           for (const s of toSeed) {
@@ -837,10 +873,26 @@ export const api = {
 
   addGuest: async (guest: import('../types').GuestCredential): Promise<void> => {
     try {
-      const local = localStorage.getItem('local_staff_credentials');
+      // Unmark from deleted if previously deleted
+      const raw = localStorage.getItem('family_fiesta_deleted_staff_v1');
+      if (raw) {
+        const list: any[] = JSON.parse(raw);
+        const filtered = list.filter((d) => {
+          const dId = typeof d === 'string' ? d : d?.id;
+          return dId !== guest.id;
+        });
+        localStorage.setItem('family_fiesta_deleted_staff_v1', JSON.stringify(filtered));
+      }
+
+      const local = localStorage.getItem('local_staff_credentials_v2');
       const list: import('../types').GuestCredential[] = local ? JSON.parse(local) : [];
-      list.push(guest);
-      localStorage.setItem('local_staff_credentials', JSON.stringify(list));
+      const idx = list.findIndex((g) => g.id === guest.id);
+      if (idx !== -1) {
+        list[idx] = guest;
+      } else {
+        list.push(guest);
+      }
+      localStorage.setItem('local_staff_credentials_v2', JSON.stringify(list));
     } catch (e) {}
     if (isTursoConfigured) {
       await tursoService.addGuest(guest);
@@ -849,28 +901,45 @@ export const api = {
 
   updateGuest: async (id: string, updates: Partial<import('../types').GuestCredential>): Promise<void> => {
     try {
-      const local = localStorage.getItem('local_staff_credentials');
-      if (local) {
-        const list: import('../types').GuestCredential[] = JSON.parse(local);
-        const idx = list.findIndex((g) => g.id === id);
-        if (idx !== -1) {
-          list[idx] = { ...list[idx], ...updates };
-          localStorage.setItem('local_staff_credentials', JSON.stringify(list));
-        }
+      const local = localStorage.getItem('local_staff_credentials_v2');
+      const list: import('../types').GuestCredential[] = local ? JSON.parse(local) : [];
+      const idx = list.findIndex((g) => g.id === id);
+      if (idx !== -1) {
+        list[idx] = { ...list[idx], ...updates };
+      } else {
+        list.push({
+          id,
+          guestName: updates.guestName || '',
+          password: updates.password || '',
+          createdAt: new Date().toISOString(),
+          ...updates,
+        });
       }
+      localStorage.setItem('local_staff_credentials_v2', JSON.stringify(list));
     } catch (e) {}
     if (isTursoConfigured) {
       await tursoService.updateGuest(id, updates);
     }
   },
 
-  deleteGuest: async (id: string): Promise<void> => {
+  deleteGuest: async (id: string, guestName?: string): Promise<void> => {
     try {
-      const local = localStorage.getItem('local_staff_credentials');
+      const raw = localStorage.getItem('family_fiesta_deleted_staff_v1');
+      const list: any[] = raw ? JSON.parse(raw) : [];
+      const normName = (guestName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      list.push({
+        id,
+        guestName: guestName || '',
+        normalizedName: normName,
+        deletedAt: new Date().toISOString(),
+      });
+      localStorage.setItem('family_fiesta_deleted_staff_v1', JSON.stringify(list));
+
+      const local = localStorage.getItem('local_staff_credentials_v2');
       if (local) {
-        const list: import('../types').GuestCredential[] = JSON.parse(local);
-        const filtered = list.filter((g) => g.id !== id);
-        localStorage.setItem('local_staff_credentials', JSON.stringify(filtered));
+        const list2: import('../types').GuestCredential[] = JSON.parse(local);
+        const filtered = list2.filter((g) => g.id !== id);
+        localStorage.setItem('local_staff_credentials_v2', JSON.stringify(filtered));
       }
     } catch (e) {}
     if (isTursoConfigured) {

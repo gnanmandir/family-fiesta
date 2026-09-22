@@ -997,8 +997,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {(activeTab === 'staff' || activeTab === 'guests') && (
           <div className="rounded-2xl bg-white border border-stone-200 p-6 shadow-xs">
             <GuestManager
+              orders={orders}
               adminRole={adminRole}
               allowEdit={isBoss || systemControls?.allowRosterEdit !== false}
+              allowOrderWipe={isBoss || systemControls?.allowOrderWipe !== false}
+              onDeleteOrder={onDeleteOrder}
+              onWipeStaffOrder={async (staff, order) => {
+                if (order?.orderNumber && onDeleteOrder) {
+                  await onDeleteOrder(order.orderNumber);
+                }
+              }}
             />
           </div>
         )}
