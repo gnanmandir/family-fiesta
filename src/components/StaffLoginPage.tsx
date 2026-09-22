@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Student, GuestCredential } from '../types';
 import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
-import { AlertCircle, User, Info, Eye, EyeOff, ShieldCheck, KeyRound, Sparkles } from 'lucide-react';
+import { AlertCircle, User, Eye, EyeOff } from 'lucide-react';
 import { api } from '../services/api';
 
 interface StaffLoginPageProps {
@@ -142,34 +142,8 @@ export const StaffLoginPage: React.FC<StaffLoginPageProps> = ({
         <img
           src={familyFiestaLogo}
           alt="Family Fiesta 2026"
-          className="w-48 sm:w-56 max-h-[180px] sm:max-h-[190px] object-contain mx-auto mb-2"
+          className="w-48 sm:w-56 max-h-[190px] sm:max-h-[200px] object-contain mx-auto mb-3 sm:mb-4"
         />
-
-        {/* Staff Portal Badge */}
-        <div className="text-center space-y-1 pb-1">
-          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-black uppercase tracking-wider">
-            <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
-            <span>Gurukul Staff Portal</span>
-          </div>
-          <p className="text-[11.5px] text-slate-500 font-medium">
-            Dedicated meal ordering for Gurukul staff & VIP guests.
-          </p>
-        </div>
-
-        {/* Orders Closed Notice Banner */}
-        {!ordersOpen && (
-          <div className="p-3.5 rounded-xl bg-amber-50/90 border border-amber-200 text-amber-900 text-xs flex items-start space-x-2.5 font-medium animate-in fade-in shadow-xs text-left">
-            <Info className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-600" />
-            <div className="space-y-1">
-              <span className="font-bold text-amber-950 block text-[12px] leading-snug">
-                🎪 Online Ordering Has Concluded for Family Fiesta 2026!
-              </span>
-              <span className="block text-amber-800 leading-relaxed text-[11px]">
-                Sign in below to download your official staff receipt.
-              </span>
-            </div>
-          </div>
-        )}
 
         {/* Login Form */}
         <form onSubmit={handleLogin} autoComplete="off" className="w-full space-y-3">
@@ -283,23 +257,6 @@ export const StaffLoginPage: React.FC<StaffLoginPageProps> = ({
             )}
           </button>
         </form>
-
-        {/* Back to Student Login / Admin Login link */}
-        <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-          <a
-            href="/"
-            className="hover:text-indigo-600 font-medium transition-colors"
-          >
-            ← Student / Parent Login
-          </a>
-          <button
-            type="button"
-            onClick={() => onAdminLogin()}
-            className="hover:text-slate-700 font-medium transition-colors cursor-pointer"
-          >
-            Admin Portal
-          </button>
-        </div>
 
       </div>
     </div>
