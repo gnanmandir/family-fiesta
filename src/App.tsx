@@ -199,13 +199,21 @@ export default function App() {
         if (st) {
           setSelectedStudent(st);
           const activeLoginRole = (localStorage.getItem('active_login_role') as import('./types').IntakePhase) || 'parent';
-          const existingOrder = cachedOrders.find(
+          let existingOrder = cachedOrders.find(
             (o) =>
               ((o.studentId && o.studentId.toLowerCase() === activeStudentId.toLowerCase()) ||
               (o.fullName && o.fullName.toLowerCase() === st.fullName.toLowerCase()) ||
               (o.studentName && o.studentName.toLowerCase() === st.fullName.toLowerCase())) &&
               (o.orderType || 'parent') === activeLoginRole
           );
+          if (!existingOrder) {
+            existingOrder = cachedOrders.find(
+              (o) =>
+                (o.studentId && o.studentId.toLowerCase() === activeStudentId.toLowerCase()) ||
+                (o.fullName && o.fullName.toLowerCase() === st.fullName.toLowerCase()) ||
+                (o.studentName && o.studentName.toLowerCase() === st.fullName.toLowerCase())
+            );
+          }
           if (existingOrder) {
             setActiveOrder(existingOrder);
             if (savedView === 'confirmation') {
@@ -333,13 +341,21 @@ export default function App() {
             setSelectedStudent(foundSt);
           }
           const activeLoginRole = (localStorage.getItem('active_login_role') as import('./types').IntakePhase) || 'parent';
-          const studentOrder = orderList.find(
+          let studentOrder = orderList.find(
             (o) =>
               ((o.studentId && o.studentId.toLowerCase() === savedStudentId.toLowerCase()) ||
               (foundSt && o.fullName && o.fullName.toLowerCase() === foundSt.fullName.toLowerCase()) ||
               (foundSt && o.studentName && o.studentName.toLowerCase() === foundSt.fullName.toLowerCase())) &&
               (o.orderType || 'parent') === activeLoginRole
           );
+          if (!studentOrder) {
+            studentOrder = orderList.find(
+              (o) =>
+                (o.studentId && o.studentId.toLowerCase() === savedStudentId.toLowerCase()) ||
+                (foundSt && o.fullName && o.fullName.toLowerCase() === foundSt.fullName.toLowerCase()) ||
+                (foundSt && o.studentName && o.studentName.toLowerCase() === foundSt.fullName.toLowerCase())
+            );
+          }
           if (studentOrder) {
             setActiveOrder(studentOrder);
             if (currentSavedView === 'confirmation') {
@@ -639,6 +655,26 @@ export default function App() {
         const onlineOrder = await api.getOrderByStudent(student.id, currentRole);
         if (onlineOrder && (onlineOrder.orderType || 'parent') === currentRole) existing = onlineOrder;
       } catch (e) {}
+    }
+
+    // Fallback across any role
+    if (!existing) {
+      existing = orders.find(
+        (o) =>
+          (o.studentId && o.studentId.toLowerCase() === student.id.toLowerCase()) ||
+          (o.fullName && o.fullName.toLowerCase() === student.fullName.toLowerCase()) ||
+          (o.studentName && o.studentName.toLowerCase() === student.fullName.toLowerCase())
+      );
+      if (!existing) {
+        const fallbackAny = getStudentExistingOrder(student.id, orders, student.fullName);
+        if (fallbackAny) existing = fallbackAny;
+      }
+      if (!existing) {
+        try {
+          const onlineOrderAny = await api.getOrderByStudent(student.id);
+          if (onlineOrderAny) existing = onlineOrderAny;
+        } catch (e) {}
+      }
     }
 
     if (existing) {
@@ -974,6 +1010,26 @@ export default function App() {
         const onlineOrder = await api.getOrderByStudent(student.id, currentRole);
         if (onlineOrder && (onlineOrder.orderType || 'parent') === currentRole) existing = onlineOrder;
       } catch (e) {}
+    }
+
+    // 3. Fallback: check across ANY role so existing order receipt is always accessible
+    if (!existing) {
+      existing = orders.find(
+        (o) =>
+          (o.studentId && o.studentId.toLowerCase() === student.id.toLowerCase()) ||
+          (o.fullName && o.fullName.toLowerCase() === student.fullName.toLowerCase()) ||
+          (o.studentName && o.studentName.toLowerCase() === student.fullName.toLowerCase())
+      );
+      if (!existing) {
+        const fallbackAny = getStudentExistingOrder(student.id, orders, student.fullName);
+        if (fallbackAny) existing = fallbackAny;
+      }
+      if (!existing) {
+        try {
+          const onlineOrderAny = await api.getOrderByStudent(student.id);
+          if (onlineOrderAny) existing = onlineOrderAny;
+        } catch (e) {}
+      }
     }
 
     if (existing) {
@@ -1351,6 +1407,7 @@ export default function App() {
           <LoginPage
             students={students}
             guests={guests}
+            orders={orders}
             onStudentLogin={handleStudentLogin}
             onAdminLogin={handleAdminLogin}
             ordersOpen={ordersOpen}

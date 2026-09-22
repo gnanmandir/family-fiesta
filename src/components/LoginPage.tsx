@@ -7,6 +7,7 @@ import { AlertCircle, User, Info, Calendar } from 'lucide-react';
 
 interface LoginPageProps {
   students: Student[];
+  orders?: Order[];
   onStudentLogin: (student: Student, role: import('../types').IntakePhase) => void;
   onAdminLogin: (role?: import('../types').AdminRole) => void;
   ordersOpen?: boolean;
@@ -16,6 +17,7 @@ interface LoginPageProps {
 
 export const LoginPage: React.FC<LoginPageProps> = ({
   students,
+  orders = [],
   guests = [],
   onStudentLogin,
   onAdminLogin,
@@ -261,58 +263,53 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         return;
       }
 
-      // 2. Phase & Order Blocking Rules
-      const isStaffRole = role === 'staff' || role === 'guest';
-      const isStaffPhase = intakePhase === 'staff' || intakePhase === 'guest';
+      // 2. Check if student/parent has an existing order (in local orders prop or database)
+      const normName = normalize(matchedStudent.fullName);
+      let existingOrder = (orders || []).find((o) => {
+        if (o.studentId && matchedStudent.id && o.studentId.toLowerCase() === matchedStudent.id.toLowerCase()) return true;
+        if (o.fullName && normalize(o.fullName) === normName) return true;
+        if (o.studentName && normalize(o.studentName) === normName) return true;
+        return false;
+      });
 
-      // Overall Orders Closed Check
-      if (!ordersOpen || intakePhase === 'closed') {
-        let hasExistingOrder = false;
+      if (!existingOrder) {
         try {
           const { api } = await import('../services/api');
-          const existing = await api.getOrderByStudent(matchedStudent.id, role);
-          if (existing) hasExistingOrder = true;
+          existingOrder = (await api.getOrderByStudent(matchedStudent.id, role)) || (await api.getOrderByStudent(matchedStudent.id));
         } catch (e) {}
-
-        if (!hasExistingOrder) {
-          setIsLoading(false);
-          setError('Online ordering is closed.');
-          return;
-        }
       }
 
-      if (intakePhase === 'parent' && role === 'student') {
-        let hasExistingStudentOrder = false;
-        try {
-          const { api } = await import('../services/api');
-          const existing = await api.getOrderByStudent(matchedStudent.id, 'student');
-          if (existing) hasExistingStudentOrder = true;
-        } catch (e) {}
+      // If they already placed an order, ALWAYS allow them to sign in
+      // so they can view their order summary and download their receipt!
+      if (!existingOrder) {
+        const isStaffPhase = intakePhase === 'staff' || intakePhase === 'guest';
 
-        if (!hasExistingStudentOrder) {
+        // Overall Orders Closed Check
+        if (!ordersOpen || intakePhase === 'closed') {
+          setIsLoading(false);
+          setError('Online ordering is closed. No prior order was found for this student.');
+          return;
+        }
+
+        // Staff Phase Restriction (only for new orders)
+        if (isStaffPhase && (role === 'parent' || role === 'student')) {
+          setIsLoading(false);
+          setError('Ordering is currently open exclusively for Gurukul Staff.');
+          return;
+        }
+
+        // Parent vs Student Phase Restrictions (only for new orders)
+        if (intakePhase === 'parent' && role === 'student') {
           setIsLoading(false);
           setError('Student ordering is not yet open.');
           return;
         }
-      }
-      if (intakePhase === 'student' && role === 'parent') {
-        let hasExistingParentOrder = false;
-        try {
-          const { api } = await import('../services/api');
-          const existing = await api.getOrderByStudent(matchedStudent.id, 'parent');
-          if (existing) hasExistingParentOrder = true;
-        } catch (e) {}
 
-        if (!hasExistingParentOrder) {
+        if (intakePhase === 'student' && role === 'parent') {
           setIsLoading(false);
-          setError('Parent ordering is closed.');
+          setError('Parent ordering has concluded.');
           return;
         }
-      }
-      if (isStaffPhase && (role === 'parent' || role === 'student')) {
-        setIsLoading(false);
-        setError('Ordering is currently open exclusively for Gurukul Staff.');
-        return;
       }
 
       // Successfully authenticated!
