@@ -93,27 +93,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         }
       });
     }
-
-    // Merge staff/guests as pseudo-students
-    if (Array.isArray(guests) && guests.length > 0) {
-      guests.forEach((g) => {
-        const name = (g as any).staffName || g.guestName;
-        const pseudoStudent: Student = {
-          id: g.id,
-          fullName: name,
-          firstName: name,
-          lastName: '',
-          parentName: 'Staff',
-          gmNo: 0,
-          grade: 'Staff',
-          birthDate: g.password, // We store the staff password here to simplify matching
-        };
-        map.set(normalize(name), pseudoStudent);
-      });
-    }
-
     return Array.from(map.values());
-  }, [students, guests]);
+  }, [students]);
 
   // Prevent browser password manager from dumping saved admin credentials into student login
   useEffect(() => {
@@ -231,16 +212,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       let isPasswordCorrect = false;
       let role: import('../types').IntakePhase = 'parent';
 
-      // Check Staff / Guest
-      if (matchedStudent.grade === 'Staff' || matchedStudent.grade === 'Guest') {
-        if (cleanPwd === effectiveBirthDate) {
-          isPasswordCorrect = true;
-          role = 'staff';
-        }
-      } else {
-        // Check Parent (Birth Date with Slashes, Dashes or Dots)
-        const dateDelimInput = inputClean.replace(/[-.]/g, '/');
-        const dateDelimExpected = effectiveBirthDate.replace(/[-.]/g, '/');
+      // Check Parent (Birth Date with Slashes, Dashes or Dots)
+      const dateDelimInput = inputClean.replace(/[-.]/g, '/');
+      const dateDelimExpected = effectiveBirthDate.replace(/[-.]/g, '/');
         if (dateDelimInput.includes('/') && dateDelimExpected) {
           if (dateDelimInput.toLowerCase() === dateDelimExpected.toLowerCase()) {
             isPasswordCorrect = true;
@@ -271,7 +245,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           isPasswordCorrect = true;
           role = 'student';
         }
-      }
 
       if (!isPasswordCorrect) {
         setIsLoading(false);
@@ -327,19 +300,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           return;
         }
       }
-      if (intakePhase === 'parent' && isStaffRole) {
-        setIsLoading(false);
-        setError('Staff ordering is not yet open.');
-        return;
-      }
-      if (intakePhase === 'student' && isStaffRole) {
-        setIsLoading(false);
-        setError('Staff ordering is not yet open.');
-        return;
-      }
       if (isStaffPhase && (role === 'parent' || role === 'student')) {
         setIsLoading(false);
-        setError('Parent/Student ordering is now closed. Currently open for Staff.');
+        setError('Ordering is currently open exclusively for Gurukul Staff.');
         return;
       }
 

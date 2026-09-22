@@ -44,13 +44,14 @@ import { AlreadySubmittedView } from './components/AlreadySubmittedView';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { AdminLoginModal } from './components/admin/AdminLoginModal';
 import { LoginPage } from './components/LoginPage';
+import { StaffLoginPage } from './components/StaffLoginPage';
 import { calculateAllowedBudget } from './utils/budget';
 import { evaluateSchedule, isScheduleDone, DEFAULT_SCHEDULE } from './utils/schedule';
 
 export default function App() {
   // Navigation & Core States
   const [currentView, setCurrentView] = useState<
-    'login' | 'home' | 'menu' | 'confirmation' | 'submitted' | 'admin'
+    'login' | 'staff-login' | 'home' | 'menu' | 'confirmation' | 'submitted' | 'admin'
   >(() => {
     const savedAdminToken = localStorage.getItem('admin_token');
     const savedView = localStorage.getItem('app_current_view') as any;
@@ -59,6 +60,8 @@ export default function App() {
     if (activeStudent && savedView && ['home', 'menu', 'confirmation', 'submitted'].includes(savedView)) {
       return savedView;
     }
+    const isStaff = typeof window !== 'undefined' && (window.location.hash === '#staff' || window.location.pathname === '/staff');
+    if (isStaff && !activeStudent) return 'staff-login';
     return activeStudent ? 'home' : 'login';
   });
 
@@ -221,14 +224,36 @@ export default function App() {
         } else {
           setSelectedStudent(null);
           setActiveOrder(null);
-          setCurrentView('login');
+          const isStaff = typeof window !== 'undefined' && (window.location.hash === '#staff' || window.location.pathname === '/staff');
+          setCurrentView(isStaff ? 'staff-login' : 'login');
         }
       } else if (!activeStudentId) {
         setSelectedStudent(null);
         setActiveOrder(null);
-        setCurrentView('login');
+        const isStaff = typeof window !== 'undefined' && (window.location.hash === '#staff' || window.location.pathname === '/staff');
+        setCurrentView(isStaff ? 'staff-login' : 'login');
       }
     }
+
+    // Listen to URL hash changes for direct link navigation (e.g. #staff)
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      const isStaff = hash === '#staff' || window.location.pathname === '/staff';
+      const activeStudent = localStorage.getItem('active_student_id');
+      const activeRole = localStorage.getItem('active_login_role');
+      const savedAdminToken = localStorage.getItem('admin_token');
+
+      if (savedAdminToken) return;
+
+      if (isStaff) {
+        if (!activeStudent || activeRole !== 'staff') {
+          setCurrentView('staff-login');
+        }
+      } else if (hash === '#login' || (!hash && !activeStudent)) {
+        setCurrentView('login');
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
 
     // Asynchronously fetch fresh data from backend
     const loadBackendData = async () => {
@@ -248,6 +273,24 @@ export default function App() {
         setGuests(guestsList);
         setMenuItems(menuList);
         setOrders(orderList);
+
+        // If staff member was logged in, ensure their Student object is populated
+        const activeStudentId = localStorage.getItem('active_student_id');
+        const activeLoginRole = localStorage.getItem('active_login_role');
+        if (activeStudentId && activeLoginRole === 'staff' && !selectedStudent) {
+          const g = guestsList.find((x) => x.id === activeStudentId);
+          if (g) {
+            setSelectedStudent({
+              id: g.id,
+              fullName: g.guestName,
+              firstName: g.guestName.split(' ')[0],
+              lastName: g.guestName.split(' ').slice(1).join(' '),
+              parentName: 'Gurukul Staff',
+              gmNo: 0,
+              grade: 'Staff',
+            });
+          }
+        }
         setIntakePhase(currentPhase);
         if (controls) setSystemControls(controls);
         if (allTiers?.parent) localStorage.setItem('app_parent_tiers', JSON.stringify(allTiers.parent));
@@ -938,6 +981,7 @@ export default function App() {
   };
 
   const handleSignOut = () => {
+    const wasStaff = activeRole === 'staff' || (typeof window !== 'undefined' && window.location.hash === '#staff');
     localStorage.removeItem('active_student_id');
     localStorage.removeItem('jusso_device_order_v6');
     localStorage.removeItem('admin_token');
@@ -954,7 +998,17 @@ export default function App() {
     setAdminRole(null);
     setCart([]);
     setIsEditingOrder(false);
-    setCurrentView('login');
+    if (wasStaff) {
+      setCurrentView('staff-login');
+      if (window.location.hash !== '#staff') {
+        window.location.hash = '#staff';
+      }
+    } else {
+      setCurrentView('login');
+      if (window.location.hash) {
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+    }
   };
 
   // Admin Actions
@@ -1218,11 +1272,11 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-500/20 selection:text-slate-900 relative overflow-x-hidden">
 
       {/* Header - shown on main screens, hidden on login and admin */}
-      {currentView !== 'admin' && currentView !== 'login' && (
+      {currentView !== 'admin' && currentView !== 'login' && currentView !== 'staff-login' && (
         <Header
           currentView={currentView}
           onNavigateHome={() => {
-            if (currentView !== 'submitted' && currentView !== 'login') {
+            if (currentView !== 'submitted' && currentView !== 'login' && currentView !== 'staff-login') {
               setCurrentView('home');
             }
           }}
@@ -1256,6 +1310,14 @@ export default function App() {
             onAdminLogin={handleAdminLogin}
             ordersOpen={ordersOpen}
             intakePhase={intakePhase}
+          />
+        )}
+
+        {currentView === 'staff-login' && (
+          <StaffLoginPage
+            onStaffLogin={handleStudentLogin}
+            onAdminLogin={handleAdminLogin}
+            ordersOpen={ordersOpen}
           />
         )}
 
