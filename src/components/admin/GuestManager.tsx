@@ -270,7 +270,7 @@ export const GuestManager: React.FC<GuestManagerProps> = ({
             </div>
             <div>
               <h2 className="text-xl font-black tracking-tight text-slate-900">
-                Staff Roster & Meal Orders
+                Staff Order
               </h2>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
                 Manage credentials, monitor order placement status, and oversee dining vouchers.
@@ -295,7 +295,7 @@ export const GuestManager: React.FC<GuestManagerProps> = ({
       </div>
 
       {/* 2. KPI Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
         <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs">
           <span className="text-xs font-semibold text-slate-500 block">Total Staff</span>
           <div className="flex items-baseline space-x-2 mt-1">
@@ -319,17 +319,6 @@ export const GuestManager: React.FC<GuestManagerProps> = ({
           <div className="flex items-baseline space-x-2 mt-1">
             <span className="text-2xl font-black text-amber-800">{stats.remaining}</span>
             <span className="text-[11px] font-bold text-amber-700">pending</span>
-          </div>
-        </div>
-
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs">
-          <span className="text-xs font-semibold text-slate-500 block">Kitchen Progress</span>
-          <div className="flex items-center space-x-2 mt-2 text-[11px] font-bold">
-            <span className="text-amber-600" title="Pending">{stats.pending}P</span>
-            <span className="text-slate-300">•</span>
-            <span className="text-sky-600" title="Preparing">{stats.preparing}Prep</span>
-            <span className="text-slate-300">•</span>
-            <span className="text-emerald-600" title="Delivered">{stats.completed}Done</span>
           </div>
         </div>
       </div>
@@ -396,7 +385,7 @@ export const GuestManager: React.FC<GuestManagerProps> = ({
       <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
         {isLoading ? (
           <div className="text-center py-16 text-slate-400 text-xs">
-            Loading staff roster and order statuses...
+            Loading staff orders and statuses...
           </div>
         ) : filteredGuests.length === 0 ? (
           <div className="text-center py-16 space-y-2">
