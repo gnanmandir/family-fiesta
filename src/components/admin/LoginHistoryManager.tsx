@@ -47,6 +47,59 @@ function formatRelativeTime(isoString: string): string {
   return `${Math.floor(diffSec / 86400)} days ago`;
 }
 
+function formatDetailsTextWithIST(text?: string): string {
+  if (!text) return '';
+  return text.replace(/\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?\b/g, (match) => {
+    try {
+      const d = new Date(match);
+      if (!isNaN(d.getTime())) {
+        return (
+          d.toLocaleString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true,
+          }) + ' IST'
+        );
+      }
+    } catch (e) {}
+    return match;
+  });
+}
+
+function getISTDateDisplay(timestamp?: string, fallback?: string): string {
+  if (timestamp) {
+    const d = new Date(timestamp);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      });
+    }
+  }
+  return fallback || '';
+}
+
+function getISTTimeDisplay(timestamp?: string, fallback?: string): string {
+  if (timestamp) {
+    const d = new Date(timestamp);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleTimeString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      });
+    }
+  }
+  return fallback || '';
+}
+
 export const LoginHistoryManager: React.FC = () => {
   const [activeSubTab, setActiveSubTab] = useState<'activities' | 'logins'>('activities');
   
@@ -666,7 +719,7 @@ export const LoginHistoryManager: React.FC = () => {
                       {/* Details */}
                       <td className="py-3.5 px-4 sm:px-6 max-w-xs sm:max-w-md">
                         <div className="text-xs text-slate-700 font-medium leading-relaxed">
-                          {act.details || 'No additional details logged.'}
+                          {formatDetailsTextWithIST(act.details) || 'No additional details logged.'}
                         </div>
                       </td>
 
@@ -675,11 +728,12 @@ export const LoginHistoryManager: React.FC = () => {
                         <div className="space-y-0.5">
                           <div className="flex items-center space-x-1.5 font-bold text-slate-800">
                             <Calendar className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                            <span>{act.dateDisplay}</span>
+                            <span>{getISTDateDisplay(act.timestamp, act.dateDisplay)}</span>
                           </div>
                           <div className="flex items-center space-x-1.5 text-slate-500 font-mono text-[11px]">
                             <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <span>{act.timeDisplay}</span>
+                            <span>{getISTTimeDisplay(act.timestamp, act.timeDisplay)}</span>
+                            <span className="px-1 py-0.2 rounded text-[9px] font-bold bg-slate-100 text-slate-600 border border-slate-200">IST</span>
                             <span className="text-slate-400">•</span>
                             <span className="text-indigo-600 font-sans font-bold">
                               {formatRelativeTime(act.timestamp)}
@@ -757,11 +811,12 @@ export const LoginHistoryManager: React.FC = () => {
                         <div className="space-y-0.5">
                           <div className="flex items-center space-x-1.5 font-bold text-slate-800">
                             <Calendar className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                            <span>{item.dateDisplay}</span>
+                            <span>{getISTDateDisplay(item.timestamp, item.dateDisplay)}</span>
                           </div>
                           <div className="flex items-center space-x-1.5 text-slate-500 font-mono text-[11px]">
                             <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <span>{item.timeDisplay}</span>
+                            <span>{getISTTimeDisplay(item.timestamp, item.timeDisplay)}</span>
+                            <span className="px-1 py-0.2 rounded text-[9px] font-bold bg-slate-100 text-slate-600 border border-slate-200">IST</span>
                           </div>
                         </div>
                       </td>

@@ -875,11 +875,13 @@ export const tursoService = {
     const now = new Date();
     const id = `login_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const dateDisplay = now.toLocaleDateString('en-IN', {
+      timeZone: 'Asia/Kolkata',
       day: 'numeric',
       month: 'short',
       year: 'numeric',
     });
     const timeDisplay = now.toLocaleTimeString('en-IN', {
+      timeZone: 'Asia/Kolkata',
       hour: '2-digit',
       minute: '2-digit',
       hour12: true,
@@ -1022,8 +1024,8 @@ export const tursoService = {
       title,
       details,
       timestamp: now.toISOString(),
-      dateDisplay: now.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
-      timeDisplay: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),
+      dateDisplay: now.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' }),
+      timeDisplay: now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true }),
       userAgent: ua,
       device: parseDeviceFromUserAgent(ua),
     };

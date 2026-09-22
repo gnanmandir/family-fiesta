@@ -603,8 +603,8 @@ export const api = {
       role,
       username,
       timestamp: now.toISOString(),
-      dateDisplay: now.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
-      timeDisplay: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),
+      dateDisplay: now.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' }),
+      timeDisplay: now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true }),
       userAgent: ua,
     };
     try {
@@ -685,8 +685,8 @@ export const api = {
       title,
       details,
       timestamp: now.toISOString(),
-      dateDisplay: now.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
-      timeDisplay: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),
+      dateDisplay: now.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' }),
+      timeDisplay: now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true }),
       userAgent: ua,
       device: typeof navigator !== 'undefined' ? (await import('./turso')).parseDeviceFromUserAgent(ua) : 'Browser',
     };

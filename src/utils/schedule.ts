@@ -162,21 +162,45 @@ export function evaluateSchedule(
 }
 
 /**
- * Formats an ISO or datetime-local string to readable human text: e.g. "Fri, 18 Sep, 09:00 AM"
+ * Formats an ISO or datetime-local string to readable human text in IST: e.g. "Fri, 18 Sep, 09:00 AM IST"
  */
 export function formatScheduleDisplay(dateTimeStr: string): string {
   if (!dateTimeStr) return '';
   const d = new Date(dateTimeStr);
   if (isNaN(d.getTime())) return dateTimeStr;
 
-  return d.toLocaleString('en-IN', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
+  return (
+    d.toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    }) + ' IST'
+  );
+}
+
+/**
+ * Formats an ISO string or Date into readable IST representation: e.g. "22 Sep 2026, 09:18 AM IST"
+ */
+export function formatISTDateTime(dateTimeStr: string | Date | null | undefined): string {
+  if (!dateTimeStr) return '';
+  const d = typeof dateTimeStr === 'string' ? new Date(dateTimeStr) : dateTimeStr;
+  if (isNaN(d.getTime())) return String(dateTimeStr);
+
+  return (
+    d.toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    }) + ' IST'
+  );
 }
 
 /**

@@ -46,7 +46,7 @@ import { AdminLoginModal } from './components/admin/AdminLoginModal';
 import { LoginPage } from './components/LoginPage';
 import { StaffLoginPage } from './components/StaffLoginPage';
 import { calculateAllowedBudget } from './utils/budget';
-import { evaluateSchedule, isScheduleDone, DEFAULT_SCHEDULE } from './utils/schedule';
+import { evaluateSchedule, isScheduleDone, DEFAULT_SCHEDULE, formatISTDateTime } from './utils/schedule';
 
 export default function App() {
   // Navigation & Core States
@@ -561,8 +561,8 @@ export default function App() {
             shouldHalt ? 'schedule_halt' : 'schedule_open',
             shouldHalt ? 'Ordering Auto-Halted by Schedule' : 'Ordering Auto-Opened by Schedule',
             shouldHalt
-              ? `Automated schedule reached end time (${orderSchedule.endTime}) and ordering was closed.`
-              : `Automated schedule reached start time (${orderSchedule.startTime}) and ordering was opened.`,
+              ? `Automated schedule reached end time (${formatISTDateTime(orderSchedule.endTime)}) and ordering was closed.`
+              : `Automated schedule reached start time (${formatISTDateTime(orderSchedule.startTime)}) and ordering was opened.`,
             adminRole || 'admin'
           ).catch(() => {});
         } catch (e) {
@@ -833,11 +833,13 @@ export default function App() {
     if (existingToUpdate) {
       const now = new Date();
       const newDateDisplay = now.toLocaleDateString('en-IN', {
+        timeZone: 'Asia/Kolkata',
         day: 'numeric',
         month: 'short',
         year: 'numeric',
       });
       const newTimeDisplay = now.toLocaleTimeString('en-IN', {
+        timeZone: 'Asia/Kolkata',
         hour: '2-digit',
         minute: '2-digit',
       });
@@ -885,11 +887,13 @@ export default function App() {
       status: 'Pending',
       createdAt: now.toISOString(),
       dateDisplay: now.toLocaleDateString('en-IN', {
+        timeZone: 'Asia/Kolkata',
         day: 'numeric',
         month: 'short',
         year: 'numeric',
       }),
       timeDisplay: now.toLocaleTimeString('en-IN', {
+        timeZone: 'Asia/Kolkata',
         hour: '2-digit',
         minute: '2-digit',
       }),
@@ -1292,7 +1296,13 @@ export default function App() {
         'schedule_change',
         newSchedule.enabled ? 'Updated Ordering Schedule' : 'Turned Off Ordering Schedule',
         newSchedule.enabled
-          ? `Automated intake schedule enabled from ${newSchedule.startTime} to ${newSchedule.endTime}`
+          ? `Automated intake schedule enabled ${
+              newSchedule.startTime && newSchedule.endTime
+                ? `from ${formatISTDateTime(newSchedule.startTime)} to ${formatISTDateTime(newSchedule.endTime)}`
+                : newSchedule.endTime
+                ? `until ${formatISTDateTime(newSchedule.endTime)}`
+                : `from ${formatISTDateTime(newSchedule.startTime)} onwards`
+            }`
           : 'Automated intake schedule disabled / turned off',
         adminRole || 'admin'
       ).catch(() => {});
