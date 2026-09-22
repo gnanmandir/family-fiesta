@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { GuestCredential, Order, AdminRole } from '../../types';
 import { api } from '../../services/api';
+import { INITIAL_STAFF } from '../../data/staff';
 import {
   Plus,
   Trash2,
@@ -21,6 +22,7 @@ import {
 } from 'lucide-react';
 
 interface GuestManagerProps {
+  initialGuests?: GuestCredential[];
   orders?: Order[];
   adminRole?: AdminRole;
   allowEdit?: boolean;
@@ -29,7 +31,57 @@ interface GuestManagerProps {
   onWipeStaffOrder?: (staff: GuestCredential, order?: Order) => Promise<void> | void;
 }
 
+const getInitialStaffList = (fallbackList?: GuestCredential[]): GuestCredential[] => {
+  if (fallbackList && fallbackList.length > 0) return fallbackList;
+  try {
+    let deletedStaff: any[] = [];
+    try {
+      const raw = localStorage.getItem('family_fiesta_deleted_staff_v1');
+      if (raw) deletedStaff = JSON.parse(raw);
+    } catch (e) {}
+
+    const isDeleted = (id: string, name?: string) => {
+      const cleanId = (id || '').toLowerCase().trim();
+      const normName = (name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      return deletedStaff.some((d: any) => {
+        if (typeof d === 'string') {
+          return d.toLowerCase().trim() === cleanId || (normName && d.toLowerCase().replace(/[^a-z0-9]/g, '') === normName);
+        }
+        if (d && typeof d === 'object') {
+          if (cleanId && d.id && d.id.toLowerCase().trim() === cleanId) return true;
+          if (normName && d.normalizedName && d.normalizedName === normName) return true;
+        }
+        return false;
+      });
+    };
+
+    const staffMap = new Map<string, GuestCredential>();
+    INITIAL_STAFF.forEach((s) => {
+      if (!isDeleted(s.id, s.guestName)) {
+        staffMap.set(s.id, s);
+      }
+    });
+
+    try {
+      const local = localStorage.getItem('local_staff_credentials_v2');
+      if (local) {
+        const parsed: GuestCredential[] = JSON.parse(local);
+        parsed.forEach((p) => {
+          if (!isDeleted(p.id, p.guestName)) {
+            staffMap.set(p.id, { ...(staffMap.get(p.id) || {}), ...p });
+          }
+        });
+      }
+    } catch (e) {}
+
+    return Array.from(staffMap.values());
+  } catch (e) {
+    return INITIAL_STAFF;
+  }
+};
+
 export const GuestManager: React.FC<GuestManagerProps> = ({
+  initialGuests,
   orders = [],
   adminRole = 'admin',
   allowEdit = true,
@@ -41,10 +93,17 @@ export const GuestManager: React.FC<GuestManagerProps> = ({
   const canEdit = isBoss || allowEdit;
   const canWipe = isBoss || allowOrderWipe;
 
-  const [guests, setGuests] = useState<GuestCredential[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [guests, setGuests] = useState<GuestCredential[]>(() => getInitialStaffList(initialGuests));
+  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'All' | 'Ordered' | 'Remaining'>('All');
+
+  // Sync if initialGuests prop updates
+  useEffect(() => {
+    if (initialGuests && initialGuests.length > 0) {
+      setGuests(initialGuests);
+    }
+  }, [initialGuests]);
 
   // Add Modal
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -70,10 +129,11 @@ export const GuestManager: React.FC<GuestManagerProps> = ({
   const normalize = (val: string) => (val || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
   const fetchGuests = async () => {
-    setIsLoading(true);
     try {
       const list = await api.getGuests();
-      setGuests(list);
+      if (list && list.length > 0) {
+        setGuests(list);
+      }
     } catch (e) {
       console.warn('Failed to load guests:', e);
     } finally {
@@ -353,13 +413,7 @@ export const GuestManager: React.FC<GuestManagerProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100 text-stone-700">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={8} className="text-center py-16 text-stone-400 text-xs">
-                    Loading staff orders and statuses...
-                  </td>
-                </tr>
-              ) : filteredGuests.length > 0 ? (
+              {filteredGuests.length > 0 ? (
                 filteredGuests.map((staff, idx) => {
                   const ord = getStaffOrder(staff);
                   const isOrdered = Boolean(ord);

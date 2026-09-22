@@ -1419,6 +1419,7 @@ export default function App() {
           <AdminDashboard
             orders={orders}
             students={students}
+            guests={guests}
             menuItems={menuItems}
             adminRole={adminRole || 'admin'}
             systemControls={systemControls}

@@ -49,6 +49,7 @@ import { api } from '../../services/api';
 interface AdminDashboardProps {
   orders: Order[];
   students: Student[];
+  guests?: import('../../types').GuestCredential[];
   menuItems: FoodItem[];
   adminRole?: import('../../types').AdminRole;
   systemControls?: import('../../types').SystemControls;
@@ -511,6 +512,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   orders,
   students,
+  guests,
   menuItems,
   adminRole = 'admin',
   systemControls,
@@ -997,6 +999,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {(activeTab === 'staff' || activeTab === 'guests') && (
           <div className="rounded-2xl bg-white border border-stone-200 p-6 shadow-xs">
             <GuestManager
+              initialGuests={guests}
               orders={orders}
               adminRole={adminRole}
               allowEdit={isBoss || systemControls?.allowRosterEdit !== false}
