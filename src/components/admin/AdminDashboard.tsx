@@ -1025,76 +1025,69 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {/* Tab 5: System Controls */}
         {activeTab === 'settings' && isSuper && (
-          <div className="space-y-8 animate-in fade-in duration-200">
+          <div className="max-w-5xl space-y-6 animate-in fade-in duration-150">
             
-            {/* Header Banner */}
-            <div className="relative overflow-hidden bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-xs">
-              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-amber-500" />
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="flex items-center space-x-3 min-w-0">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-500/25 flex items-center justify-center shrink-0">
-                    <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6" />
-                  </div>
-                  <div className="min-w-0">
-                    <h2 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight truncate">
-                      System Controls
-                    </h2>
-                    <p className="text-slate-500 text-xs sm:text-sm font-medium truncate">
-                      Live portal intake, database resets, and access credentials.
-                    </p>
-                  </div>
-                </div>
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-slate-200">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                  System Controls
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                  Manage live ordering availability, intake phases, security credentials, and database resets.
+                </p>
+              </div>
 
-                <div className="flex items-center shrink-0">
-                  <span className="px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-900 border border-indigo-200/80 text-[11px] sm:text-xs font-bold inline-flex items-center space-x-1.5 shadow-2xs">
-                    <Crown className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                    <span>Super Admin Authorized</span>
-                  </span>
-                </div>
+              <div className="flex items-center shrink-0">
+                <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold inline-flex items-center space-x-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Super Admin Authorized</span>
+                </span>
               </div>
             </div>
 
-            {/* SECTION 1: Festival Operations & Live Controls */}
+            {/* SECTION 1: Portal & Intake Operations */}
             <div className="space-y-3">
-              <div className="flex items-center space-x-2.5 px-0.5">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200/60 flex items-center justify-center shadow-2xs shrink-0">
-                  <Power className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                </div>
-                <h3 className="text-sm font-bold text-slate-900">Festival Operations</h3>
+              <div className="flex items-center space-x-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Portal Operations
+                </h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                {/* Card 0: Master Intake Phase Switch */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Card 0: Intake Phase */}
                 {onSetIntakePhase && (
-                  <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs hover:shadow-md transition-all p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden">
-                    <div className={`absolute top-0 inset-x-0 h-1.5 ${
-                      intakePhase === 'parent' ? 'bg-gradient-to-r from-blue-500 to-indigo-500' :
-                      intakePhase === 'student' ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500' :
-                      (intakePhase === 'guest' || intakePhase === 'staff') ? 'bg-gradient-to-r from-amber-500 to-orange-500' :
-                      'bg-gradient-to-r from-slate-500 to-gray-500'
-                    }`} />
-                    
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 flex flex-col justify-between shadow-2xs">
                     <div className="space-y-3">
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center space-x-2.5 min-w-0">
-                          <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 shadow-2xs border bg-slate-50 text-slate-700 border-slate-200`}>
-                            <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
+                          <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
+                            <Settings className="w-4 h-4" />
                           </div>
-                          <h4 className="text-sm sm:text-base font-bold text-slate-900 truncate">
-                            Intake Phase
-                          </h4>
+                          <div>
+                            <h4 className="text-sm font-semibold text-slate-900 truncate">
+                              Intake Phase
+                            </h4>
+                            <p className="text-xs text-slate-500">
+                              Active login and ordering group
+                            </p>
+                          </div>
                         </div>
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10.5px] sm:text-[11px] font-bold shadow-2xs shrink-0 bg-slate-50 text-slate-700 border border-slate-200 uppercase tracking-wide">
+
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200 uppercase tracking-wide shrink-0">
                           {intakePhase === 'guest' ? 'staff' : intakePhase}
                         </span>
                       </div>
-                      
-                      <div className="bg-slate-50/90 border border-slate-200/80 rounded-xl px-3 py-2.5 text-xs text-slate-600 font-medium">
-                        Controls who can login and place orders. Other roles will be read-only.
-                      </div>
+
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        Determines which user role is currently allowed to log in and submit orders. Other roles are restricted to read-only mode.
+                      </p>
                     </div>
-                    
-                    <div className={`pt-3.5 mt-4 border-t border-slate-100/80 ${(!isBoss && systemControls?.allowPhaseChange === false) ? 'opacity-40 cursor-not-allowed pointer-events-none select-none' : ''}`}>
+
+                    <div className={`pt-4 mt-4 border-t border-slate-100 ${(!isBoss && systemControls?.allowPhaseChange === false) ? 'opacity-40 cursor-not-allowed pointer-events-none select-none' : ''}`}>
+                      <label className="block text-[11px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">
+                        Select Active Phase
+                      </label>
                       <select
                         disabled={!isBoss && systemControls?.allowPhaseChange === false}
                         value={intakePhase === 'guest' ? 'staff' : intakePhase}
@@ -1108,7 +1101,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             'Confirm Phase Change'
                           );
                         }}
-                        className={`w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs sm:text-sm rounded-xl px-3 py-2 sm:py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-bold outline-none ${
+                        className={`w-full bg-slate-50 hover:bg-slate-100/80 border border-slate-200 text-slate-900 text-xs sm:text-sm rounded-lg px-3 py-2 font-medium focus:ring-2 focus:ring-slate-900 focus:border-slate-900 outline-none transition-colors ${
                           (!isBoss && systemControls?.allowPhaseChange === false) ? 'cursor-not-allowed' : 'cursor-pointer'
                         }`}
                       >
@@ -1120,47 +1113,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
                   </div>
                 )}
-                
-                {/* Card 1: Master Ordering Switch & Automated Calendar Schedule */}
-                {onToggleOrdering && (
-                  <div className={`bg-white border rounded-2xl shadow-xs hover:shadow-md transition-all p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden ${
-                    ordersOpen ? 'border-emerald-200/90' : 'border-rose-200/90'
-                  }`}>
-                    <div className={`absolute top-0 inset-x-0 h-1.5 ${
-                      ordersOpen ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 'bg-gradient-to-r from-rose-500 to-red-500'
-                    }`} />
 
+                {/* Card 1: Food Ordering Portal */}
+                {onToggleOrdering && (
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 flex flex-col justify-between shadow-2xs">
                     <div className="space-y-3">
-                      {/* Header row: Icon + Title on left, Status Badge on right */}
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center space-x-2.5 min-w-0">
-                          <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 shadow-2xs border ${
-                            ordersOpen
-                              ? 'bg-emerald-50 text-emerald-600 border-emerald-200/80'
-                              : 'bg-rose-50 text-rose-600 border-rose-200/80'
-                          }`}>
-                            <Power className="w-4 h-4 sm:w-5 sm:h-5" />
+                          <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
+                            <Power className="w-4 h-4" />
                           </div>
-                          <h4 className="text-sm sm:text-base font-bold text-slate-900 truncate">
-                            Food Ordering Portal
-                          </h4>
+                          <div>
+                            <h4 className="text-sm font-semibold text-slate-900 truncate">
+                              Ordering Portal
+                            </h4>
+                            <p className="text-xs text-slate-500">
+                              Acceptance of new orders
+                            </p>
+                          </div>
                         </div>
 
-                        <span className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[10.5px] sm:text-[11px] font-bold shadow-2xs shrink-0 ${
+                        <span className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold shrink-0 ${
                           ordersOpen
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/90'
-                            : 'bg-rose-50 text-rose-700 border border-rose-200/90'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80'
+                            : 'bg-slate-100 text-slate-600 border border-slate-200'
                         }`}>
-                          <span className={`w-2 h-2 rounded-full ${ordersOpen ? 'bg-emerald-500 animate-pulse ring-4 ring-emerald-500/20' : 'bg-rose-500'}`} />
-                          <span>{ordersOpen ? 'Active' : 'Halted'}</span>
+                          <span className={`w-1.5 h-1.5 rounded-full ${ordersOpen ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                          <span>{ordersOpen ? 'Accepting Orders' : 'Ordering Halted'}</span>
                         </span>
                       </div>
 
-                      {/* Schedule status strip */}
-                      <div className="bg-slate-50/90 border border-slate-200/80 rounded-xl px-3 py-2.5 flex items-center justify-between text-xs">
+                      {/* Schedule status banner */}
+                      <div className="bg-slate-50 border border-slate-200/70 rounded-lg px-3 py-2 flex items-center justify-between text-xs">
                         <div className="flex items-center space-x-2 min-w-0">
-                          <Calendar className={`w-4 h-4 shrink-0 ${isScheduleActuallyActive ? 'text-indigo-600' : 'text-slate-400'}`} />
-                          <span className="font-semibold text-slate-800 truncate text-[11.5px] sm:text-xs">
+                          <Calendar className={`w-3.5 h-3.5 shrink-0 ${isScheduleActuallyActive ? 'text-slate-700' : 'text-slate-400'}`} />
+                          <span className="font-medium text-slate-700 truncate text-[11.5px]">
                             {isScheduleActuallyActive && orderSchedule ? (
                               !orderSchedule.startTime && orderSchedule.endTime
                                 ? `Auto-Halts: ${formatScheduleDisplay(orderSchedule.endTime)}`
@@ -1172,18 +1159,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             )}
                           </span>
                         </div>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${
-                          isScheduleActuallyActive
-                            ? 'bg-indigo-50 text-indigo-700 border-indigo-200/90'
-                            : 'bg-white text-slate-500 border-slate-200'
-                        }`}>
+                        <span className="text-[10px] font-semibold text-slate-500 shrink-0">
                           {isScheduleActuallyActive ? 'Scheduled' : 'Manual'}
                         </span>
                       </div>
                     </div>
 
-                    {/* Action buttons: 2-column grid on mobile, flex on desktop */}
-                    <div className={`pt-3.5 mt-4 border-t border-slate-100 grid grid-cols-2 sm:flex sm:items-center sm:justify-between gap-2 ${
+                    {/* Action buttons */}
+                    <div className={`pt-4 mt-4 border-t border-slate-100 flex items-center justify-between gap-2.5 ${
                       (!isBoss && systemControls?.allowOrderPortal === false) ? 'opacity-40 cursor-not-allowed pointer-events-none select-none' : ''
                     }`}>
                       <button
@@ -1200,16 +1183,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           }
                           setIsScheduleModalOpen(true);
                         }}
-                        className={`px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center justify-center space-x-1.5 active:scale-95 border ${
+                        className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center space-x-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 active:scale-98 ${
                           (!isBoss && systemControls?.allowOrderPortal === false) ? 'cursor-not-allowed' : 'cursor-pointer'
-                        } ${
-                          isScheduleActuallyActive
-                            ? 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200/90 shadow-xs'
-                            : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
                         }`}
                       >
-                        <Calendar className="w-3.5 h-3.5 text-indigo-600" />
-                        <span>{isScheduleActuallyActive ? 'Edit' : 'Schedule'}</span>
+                        <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                        <span>{isScheduleActuallyActive ? 'Edit Schedule' : 'Set Schedule'}</span>
                       </button>
 
                       <button
@@ -1231,263 +1210,61 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             newState ? 'Resume Ordering' : 'Halt Ordering'
                           );
                         }}
-                        className={`px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center justify-center space-x-1.5 active:scale-95 ${
+                        className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center space-x-1.5 active:scale-98 ${
                           (!isBoss && systemControls?.allowOrderPortal === false) ? 'cursor-not-allowed' : 'cursor-pointer'
                         } ${
                           ordersOpen
-                            ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 hover:border-rose-300'
-                            : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/25'
+                            ? 'bg-white hover:bg-rose-50 text-rose-600 border border-rose-200'
+                            : 'bg-slate-900 hover:bg-slate-800 text-white'
                         }`}
                       >
                         <Power className="w-3.5 h-3.5" />
-                        <span>{ordersOpen ? 'Halt' : 'Re-Open'}</span>
-                        <span className="hidden sm:inline"> Ordering</span>
+                        <span>{ordersOpen ? 'Halt Ordering' : 'Resume Ordering'}</span>
                       </button>
                     </div>
                   </div>
                 )}
               </div>
+            </div>
 
-              {/* Card 2: Wipe Order Register (Danger Zone - Full Width) */}
-              <div className={`bg-gradient-to-b from-white via-white to-rose-50/25 border border-rose-200/90 rounded-2xl shadow-xs hover:shadow-md transition-all p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden ${
-                (!isBoss && systemControls?.allowOrderWipe === false) ? 'opacity-40 cursor-not-allowed pointer-events-none select-none' : ''
-              }`}>
-                  <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-rose-500 to-red-600" />
+            {/* SECTION 2: Access & Credentials */}
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Security & Access
+                </h3>
+              </div>
 
-                  <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Card 2: Account Credentials */}
+                <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 flex flex-col justify-between shadow-2xs">
+                  <div className="space-y-2.5">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center space-x-2.5 min-w-0">
-                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-rose-50 text-rose-600 border border-rose-200/80 flex items-center justify-center shrink-0 shadow-2xs">
-                          <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 text-rose-600" />
+                        <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
+                          <KeyRound className="w-4 h-4" />
                         </div>
                         <div>
-                          <h4 className="text-sm sm:text-base font-bold text-slate-900 truncate">
-                            Wipe Order Register
+                          <h4 className="text-sm font-semibold text-slate-900 truncate">
+                            Account Credentials
                           </h4>
-                          <p className="text-[11px] text-slate-500 font-medium">
-                            Select a category to wipe individually, or wipe all orders.
+                          <p className="text-xs text-slate-500">
+                            Super Admin & Stall Operator Logins
                           </p>
                         </div>
                       </div>
 
-                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10px] sm:text-[10.5px] font-bold tracking-wide uppercase bg-rose-100 text-rose-800 border border-rose-200/80 shadow-2xs shrink-0">
-                        <AlertTriangle className="w-3 h-3 text-rose-600" />
-                        <span>Requires Auth</span>
+                      <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200 shrink-0">
+                        Admin Roles
                       </span>
                     </div>
 
-                    <div className="bg-rose-50/80 border border-rose-200/80 rounded-xl px-3 py-2 flex items-center space-x-2 text-rose-900">
-                      <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-                      <p className="text-xs font-medium leading-tight">
-                        Wiping clears selected orders and releases device locks for that category.
-                      </p>
-                    </div>
-
-                    {/* Individual Category Wipe Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
-                      {/* Parent Orders Wipe */}
-                      <div className="p-3 rounded-xl border border-rose-100 bg-white shadow-2xs flex flex-col justify-between space-y-2">
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-900">Parent Orders</span>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                              {parentOrdersCount}
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-slate-500 mt-0.5">Family & parent meal orders</p>
-                        </div>
-                        <button
-                          type="button"
-                          disabled={parentOrdersCount === 0 || (!isBoss && systemControls?.allowOrderWipe === false)}
-                          onClick={() => {
-                            openProtectedAction(
-                              'Permanently Wipe Parent Orders',
-                              `CRITICAL WARNING: This will permanently delete all ${parentOrdersCount} parent orders and release their device locks. Student and Staff orders will NOT be touched. Enter system password to proceed.`,
-                              async () => {
-                                if (onClearOrdersByRole) {
-                                  await onClearOrdersByRole('parent');
-                                } else {
-                                  await onClearAllOrders();
-                                }
-                                alert('Parent orders wiped successfully!');
-                              },
-                              true,
-                              'Wipe Parent Orders'
-                            );
-                          }}
-                          className={`w-full py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all ${
-                            parentOrdersCount === 0 || (!isBoss && systemControls?.allowOrderWipe === false)
-                              ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                              : 'bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 hover:border-rose-600 cursor-pointer active:scale-95'
-                          }`}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          <span>Wipe Parents ({parentOrdersCount})</span>
-                        </button>
-                      </div>
-
-                      {/* Student Orders Wipe */}
-                      <div className="p-3 rounded-xl border border-rose-100 bg-white shadow-2xs flex flex-col justify-between space-y-2">
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-900">Student Orders</span>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                              {studentOrdersCount}
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-slate-500 mt-0.5">Student phase meal passes</p>
-                        </div>
-                        <button
-                          type="button"
-                          disabled={studentOrdersCount === 0 || (!isBoss && systemControls?.allowOrderWipe === false)}
-                          onClick={() => {
-                            openProtectedAction(
-                              'Permanently Wipe Student Orders',
-                              `CRITICAL WARNING: This will permanently delete all ${studentOrdersCount} student orders and release their device locks. Parent and Staff orders will NOT be touched. Enter system password to proceed.`,
-                              async () => {
-                                if (onClearOrdersByRole) {
-                                  await onClearOrdersByRole('student');
-                                } else {
-                                  await onClearAllOrders();
-                                }
-                                alert('Student orders wiped successfully!');
-                              },
-                              true,
-                              'Wipe Student Orders'
-                            );
-                          }}
-                          className={`w-full py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all ${
-                            studentOrdersCount === 0 || (!isBoss && systemControls?.allowOrderWipe === false)
-                              ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                              : 'bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 hover:border-rose-600 cursor-pointer active:scale-95'
-                          }`}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          <span>Wipe Students ({studentOrdersCount})</span>
-                        </button>
-                      </div>
-
-                      {/* Staff Orders Wipe */}
-                      <div className="p-3 rounded-xl border border-rose-100 bg-white shadow-2xs flex flex-col justify-between space-y-2">
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-900">Staff Orders</span>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                              {staffOrdersCount}
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-slate-500 mt-0.5">Staff dining meal vouchers</p>
-                        </div>
-                        <button
-                          type="button"
-                          disabled={staffOrdersCount === 0 || (!isBoss && systemControls?.allowOrderWipe === false)}
-                          onClick={() => {
-                            openProtectedAction(
-                              'Permanently Wipe Staff Orders',
-                              `CRITICAL WARNING: This will permanently delete all ${staffOrdersCount} staff orders and release their device locks. Parent and Student orders will NOT be touched. Enter system password to proceed.`,
-                              async () => {
-                                if (onClearOrdersByRole) {
-                                  await onClearOrdersByRole('staff');
-                                } else {
-                                  await onClearAllOrders();
-                                }
-                                alert('Staff orders wiped successfully!');
-                              },
-                              true,
-                              'Wipe Staff Orders'
-                            );
-                          }}
-                          className={`w-full py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all ${
-                            staffOrdersCount === 0 || (!isBoss && systemControls?.allowOrderWipe === false)
-                              ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                              : 'bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 hover:border-rose-600 cursor-pointer active:scale-95'
-                          }`}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          <span>Wipe Staff ({staffOrdersCount})</span>
-                        </button>
-                      </div>
-                    </div>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      Update the login usernames and passwords for Super Administrator and Stall Operator accounts.
+                    </p>
                   </div>
 
-                  <div className="pt-3.5 mt-4 border-t border-rose-100/80 flex flex-col sm:flex-row items-center justify-between gap-2">
-                    <span className="text-[11px] text-slate-500 font-medium">
-                      Need a full reset? Wipe all categories simultaneously:
-                    </span>
-                    <button
-                      type="button"
-                      disabled={orders.length === 0 || (!isBoss && systemControls?.allowOrderWipe === false)}
-                      onClick={() => {
-                        openProtectedAction(
-                          'Permanently Wipe All Orders',
-                          `CRITICAL WARNING: This action will permanently erase all ${orders.length} order records across Parent, Student, and Staff categories. Enter system password to proceed.`,
-                          async () => {
-                            if (onClearOrdersByRole) {
-                              await onClearOrdersByRole('all');
-                            } else {
-                              await onClearAllOrders();
-                            }
-                            alert('All orders wiped successfully!');
-                          },
-                          true,
-                          'Wipe All Orders'
-                        );
-                      }}
-                      className={`w-full sm:w-auto px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold flex items-center justify-center space-x-2 transition-all ${
-                        orders.length === 0 || (!isBoss && systemControls?.allowOrderWipe === false)
-                          ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                          : 'text-white bg-rose-600 hover:bg-rose-700 shadow-sm shadow-rose-600/25 cursor-pointer active:scale-95'
-                      }`}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span>Wipe All Orders ({orders.length})</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-            {/* SECTION 2: Access Control & Security Credentials */}
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2.5 px-0.5">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200/60 flex items-center justify-center shadow-2xs shrink-0">
-                  <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                </div>
-                <h3 className="text-sm font-bold text-slate-900">Access Control & Credentials</h3>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                {/* Card 3: Account Credentials */}
-                <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs hover:shadow-md transition-all p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden">
-                  <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-indigo-500 to-blue-600" />
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center space-x-2.5 min-w-0">
-                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center shrink-0 shadow-2xs">
-                          <KeyRound className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
-                        </div>
-                        <h4 className="text-sm sm:text-base font-bold text-slate-900 truncate">
-                          Account Credentials
-                        </h4>
-                      </div>
-
-                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10px] sm:text-[10.5px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/70 shadow-2xs shrink-0">
-                        <span>Super & Admin</span>
-                      </span>
-                    </div>
-
-                    <div className="bg-slate-50/90 border border-slate-200/80 rounded-xl px-3 py-2.5 flex items-center justify-between text-xs">
-                      <p className="text-xs text-slate-600 font-medium truncate">
-                        Logins for Super Admin & Stall Admin accounts.
-                      </p>
-                      <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                        <span className="text-xs" title="Super Admin">👑</span>
-                        <span className="text-xs" title="Stall Admin">🛡️</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pt-3.5 mt-4 border-t border-slate-100 flex items-center justify-end">
+                  <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-end">
                     <button
                       type="button"
                       onClick={() => {
@@ -1498,44 +1275,43 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         setCredError('');
                         setCredModalOpen(true);
                       }}
-                      className="w-full sm:w-auto px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold text-slate-800 hover:text-slate-950 bg-slate-100 hover:bg-slate-200 border border-slate-200/90 shadow-2xs flex items-center justify-center space-x-2 cursor-pointer transition-all active:scale-95"
+                      className="w-full sm:w-auto px-4 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 transition-colors flex items-center justify-center space-x-2 cursor-pointer active:scale-98"
                     >
-                      <KeyRound className="w-4 h-4 text-slate-700" />
+                      <KeyRound className="w-3.5 h-3.5 text-slate-500" />
                       <span>Update Credentials</span>
                     </button>
                   </div>
                 </div>
 
-                {/* Card 4: Master System Authorization Key */}
-                <div className="bg-gradient-to-b from-white via-white to-amber-50/25 border border-amber-200/90 rounded-2xl shadow-xs hover:shadow-md transition-all p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden">
-                  <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-amber-500 to-yellow-500" />
-
-                  <div className="space-y-3">
+                {/* Card 3: Master System Authorization Key */}
+                <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 flex flex-col justify-between shadow-2xs">
+                  <div className="space-y-2.5">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center space-x-2.5 min-w-0">
-                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 text-amber-600 border border-amber-200/80 flex items-center justify-center shrink-0 shadow-2xs">
-                          <ShieldAlert className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
+                        <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
+                          <ShieldCheck className="w-4 h-4" />
                         </div>
-                        <h4 className="text-sm sm:text-base font-bold text-slate-900 truncate">
-                          System Master Key
-                        </h4>
+                        <div>
+                          <h4 className="text-sm font-semibold text-slate-900 truncate">
+                            System Master Key
+                          </h4>
+                          <p className="text-xs text-slate-500">
+                            Action Authorization Passphrase
+                          </p>
+                        </div>
                       </div>
 
-                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10px] sm:text-[10.5px] font-bold bg-amber-100 text-amber-900 border border-amber-200/80 shadow-2xs shrink-0">
-                        <Lock className="w-3 h-3 text-amber-700" />
-                        <span>Master Key</span>
+                      <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200 shrink-0">
+                        Master Pass
                       </span>
                     </div>
 
-                    <div className="bg-amber-50/80 border border-amber-200/80 rounded-xl px-3 py-2.5 flex items-center space-x-2 text-amber-900">
-                      <Lock className="w-4 h-4 text-amber-600 shrink-0" />
-                      <p className="text-xs font-medium leading-tight truncate">
-                        Authorizes order wipes and credential updates.
-                      </p>
-                    </div>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      The master passphrase required to authorize sensitive operations, including database wipes and credential changes.
+                    </p>
                   </div>
 
-                  <div className="pt-3.5 mt-4 border-t border-amber-100/80 flex items-center justify-end">
+                  <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-end">
                     <button
                       type="button"
                       onClick={() => {
@@ -1545,12 +1321,217 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         setSysPassError('');
                         setSysPassModalOpen(true);
                       }}
-                      className="w-full sm:w-auto px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 shadow-sm shadow-amber-600/25 flex items-center justify-center space-x-2 cursor-pointer transition-all active:scale-95"
+                      className="w-full sm:w-auto px-4 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 transition-colors flex items-center justify-center space-x-2 cursor-pointer active:scale-98"
                     >
-                      <ShieldAlert className="w-4 h-4" />
-                      <span>Update Master Key</span>
+                      <Lock className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Change Master Key</span>
                     </button>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* SECTION 3: Danger Zone (Order Register Wipes) */}
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center space-x-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-rose-600">
+                  Danger Zone
+                </h3>
+              </div>
+
+              <div className={`bg-white border border-slate-200 rounded-xl overflow-hidden shadow-2xs ${
+                (!isBoss && systemControls?.allowOrderWipe === false) ? 'opacity-40 cursor-not-allowed pointer-events-none select-none' : ''
+              }`}>
+                {/* Danger zone header note */}
+                <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-900">
+                      Order Register Wipes
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Permanently delete order records and release device locks. All wipe actions require Master Key confirmation.
+                    </p>
+                  </div>
+                  <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold bg-slate-100 text-slate-600 border border-slate-200 w-fit shrink-0">
+                    <Lock className="w-3 h-3 text-slate-400" />
+                    <span>Auth Required</span>
+                  </span>
+                </div>
+
+                {/* Category Wipe Rows */}
+                <div className="divide-y divide-slate-100">
+                  {/* Parent Orders */}
+                  <div className="p-4 sm:px-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs font-semibold text-slate-900">Parent Orders</span>
+                        <span className="text-[10.5px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                          {parentOrdersCount} {parentOrdersCount === 1 ? 'order' : 'orders'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Family & parent meal orders and associated device identifiers.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={parentOrdersCount === 0 || (!isBoss && systemControls?.allowOrderWipe === false)}
+                      onClick={() => {
+                        openProtectedAction(
+                          'Permanently Wipe Parent Orders',
+                          `CRITICAL WARNING: This will permanently delete all ${parentOrdersCount} parent orders and release their device locks. Student and Staff orders will NOT be touched. Enter system password to proceed.`,
+                          async () => {
+                            if (onClearOrdersByRole) {
+                              await onClearOrdersByRole('parent');
+                            } else {
+                              await onClearAllOrders();
+                            }
+                            alert('Parent orders wiped successfully!');
+                          },
+                          true,
+                          'Wipe Parent Orders'
+                        );
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors shrink-0 ${
+                        parentOrdersCount === 0 || (!isBoss && systemControls?.allowOrderWipe === false)
+                          ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                          : 'border border-slate-200 text-slate-700 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50/50 cursor-pointer active:scale-98'
+                      }`}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Wipe Parent Orders</span>
+                    </button>
+                  </div>
+
+                  {/* Student Orders */}
+                  <div className="p-4 sm:px-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs font-semibold text-slate-900">Student Orders</span>
+                        <span className="text-[10.5px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                          {studentOrdersCount} {studentOrdersCount === 1 ? 'order' : 'orders'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Student meal passes and individual student device locks.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={studentOrdersCount === 0 || (!isBoss && systemControls?.allowOrderWipe === false)}
+                      onClick={() => {
+                        openProtectedAction(
+                          'Permanently Wipe Student Orders',
+                          `CRITICAL WARNING: This will permanently delete all ${studentOrdersCount} student orders and release their device locks. Parent and Staff orders will NOT be touched. Enter system password to proceed.`,
+                          async () => {
+                            if (onClearOrdersByRole) {
+                              await onClearOrdersByRole('student');
+                            } else {
+                              await onClearAllOrders();
+                            }
+                            alert('Student orders wiped successfully!');
+                          },
+                          true,
+                          'Wipe Student Orders'
+                        );
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors shrink-0 ${
+                        studentOrdersCount === 0 || (!isBoss && systemControls?.allowOrderWipe === false)
+                          ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                          : 'border border-slate-200 text-slate-700 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50/50 cursor-pointer active:scale-98'
+                      }`}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Wipe Student Orders</span>
+                    </button>
+                  </div>
+
+                  {/* Staff Orders */}
+                  <div className="p-4 sm:px-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs font-semibold text-slate-900">Staff Orders</span>
+                        <span className="text-[10.5px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                          {staffOrdersCount} {staffOrdersCount === 1 ? 'order' : 'orders'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Staff dining vouchers and staff device locks.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={staffOrdersCount === 0 || (!isBoss && systemControls?.allowOrderWipe === false)}
+                      onClick={() => {
+                        openProtectedAction(
+                          'Permanently Wipe Staff Orders',
+                          `CRITICAL WARNING: This will permanently delete all ${staffOrdersCount} staff orders and release their device locks. Parent and Student orders will NOT be touched. Enter system password to proceed.`,
+                          async () => {
+                            if (onClearOrdersByRole) {
+                              await onClearOrdersByRole('staff');
+                            } else {
+                              await onClearAllOrders();
+                            }
+                            alert('Staff orders wiped successfully!');
+                          },
+                          true,
+                          'Wipe Staff Orders'
+                        );
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors shrink-0 ${
+                        staffOrdersCount === 0 || (!isBoss && systemControls?.allowOrderWipe === false)
+                          ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                          : 'border border-slate-200 text-slate-700 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50/50 cursor-pointer active:scale-98'
+                      }`}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Wipe Staff Orders</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Full Database Wipe Footer */}
+                <div className="p-4 sm:px-5 bg-slate-50/80 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div>
+                    <span className="text-xs font-semibold text-slate-900 block">
+                      Wipe All Categories Simultaneously
+                    </span>
+                    <span className="text-xs text-slate-500">
+                      Erases all {orders.length} orders across Parent, Student, and Staff databases.
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={orders.length === 0 || (!isBoss && systemControls?.allowOrderWipe === false)}
+                    onClick={() => {
+                      openProtectedAction(
+                        'Permanently Wipe All Orders',
+                        `CRITICAL WARNING: This action will permanently erase all ${orders.length} order records across Parent, Student, and Staff categories. Enter system password to proceed.`,
+                        async () => {
+                          if (onClearOrdersByRole) {
+                            await onClearOrdersByRole('all');
+                          } else {
+                            await onClearAllOrders();
+                          }
+                          alert('All orders wiped successfully!');
+                        },
+                        true,
+                        'Wipe All Orders'
+                      );
+                    }}
+                    className={`w-full sm:w-auto px-4 py-2 rounded-lg text-xs font-semibold flex items-center justify-center space-x-2 transition-colors shrink-0 ${
+                      orders.length === 0 || (!isBoss && systemControls?.allowOrderWipe === false)
+                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                        : 'text-white bg-rose-600 hover:bg-rose-700 cursor-pointer active:scale-98'
+                    }`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Wipe All Orders ({orders.length})</span>
+                  </button>
                 </div>
               </div>
             </div>
