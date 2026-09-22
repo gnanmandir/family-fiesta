@@ -28,6 +28,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
   const passwordInputRef = useRef<HTMLInputElement>(null);
+  const datePickerRef = useRef<HTMLInputElement>(null);
+
+  const toIsoDate = (val: string) => {
+    const parts = (val || '').split('/');
+    if (parts.length === 3 && parts[0].length === 2 && parts[1].length === 2 && parts[2].length === 4) {
+      return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    return '';
+  };
 
   // Helper to normalize names for resilient comparison
   const normalize = (val: string) => (val || '').toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -359,7 +368,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           {/* Name */}
           <div className="relative space-y-1.5 text-left">
             <label className="block text-xs font-semibold text-slate-600">
-              Name
+              Enter Student Name
             </label>
             <div className="relative">
               <input
@@ -376,7 +385,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 onBlur={() => {
                   setTimeout(() => setShowNameSuggestions(false), 200);
                 }}
-                placeholder="Enter name"
+                placeholder="Enter student name"
                 className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-colors"
                 autoFocus
                 autoComplete="off"
@@ -436,11 +445,49 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   setPassword(e.target.value);
                   if (error) setError(null);
                 }}
-                placeholder="Enter password"
-                className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-colors font-medium"
+                placeholder="DD/MM/YYYY"
+                className="w-full pl-3.5 pr-10 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-colors font-medium"
                 autoComplete="off"
                 data-lpignore="true"
                 required
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    if (datePickerRef.current) {
+                      if (typeof datePickerRef.current.showPicker === 'function') {
+                        datePickerRef.current.showPicker();
+                      } else {
+                        datePickerRef.current.click();
+                      }
+                    }
+                  } catch (e) {
+                    datePickerRef.current?.click();
+                  }
+                }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                title="Select birth date from calendar"
+              >
+                <Calendar className="w-4 h-4" />
+              </button>
+              <input
+                ref={datePickerRef}
+                type="date"
+                tabIndex={-1}
+                aria-hidden="true"
+                value={toIsoDate(password)}
+                className="sr-only absolute pointer-events-none opacity-0"
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val) {
+                    const [y, m, d] = val.split('-');
+                    if (y && m && d) {
+                      setPassword(`${d}/${m}/${y}`);
+                      if (error) setError(null);
+                    }
+                  }
+                }}
               />
             </div>
           </div>
