@@ -537,7 +537,7 @@ export const GuestManager: React.FC<GuestManagerProps> = ({
             <form onSubmit={handleAddGuest} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Staff Member Name
+                  Enter Name
                 </label>
                 <input
                   type="text"
@@ -551,7 +551,7 @@ export const GuestManager: React.FC<GuestManagerProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Password Code
+                  Enter Password
                 </label>
                 <input
                   type="text"
@@ -609,7 +609,7 @@ export const GuestManager: React.FC<GuestManagerProps> = ({
             <form onSubmit={handleUpdateGuest} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Staff Member Name
+                  Enter Name
                 </label>
                 <input
                   type="text"
@@ -622,7 +622,7 @@ export const GuestManager: React.FC<GuestManagerProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Password Code
+                  Enter Password
                 </label>
                 <input
                   type="text"

@@ -63,11 +63,11 @@ export const StaffLoginPage: React.FC<StaffLoginPageProps> = ({
     const cleanPwd = password.trim();
 
     if (!cleanName) {
-      setError('Please enter your Staff Name.');
+      setError('Please enter name.');
       return;
     }
     if (!cleanPwd) {
-      setError('Please enter your Staff Password.');
+      setError('Please enter password.');
       return;
     }
 
@@ -177,7 +177,7 @@ export const StaffLoginPage: React.FC<StaffLoginPageProps> = ({
           {/* Staff Name Field */}
           <div className="relative space-y-1.5 text-left">
             <label className="block text-xs font-semibold text-slate-700">
-              Staff Member Name
+              Enter Name
             </label>
             <div className="relative">
               <input
@@ -192,7 +192,7 @@ export const StaffLoginPage: React.FC<StaffLoginPageProps> = ({
                 onBlur={() => {
                   setTimeout(() => setShowSuggestions(false), 200);
                 }}
-                placeholder="Enter your staff name..."
+                placeholder="Enter name"
                 className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-colors"
                 autoFocus
                 autoComplete="off"
@@ -235,7 +235,7 @@ export const StaffLoginPage: React.FC<StaffLoginPageProps> = ({
           {/* Password Field */}
           <div className="space-y-1.5 text-left">
             <label className="block text-xs font-semibold text-slate-700">
-              Staff Password
+              Enter Password
             </label>
             <div className="relative">
               <input
@@ -246,7 +246,7 @@ export const StaffLoginPage: React.FC<StaffLoginPageProps> = ({
                   setPassword(e.target.value);
                   if (error) setError(null);
                 }}
-                placeholder="Enter assigned password"
+                placeholder="Enter password"
                 className="w-full pl-3.5 pr-10 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-colors"
                 autoComplete="new-password"
                 required
