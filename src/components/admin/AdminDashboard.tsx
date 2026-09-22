@@ -43,6 +43,7 @@ import { StudentManager } from './StudentManager';
 import { GuestManager } from './GuestManager';
 import { FoodManager } from './FoodManager';
 import { PricingManager } from './PricingManager';
+import { LoginHistoryManager } from './LoginHistoryManager';
 import { api } from '../../services/api';
 
 interface AdminDashboardProps {
@@ -537,8 +538,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const isBoss = adminRole === 'boss';
   const isSuper = adminRole === 'super' || isBoss;
 
-  type AdminTab = 'overview' | 'orders' | 'students' | 'staff' | 'food' | 'settings' | 'pricing';
-  const VALID_ADMIN_TABS: AdminTab[] = ['overview', 'orders', 'students', 'staff', 'food', 'settings', 'pricing'];
+  type AdminTab = 'overview' | 'orders' | 'students' | 'staff' | 'food' | 'settings' | 'pricing' | 'login_history';
+  const VALID_ADMIN_TABS: AdminTab[] = ['overview', 'orders', 'students', 'staff', 'food', 'settings', 'pricing', 'login_history'];
 
   const [activeTab, setActiveTab] = useState<AdminTab>(() => {
     try {
@@ -612,7 +613,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         window.history.replaceState(null, '', '#overview');
       } catch (e) {}
     }
-  }, [isSuper, activeTab]);
+    if (!isBoss && activeTab === 'login_history') {
+      setActiveTab('overview');
+      try {
+        localStorage.setItem('admin_active_tab', 'overview');
+        window.history.replaceState(null, '', '#overview');
+      } catch (e) {}
+    }
+  }, [isSuper, isBoss, activeTab]);
 
   // In-app Protected Action Modal State
   const [protectedModal, setProtectedModal] = useState<{
@@ -874,6 +882,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             { id: 'pricing', label: 'Pricing & Tiers', icon: <IndianRupee className="w-4 h-4" /> },
             ...(isSuper ? [
               { id: 'settings', label: 'Operations & Wipe', icon: <RotateCcw className="w-4 h-4" /> },
+            ] : []),
+            ...(isBoss ? [
+              { id: 'login_history', label: 'Login History', icon: <History className="w-4 h-4" /> },
             ] : []),
           ].map((tab) => {
             const isActive = activeTab === tab.id;
@@ -1562,7 +1573,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         )}
 
-
+        {/* Tab: Boss Exclusive Login History & Audit Trail */}
+        {activeTab === 'login_history' && isBoss && (
+          <LoginHistoryManager />
+        )}
 
       </div>
 
