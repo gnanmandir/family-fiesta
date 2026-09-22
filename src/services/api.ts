@@ -780,31 +780,99 @@ export const api = {
     }
   },
 
-  // --- Guests ---
+  // --- Guests / Staff ---
   getGuests: async (): Promise<import('../types').GuestCredential[]> => {
+    const { INITIAL_STAFF } = await import('../data/staff');
+    let remoteGuests: import('../types').GuestCredential[] = [];
     if (isTursoConfigured) {
       try {
-        return await tursoService.getGuests();
+        remoteGuests = await tursoService.getGuests();
       } catch (e) {
         console.warn('[Turso] Failed to fetch guests:', e);
       }
     }
-    return [];
+
+    const nameMap = new Map<string, import('../types').GuestCredential>();
+
+    // 1. Base from INITIAL_STAFF
+    INITIAL_STAFF.forEach((s) => {
+      nameMap.set(s.guestName.toLowerCase().trim(), s);
+    });
+
+    // 2. Local storage overrides / additions
+    try {
+      const local = localStorage.getItem('local_staff_credentials');
+      if (local) {
+        const parsed: import('../types').GuestCredential[] = JSON.parse(local);
+        parsed.forEach((p) => {
+          nameMap.set(p.guestName.toLowerCase().trim(), p);
+        });
+      }
+    } catch (e) {}
+
+    // 3. Remote Turso overrides / additions
+    remoteGuests.forEach((r) => {
+      nameMap.set(r.guestName.toLowerCase().trim(), r);
+    });
+
+    const fullList = Array.from(nameMap.values());
+
+    // 4. Background seed to Turso if remote is missing staff members
+    if (isTursoConfigured && remoteGuests.length < fullList.length) {
+      const existingNames = new Set(remoteGuests.map((r) => r.guestName.toLowerCase().trim()));
+      const toSeed = fullList.filter((s) => !existingNames.has(s.guestName.toLowerCase().trim()));
+      if (toSeed.length > 0) {
+        (async () => {
+          for (const s of toSeed) {
+            try {
+              await tursoService.addGuest(s);
+            } catch (err) {}
+          }
+        })().catch(() => {});
+      }
+    }
+
+    return fullList;
   },
 
   addGuest: async (guest: import('../types').GuestCredential): Promise<void> => {
+    try {
+      const local = localStorage.getItem('local_staff_credentials');
+      const list: import('../types').GuestCredential[] = local ? JSON.parse(local) : [];
+      list.push(guest);
+      localStorage.setItem('local_staff_credentials', JSON.stringify(list));
+    } catch (e) {}
     if (isTursoConfigured) {
       await tursoService.addGuest(guest);
     }
   },
 
   updateGuest: async (id: string, updates: Partial<import('../types').GuestCredential>): Promise<void> => {
+    try {
+      const local = localStorage.getItem('local_staff_credentials');
+      if (local) {
+        const list: import('../types').GuestCredential[] = JSON.parse(local);
+        const idx = list.findIndex((g) => g.id === id);
+        if (idx !== -1) {
+          list[idx] = { ...list[idx], ...updates };
+          localStorage.setItem('local_staff_credentials', JSON.stringify(list));
+        }
+      }
+    } catch (e) {}
     if (isTursoConfigured) {
       await tursoService.updateGuest(id, updates);
     }
   },
 
   deleteGuest: async (id: string): Promise<void> => {
+    try {
+      const local = localStorage.getItem('local_staff_credentials');
+      if (local) {
+        const list: import('../types').GuestCredential[] = JSON.parse(local);
+        const filtered = list.filter((g) => g.id !== id);
+        localStorage.setItem('local_staff_credentials', JSON.stringify(filtered));
+      }
+    } catch (e) {}
     if (isTursoConfigured) {
       await tursoService.deleteGuest(id);
     }

@@ -799,23 +799,48 @@ export const tursoService = {
     );
   },
 
-  // --- Guests ---
+  // --- Guests / Staff ---
   getGuests: async (): Promise<import('../types').GuestCredential[]> => {
-    const rows = await tursoQuery('SELECT * FROM guests ORDER BY created_at DESC');
-    if (!rows) return [];
-    return rows.map((r: any) => ({
-      id: r.id,
-      guestName: r.guest_name,
-      password: r.password,
-      createdAt: r.created_at,
-    }));
+    try {
+      await tursoQuery(
+        `CREATE TABLE IF NOT EXISTS guests (
+          id TEXT PRIMARY KEY,
+          guest_name TEXT NOT NULL,
+          password TEXT NOT NULL,
+          created_at TEXT
+        )`
+      );
+      const rows = await tursoQuery('SELECT * FROM guests ORDER BY created_at DESC');
+      if (!rows) return [];
+      return rows.map((r: any) => ({
+        id: r.id,
+        guestName: r.guest_name,
+        password: r.password,
+        createdAt: r.created_at,
+      }));
+    } catch (e) {
+      console.warn('[Turso] getGuests error:', e);
+      return [];
+    }
   },
 
   addGuest: async (guest: import('../types').GuestCredential): Promise<void> => {
-    await tursoQuery(
-      `INSERT INTO guests (id, guest_name, password, created_at) VALUES (?, ?, ?, ?)`,
-      [guest.id, guest.guestName, guest.password, guest.createdAt || new Date().toISOString()]
-    );
+    try {
+      await tursoQuery(
+        `CREATE TABLE IF NOT EXISTS guests (
+          id TEXT PRIMARY KEY,
+          guest_name TEXT NOT NULL,
+          password TEXT NOT NULL,
+          created_at TEXT
+        )`
+      );
+      await tursoQuery(
+        `INSERT OR REPLACE INTO guests (id, guest_name, password, created_at) VALUES (?, ?, ?, ?)`,
+        [guest.id, guest.guestName, guest.password, guest.createdAt || new Date().toISOString()]
+      );
+    } catch (e) {
+      console.warn('[Turso] addGuest error:', e);
+    }
   },
 
   updateGuest: async (id: string, updates: Partial<import('../types').GuestCredential>): Promise<void> => {

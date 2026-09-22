@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Student, GuestCredential } from '../types';
+import { INITIAL_STAFF } from '../data/staff';
 import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
 import { AlertCircle, User, Eye, EyeOff, Info } from 'lucide-react';
 import { api } from '../services/api';
@@ -20,7 +21,7 @@ export const StaffLoginPage: React.FC<StaffLoginPageProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [guests, setGuests] = useState<GuestCredential[]>([]);
+  const [guests, setGuests] = useState<GuestCredential[]>(INITIAL_STAFF);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const passwordInputRef = useRef<HTMLInputElement>(null);
 
@@ -30,7 +31,7 @@ export const StaffLoginPage: React.FC<StaffLoginPageProps> = ({
     const loadStaff = async () => {
       try {
         const list = await api.getGuests();
-        if (mounted) setGuests(list);
+        if (mounted && list && list.length > 0) setGuests(list);
       } catch (e) {
         console.warn('Failed to fetch staff credentials:', e);
       }
@@ -109,7 +110,17 @@ export const StaffLoginPage: React.FC<StaffLoginPageProps> = ({
       return;
     }
 
-    if (matchedGuest.password.trim() !== cleanPwd) {
+    const pwdMatches = (stored: string, input: string) => {
+      const s = (stored || '').trim();
+      const inp = (input || '').trim();
+      if (s === inp) return true;
+      const numS = parseInt(s, 10);
+      const numInp = parseInt(inp, 10);
+      if (!isNaN(numS) && !isNaN(numInp) && numS === numInp) return true;
+      return false;
+    };
+
+    if (!pwdMatches(matchedGuest.password, cleanPwd)) {
       setIsLoading(false);
       setError('Incorrect password for this staff member.');
       return;
