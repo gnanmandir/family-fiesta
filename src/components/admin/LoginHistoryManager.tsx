@@ -474,54 +474,67 @@ export const LoginHistoryManager: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Unified Overview Strip: Metrics + Active Presence in One Clean Row */}
-      <div className="bg-white border border-slate-200 rounded-xl p-3 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs">
-        
-        {/* Metric Badges */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6">
-          <div>
-            <span className="text-[11px] font-medium text-slate-500 block">Total Actions</span>
-            <span className="text-lg font-bold text-slate-900 font-mono">{totalActivities}</span>
+      {/* 2. Overview Strip: Evenly distributed metrics and presence across full width */}
+      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-0 lg:divide-x divide-slate-100">
+          
+          <div className="lg:px-4 first:lg:pl-0">
+            <span className="text-[11px] font-medium text-slate-500 block uppercase tracking-wider">Total Actions</span>
+            <div className="flex items-baseline space-x-2 mt-0.5">
+              <span className="text-xl font-bold text-slate-900 font-mono">{totalActivities}</span>
+              <span className="text-[11px] text-slate-400">logged</span>
+            </div>
           </div>
-          <div>
-            <span className="text-[11px] font-medium text-slate-500 block">Portal Toggles</span>
-            <span className="text-lg font-bold text-slate-900 font-mono">{portalToggles}</span>
-          </div>
-          <div>
-            <span className="text-[11px] font-medium text-slate-500 block">System Changes</span>
-            <span className="text-lg font-bold text-slate-900 font-mono">{systemChanges}</span>
-          </div>
-          <div>
-            <span className="text-[11px] font-medium text-slate-500 block">Login Sessions</span>
-            <span className="text-lg font-bold text-slate-900 font-mono">{totalLogins}</span>
-          </div>
-        </div>
 
-        {/* Online Admins List */}
-        <div className="md:border-l md:border-slate-200 md:pl-5 flex flex-col sm:flex-row sm:items-center gap-2">
-          <div className="flex items-center space-x-1.5 text-xs text-slate-500 font-medium">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-            <span className="whitespace-nowrap">Online Now ({activeCount}):</span>
+          <div className="lg:px-4">
+            <span className="text-[11px] font-medium text-slate-500 block uppercase tracking-wider">Portal Toggles</span>
+            <div className="flex items-baseline space-x-2 mt-0.5">
+              <span className="text-xl font-bold text-slate-900 font-mono">{portalToggles}</span>
+              <span className="text-[11px] text-slate-400">open/halt</span>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            {onlineAdmins.length > 0 ? (
-              onlineAdmins.map((admin) => (
-                <div
-                  key={admin.username}
-                  className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800"
-                >
-                  {getRoleBadge(admin.role)}
-                  <span className="text-[10px] text-slate-400">
-                    {formatRelativeTime(admin.lastSeen)}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <span className="text-xs text-slate-400 italic">Current session active</span>
-            )}
-          </div>
-        </div>
 
+          <div className="lg:px-4">
+            <span className="text-[11px] font-medium text-slate-500 block uppercase tracking-wider">System Changes</span>
+            <div className="flex items-baseline space-x-2 mt-0.5">
+              <span className="text-xl font-bold text-slate-900 font-mono">{systemChanges}</span>
+              <span className="text-[11px] text-slate-400">wipes/tiers</span>
+            </div>
+          </div>
+
+          <div className="lg:px-4">
+            <span className="text-[11px] font-medium text-slate-500 block uppercase tracking-wider">Login Sessions</span>
+            <div className="flex items-baseline space-x-2 mt-0.5">
+              <span className="text-xl font-bold text-slate-900 font-mono">{totalLogins}</span>
+              <span className="text-[11px] text-slate-400">auths</span>
+            </div>
+          </div>
+
+          <div className="col-span-2 sm:col-span-3 lg:col-span-1 lg:px-4 lg:pl-5">
+            <div className="flex items-center space-x-1.5 text-[11px] font-medium text-slate-500 uppercase tracking-wider">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
+              <span>Online Now ({activeCount})</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+              {onlineAdmins.length > 0 ? (
+                onlineAdmins.map((admin) => (
+                  <div
+                    key={admin.username}
+                    className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800"
+                  >
+                    {getRoleBadge(admin.role)}
+                    <span className="text-[10px] text-slate-400">
+                      {formatRelativeTime(admin.lastSeen)}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <span className="text-xs text-slate-400 italic">Active session</span>
+              )}
+            </div>
+          </div>
+
+        </div>
       </div>
 
       {/* 3. Modern Segmented Toolbar: Sub-tabs, Filters & Search */}
