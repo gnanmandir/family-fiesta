@@ -172,25 +172,6 @@ export default function App() {
     if (savedAdminToken || savedView === 'admin') {
       setIsAdminLoggedIn(true);
       setCurrentView('admin');
-
-      // Check if we need to record a session resumption for this browser session
-      try {
-        const alreadyNotified = sessionStorage.getItem('admin_session_resumed');
-        if (!alreadyNotified) {
-          sessionStorage.setItem('admin_session_resumed', 'true');
-          const role = (localStorage.getItem('admin_role') as AdminRole) || 'admin';
-          const username =
-            localStorage.getItem('admin_username') ||
-            (role === 'boss' ? 'boss' : role === 'super' ? 'superadmin' : 'admin');
-          api.recordActivity(
-            'session_resume',
-            'Admin Session Resumed / Re-opened',
-            `Admin accessed the dashboard with an existing active ${role} session (${username})`,
-            role,
-            username
-          ).catch(() => {});
-        }
-      } catch (e) {}
     } else {
       // 2. Student session flow
       const activeStudentId = localStorage.getItem('active_student_id');

@@ -270,6 +270,27 @@ export const LoginHistoryManager: React.FC = () => {
     });
   }, [activities, roleFilter, actionFilter, searchTerm]);
 
+  // Deduplicate consecutive identical activities within 5 minutes
+  const deduplicatedActivities = useMemo(() => {
+    const list = filteredActivities;
+    const result: AdminActivityLog[] = [];
+    for (let i = 0; i < list.length; i++) {
+      const curr = list[i];
+      const prev = result[result.length - 1];
+      if (
+        prev &&
+        prev.actionType === curr.actionType &&
+        prev.title === curr.title &&
+        prev.username === curr.username &&
+        Math.abs(new Date(prev.timestamp).getTime() - new Date(curr.timestamp).getTime()) < 300000
+      ) {
+        continue;
+      }
+      result.push(curr);
+    }
+    return result;
+  }, [filteredActivities]);
+
   // Filtered logins
   const filteredHistory = useMemo(() => {
     return history.filter((item) => {
@@ -604,31 +625,21 @@ export const LoginHistoryManager: React.FC = () => {
       {activeSubTab === 'activities' ? (
         /* Activity & Changes Table */
         <div className="bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden">
-          {filteredActivities.length > 0 ? (
+          {deduplicatedActivities.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-500 font-semibold uppercase tracking-wider text-[10.5px]">
-                    <th className="py-3 px-4">Event</th>
                     <th className="py-3 px-4">Admin</th>
+                    <th className="py-3 px-4">Event</th>
                     <th className="py-3 px-4">Details</th>
                     <th className="py-3 px-4">Timestamp</th>
                     <th className="py-3 px-4">Device</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredActivities.map((act, idx) => (
+                  {deduplicatedActivities.map((act, idx) => (
                     <tr key={act.id || idx} className="hover:bg-slate-50/60 transition-colors">
-                      {/* Action Type */}
-                      <td className="py-3 px-4">
-                        <div className="space-y-1">
-                          {getActionBadge(act.actionType)}
-                          <div className="font-semibold text-slate-900 text-xs">
-                            {act.title}
-                          </div>
-                        </div>
-                      </td>
-
                       {/* Admin & Role */}
                       <td className="py-3 px-4 whitespace-nowrap">
                         <div className="flex items-center space-x-2">
@@ -636,6 +647,16 @@ export const LoginHistoryManager: React.FC = () => {
                             <User className="w-3 h-3" />
                           </div>
                           {getRoleBadge(act.role)}
+                        </div>
+                      </td>
+
+                      {/* Action Type / Event */}
+                      <td className="py-3 px-4">
+                        <div className="space-y-1">
+                          {getActionBadge(act.actionType)}
+                          <div className="font-semibold text-slate-900 text-xs">
+                            {act.title}
+                          </div>
                         </div>
                       </td>
 
