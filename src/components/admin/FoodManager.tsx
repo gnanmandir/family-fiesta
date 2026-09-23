@@ -156,7 +156,7 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
     <div className="space-y-4">
       
       {/* Top Header & Add Button */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-stone-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-stone-200 shadow-xs">
         <div>
           <h3 className="text-base font-bold text-stone-900">Food Menu Catalog</h3>
           <p className="text-xs text-stone-500 mt-0.5">
@@ -170,7 +170,7 @@ export const FoodManager: React.FC<FoodManagerProps> = ({
           <button
             type="button"
             onClick={handleOpenAdd}
-            className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs tracking-wide shadow-md shadow-indigo-500/20 flex items-center space-x-2 active:scale-95 cursor-pointer transition-all"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs tracking-wide shadow-md shadow-indigo-500/20 flex items-center justify-center space-x-2 active:scale-95 cursor-pointer transition-all shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>Add New Dish</span>

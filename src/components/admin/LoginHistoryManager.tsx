@@ -607,15 +607,15 @@ export const LoginHistoryManager: React.FC = () => {
         </div>
 
         {/* Right: Clean Filters & Search Bar */}
-        <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full lg:w-auto">
           
           {/* Role Filter Dropdown */}
-          <div className="flex items-center space-x-1.5">
+          <div className="flex items-center space-x-1.5 w-full sm:w-auto">
             <label className="text-[11px] font-medium text-slate-500 hidden sm:inline">Role:</label>
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value as any)}
-              className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 outline-none focus:border-slate-400 transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 outline-none focus:border-slate-400 transition-colors cursor-pointer"
             >
               <option value="all">All Roles</option>
               <option value="boss">Boss</option>
@@ -626,12 +626,12 @@ export const LoginHistoryManager: React.FC = () => {
 
           {/* Action Type Filter Dropdown (only for activities tab) */}
           {activeSubTab === 'activities' && (
-            <div className="flex items-center space-x-1.5">
+            <div className="flex items-center space-x-1.5 w-full sm:w-auto">
               <label className="text-[11px] font-medium text-slate-500 hidden sm:inline">Action:</label>
               <select
                 value={actionFilter}
                 onChange={(e) => setActionFilter(e.target.value as any)}
-                className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 outline-none focus:border-slate-400 transition-colors cursor-pointer"
+                className="w-full sm:w-auto px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 outline-none focus:border-slate-400 transition-colors cursor-pointer"
               >
                 <option value="all">All Actions</option>
                 <option value="portal_toggle">Portal Open/Halt</option>
@@ -647,7 +647,7 @@ export const LoginHistoryManager: React.FC = () => {
           )}
 
           {/* Search Box */}
-          <div className="relative flex-1 sm:w-60">
+          <div className="relative col-span-2 sm:w-60 sm:flex-1">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
@@ -677,7 +677,7 @@ export const LoginHistoryManager: React.FC = () => {
         <div className="bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden">
           {deduplicatedActivities.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
+              <table className="w-full text-left text-xs border-collapse min-w-[700px]">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-500 font-semibold uppercase tracking-wider text-[10.5px]">
                     <th className="py-3 px-4">Admin</th>
@@ -758,7 +758,7 @@ export const LoginHistoryManager: React.FC = () => {
         <div className="bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden">
           {filteredHistory.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
+              <table className="w-full text-left text-xs border-collapse min-w-[700px]">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-500 font-semibold uppercase tracking-wider text-[10.5px]">
                     <th className="py-3 px-4">Admin Account</th>

@@ -195,7 +195,7 @@ export const PricingManager: React.FC<PricingManagerProps> = ({ adminRole = 'adm
       </div>
 
       {/* Role Group Navigation Tabs */}
-      <div className="flex bg-slate-100 p-1.5 rounded-2xl w-full max-w-md mb-6 border border-slate-200/80">
+      <div className="flex bg-slate-100 p-1 sm:p-1.5 rounded-2xl w-full max-w-md mb-6 border border-slate-200/80">
         {(['parent', 'student', 'guest'] as const).map((group) => {
           const isActive = activeGroup === group;
           const count = (tiersByGroup[group] || []).length;
@@ -204,18 +204,18 @@ export const PricingManager: React.FC<PricingManagerProps> = ({ adminRole = 'adm
               key={group}
               type="button"
               onClick={() => setActiveGroup(group)}
-              className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+              className={`flex-1 py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1 sm:space-x-1.5 cursor-pointer ${
                 isActive
                   ? 'bg-white text-indigo-600 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              {group === 'parent' && <Users className="w-3.5 h-3.5" />}
-              {group === 'student' && <GraduationCap className="w-3.5 h-3.5" />}
-              {group === 'guest' && <UserCheck className="w-3.5 h-3.5" />}
+              {group === 'parent' && <Users className="w-3.5 h-3.5 shrink-0" />}
+              {group === 'student' && <GraduationCap className="w-3.5 h-3.5 shrink-0" />}
+              {group === 'guest' && <UserCheck className="w-3.5 h-3.5 shrink-0" />}
               <span className="capitalize">{getGroupLabel(group)}</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${isActive ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-200/70 text-slate-600'}`}>
-                {count} {count === 1 ? 'mem' : 'mems'}
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full shrink-0 ${isActive ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-200/70 text-slate-600'}`}>
+                {count}<span className="hidden sm:inline"> {count === 1 ? 'mem' : 'mems'}</span>
               </span>
             </button>
           );
@@ -230,7 +230,7 @@ export const PricingManager: React.FC<PricingManagerProps> = ({ adminRole = 'adm
       )}
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+        <div className="p-4 sm:p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="font-bold text-slate-900 flex items-center space-x-2">
               <Users className="w-4 h-4 text-slate-500" />
@@ -247,7 +247,7 @@ export const PricingManager: React.FC<PricingManagerProps> = ({ adminRole = 'adm
           {!isReadOnly && (
             <button
               onClick={addTier}
-              className="flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-indigo-700 font-semibold text-xs rounded-lg transition-colors shadow-xs cursor-pointer"
+              className="self-start sm:self-auto flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-indigo-700 font-semibold text-xs rounded-lg transition-colors shadow-xs cursor-pointer shrink-0"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Member Tier</span>

@@ -863,7 +863,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       </div>
 
-      <div className="max-w-[1600px] w-full mx-auto p-4 sm:px-6 lg:px-10 py-6 lg:py-8 space-y-6">
+      <div className="max-w-[1600px] w-full mx-auto p-3 sm:px-6 lg:px-10 py-4 sm:py-6 lg:py-8 space-y-5 sm:space-y-6">
         
         {/* Navigation Tabs Bar */}
         <div className="flex items-center space-x-1.5 overflow-x-auto bg-white p-1.5 rounded-xl border border-slate-200 shadow-xs custom-scrollbar">
@@ -888,7 +888,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-3.5 py-2 rounded-lg font-semibold text-xs whitespace-nowrap transition-all duration-150 flex items-center space-x-2 cursor-pointer ${
+                className={`shrink-0 px-3 sm:px-3.5 py-2 rounded-lg font-semibold text-xs whitespace-nowrap transition-all duration-150 flex items-center space-x-2 cursor-pointer ${
                   isActive
                     ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'

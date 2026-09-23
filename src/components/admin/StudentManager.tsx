@@ -289,15 +289,16 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
         <button
           type="button"
           onClick={() => setPhaseTab('parent')}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+          className={`flex-1 flex items-center justify-center space-x-1.5 sm:space-x-2 px-2.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             phaseTab === 'parent'
               ? 'bg-white text-indigo-700 shadow-xs border border-stone-200/60'
               : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/50'
           }`}
         >
-          <span className="text-base leading-none">👨‍👩‍👦</span>
-          <span>Parent Phase Orders</span>
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+          <span className="text-sm sm:text-base leading-none">👨‍👩‍👦</span>
+          <span className="sm:hidden whitespace-nowrap">Parents</span>
+          <span className="hidden sm:inline whitespace-nowrap">Parent Phase Orders</span>
+          <span className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] font-bold ${
             phaseTab === 'parent' ? 'bg-indigo-50 text-indigo-700' : 'bg-stone-200 text-stone-600'
           }`}>
             {parentOrderedCount}/{totalStudents}
@@ -307,15 +308,16 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
         <button
           type="button"
           onClick={() => setPhaseTab('student')}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+          className={`flex-1 flex items-center justify-center space-x-1.5 sm:space-x-2 px-2.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             phaseTab === 'student'
               ? 'bg-white text-indigo-700 shadow-xs border border-stone-200/60'
               : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/50'
           }`}
         >
-          <span className="text-base leading-none">🎓</span>
-          <span>Student Phase Orders</span>
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+          <span className="text-sm sm:text-base leading-none">🎓</span>
+          <span className="sm:hidden whitespace-nowrap">Students</span>
+          <span className="hidden sm:inline whitespace-nowrap">Student Phase Orders</span>
+          <span className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] font-bold ${
             phaseTab === 'student' ? 'bg-indigo-50 text-indigo-700' : 'bg-stone-200 text-stone-600'
           }`}>
             {studentOrderedCount}/{totalStudents}
@@ -324,31 +326,36 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
       </div>
 
       {/* Stat Cards Row */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="p-4 rounded-xl bg-white border border-stone-200 text-center shadow-xs">
-          <div className="text-[10px] text-stone-500 uppercase tracking-wider font-semibold">Total Students</div>
-          <div className="text-2xl font-bold text-stone-900 mt-1 font-mono">{totalStudents}</div>
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="p-2.5 sm:p-4 rounded-xl bg-white border border-stone-200 text-center shadow-xs">
+          <div className="text-[9.5px] sm:text-[10px] text-stone-500 uppercase tracking-wider font-semibold leading-tight">
+            <span className="sm:hidden">Total</span>
+            <span className="hidden sm:inline">Total Students</span>
+          </div>
+          <div className="text-lg sm:text-2xl font-bold text-stone-900 mt-0.5 sm:mt-1 font-mono">{totalStudents}</div>
         </div>
 
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center shadow-xs">
-          <div className="text-[10px] text-emerald-800 uppercase tracking-wider font-semibold">
-            {phaseTab === 'parent' ? 'Parents Ordered' : 'Students Ordered'}
+        <div className="p-2.5 sm:p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center shadow-xs">
+          <div className="text-[9.5px] sm:text-[10px] text-emerald-800 uppercase tracking-wider font-semibold leading-tight">
+            <span className="sm:hidden">Ordered</span>
+            <span className="hidden sm:inline">{phaseTab === 'parent' ? 'Parents Ordered' : 'Students Ordered'}</span>
           </div>
-          <div className="text-2xl font-bold text-emerald-950 mt-1 font-mono">{activeOrderedCount}</div>
+          <div className="text-lg sm:text-2xl font-bold text-emerald-950 mt-0.5 sm:mt-1 font-mono">{activeOrderedCount}</div>
         </div>
 
-        <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-center shadow-xs">
-          <div className="text-[10px] text-amber-800 uppercase tracking-wider font-semibold">
-            {phaseTab === 'parent' ? 'Parents Remaining' : 'Students Remaining'}
+        <div className="p-2.5 sm:p-4 rounded-xl bg-amber-50 border border-amber-200 text-center shadow-xs">
+          <div className="text-[9.5px] sm:text-[10px] text-amber-800 uppercase tracking-wider font-semibold leading-tight">
+            <span className="sm:hidden">Remaining</span>
+            <span className="hidden sm:inline">{phaseTab === 'parent' ? 'Parents Remaining' : 'Students Remaining'}</span>
           </div>
-          <div className="text-2xl font-bold text-amber-950 mt-1 font-mono">{activeRemainingCount}</div>
+          <div className="text-lg sm:text-2xl font-bold text-amber-950 mt-0.5 sm:mt-1 font-mono">{activeRemainingCount}</div>
         </div>
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-stone-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3 bg-white p-3 sm:p-3.5 rounded-xl border border-stone-200 shadow-xs">
         <div className="flex w-full sm:w-auto items-center gap-2">
-          <div className="relative w-full sm:w-72">
+          <div className="relative flex-1 sm:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
             <input
               type="text"
@@ -364,13 +371,14 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
               setEditingStudent({ id: '', fullName: '', firstName: '', lastName: '', parentName: '', birthDate: '', gmNo: 0, grade: 'Std 5' } as any);
               setSelectedGrade('Std 5');
             }}
-            className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm whitespace-nowrap transition-colors"
+            className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm whitespace-nowrap transition-colors shrink-0"
           >
-            + Add Student
+            <span className="sm:hidden">+ Add</span>
+            <span className="hidden sm:inline">+ Add Student</span>
           </button>
         </div>
 
-        <div className="flex items-center space-x-1.5">
+        <div className="flex items-center space-x-1.5 self-center sm:self-auto">
           {(['All', 'Ordered', 'Remaining'] as const).map((f) => (
             <button
               key={f}

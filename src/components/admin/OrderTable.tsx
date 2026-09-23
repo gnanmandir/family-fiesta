@@ -498,9 +498,9 @@ Thank you for ordering from Family Fiesta!
         {/* Phase Tabs */}
         <div className="flex bg-stone-100 p-1 rounded-xl w-full max-w-lg mb-2">
           {([
-            { id: 'parent', label: 'Parent Orders' },
-            { id: 'student', label: 'Student Orders' },
-            { id: 'guest', label: 'Staff Orders' },
+            { id: 'parent', label: 'Parent Orders', shortLabel: 'Parents' },
+            { id: 'student', label: 'Student Orders', shortLabel: 'Students' },
+            { id: 'guest', label: 'Staff Orders', shortLabel: 'Staff' },
           ] as const).map((tab) => {
             const count = orders.filter((o) => {
               const type = o.orderType || 'parent';
@@ -517,13 +517,14 @@ Thank you for ordering from Family Fiesta!
                     setSortDirection('desc');
                   }
                 }}
-                className={`flex-1 text-xs sm:text-sm font-bold py-2 rounded-lg transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+                className={`flex-1 text-xs sm:text-sm font-bold py-1.5 sm:py-2 px-1 sm:px-2 rounded-lg transition-all flex items-center justify-center space-x-1 sm:space-x-1.5 cursor-pointer ${
                   activeTab === tab.id
                     ? 'bg-white shadow-sm text-stone-900 border border-stone-200'
                     : 'text-stone-500 hover:text-stone-700 hover:bg-stone-200/50'
                 }`}
               >
-                <span>{tab.label}</span>
+                <span className="sm:hidden whitespace-nowrap">{tab.shortLabel}</span>
+                <span className="hidden sm:inline whitespace-nowrap">{tab.label}</span>
                 <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${activeTab === tab.id ? 'bg-indigo-50 text-indigo-700' : 'bg-stone-200 text-stone-600'}`}>
                   {count}
                 </span>
@@ -533,33 +534,42 @@ Thank you for ordering from Family Fiesta!
         </div>
 
         {/* Quick Sheet Summary Statistics */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
-          <div className="p-3 rounded-xl bg-stone-50 border border-stone-200 flex justify-between items-center">
+        <div className="grid grid-cols-3 gap-2 text-xs">
+          <div className="p-2.5 sm:p-3 rounded-xl bg-stone-50 border border-stone-200 flex justify-between items-center">
             <div>
-              <div className="text-[10px] text-stone-500 uppercase font-semibold">Total Orders</div>
-              <div className="text-lg font-bold text-stone-900 font-mono">{filteredOrders.length}</div>
+              <div className="text-[9.5px] sm:text-[10px] text-stone-500 uppercase font-semibold leading-tight">
+                <span className="sm:hidden">Orders</span>
+                <span className="hidden sm:inline">Total Orders</span>
+              </div>
+              <div className="text-base sm:text-lg font-bold text-stone-900 font-mono mt-0.5">{filteredOrders.length}</div>
             </div>
-            <div className="w-8 h-8 rounded-lg bg-white border border-stone-200 text-stone-700 flex items-center justify-center">
+            <div className="hidden sm:flex w-8 h-8 rounded-lg bg-white border border-stone-200 text-stone-700 items-center justify-center shrink-0">
               <ShoppingBag className="w-4 h-4" />
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-stone-50 border border-stone-200 flex justify-between items-center">
+          <div className="p-2.5 sm:p-3 rounded-xl bg-stone-50 border border-stone-200 flex justify-between items-center">
             <div>
-              <div className="text-[10px] text-stone-500 uppercase font-semibold">Total Revenue</div>
-              <div className="text-lg font-bold text-stone-900 font-mono">₹{sheetTotalRevenue}</div>
+              <div className="text-[9.5px] sm:text-[10px] text-stone-500 uppercase font-semibold leading-tight">
+                <span className="sm:hidden">Revenue</span>
+                <span className="hidden sm:inline">Total Revenue</span>
+              </div>
+              <div className="text-base sm:text-lg font-bold text-stone-900 font-mono mt-0.5">₹{sheetTotalRevenue}</div>
             </div>
-            <div className="w-8 h-8 rounded-lg bg-white border border-stone-200 text-stone-700 flex items-center justify-center">
+            <div className="hidden sm:flex w-8 h-8 rounded-lg bg-white border border-stone-200 text-stone-700 items-center justify-center shrink-0">
               <IndianRupee className="w-4 h-4" />
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-stone-50 border border-stone-200 flex justify-between items-center">
+          <div className="p-2.5 sm:p-3 rounded-xl bg-stone-50 border border-stone-200 flex justify-between items-center">
             <div>
-              <div className="text-[10px] text-stone-500 uppercase font-semibold">Total Attendees</div>
-              <div className="text-lg font-bold text-stone-900 font-mono">{sheetTotalPeople}</div>
+              <div className="text-[9.5px] sm:text-[10px] text-stone-500 uppercase font-semibold leading-tight">
+                <span className="sm:hidden">Attendees</span>
+                <span className="hidden sm:inline">Total Attendees</span>
+              </div>
+              <div className="text-base sm:text-lg font-bold text-stone-900 font-mono mt-0.5">{sheetTotalPeople}</div>
             </div>
-            <div className="w-8 h-8 rounded-lg bg-white border border-stone-200 text-stone-700 flex items-center justify-center">
+            <div className="hidden sm:flex w-8 h-8 rounded-lg bg-white border border-stone-200 text-stone-700 items-center justify-center shrink-0">
               <Users className="w-4 h-4" />
             </div>
           </div>
@@ -664,7 +674,7 @@ Thank you for ordering from Family Fiesta!
       {/* Full Detailed Spreadsheet Table Container */}
       <div className="bg-white border border-stone-200 rounded-xl overflow-hidden shadow-xs">
         <div className="overflow-x-auto custom-scrollbar">
-          <table className="w-full text-left border-collapse text-xs">
+          <table className="w-full text-left border-collapse text-xs min-w-[750px]">
             <thead>
               <tr className="bg-stone-50 border-b border-stone-200 text-stone-600 font-semibold uppercase tracking-wider text-[11px]">
                 {!isStaff && (
