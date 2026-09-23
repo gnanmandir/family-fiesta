@@ -320,26 +320,50 @@ export const LoginHistoryManager: React.FC = () => {
   const totalLogins = history.length;
   const activeCount = onlineAdmins.length;
 
+  const getRoleAvatar = (role: AdminRole) => {
+    switch (role) {
+      case 'boss':
+        return (
+          <div className="w-6 h-6 rounded-full bg-amber-50 border border-amber-200/80 flex items-center justify-center text-amber-700 shrink-0 shadow-2xs">
+            <User className="w-3 h-3" />
+          </div>
+        );
+      case 'super':
+        return (
+          <div className="w-6 h-6 rounded-full bg-indigo-50 border border-indigo-200/80 flex items-center justify-center text-indigo-600 shrink-0 shadow-2xs">
+            <User className="w-3 h-3" />
+          </div>
+        );
+      case 'admin':
+      default:
+        return (
+          <div className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 shrink-0">
+            <User className="w-3 h-3" />
+          </div>
+        );
+    }
+  };
+
   const getRoleBadge = (role: AdminRole) => {
     switch (role) {
       case 'boss':
         return (
-          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200/70">
-            <ShieldAlert className="w-2.5 h-2.5 text-amber-700" />
+          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
+            <ShieldAlert className="w-2.5 h-2.5 text-amber-600" />
             <span>Boss</span>
           </span>
         );
       case 'super':
         return (
-          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-            <Crown className="w-2.5 h-2.5 text-slate-600" />
+          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs">
+            <Crown className="w-2.5 h-2.5 text-indigo-600" />
             <span>Super Admin</span>
           </span>
         );
       case 'admin':
       default:
         return (
-          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
             <ShieldCheck className="w-2.5 h-2.5 text-slate-500" />
             <span>Admin</span>
           </span>
@@ -351,49 +375,49 @@ export const LoginHistoryManager: React.FC = () => {
     switch (actionType) {
       case 'portal_toggle':
         return (
-          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200/60">
+          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200/80">
             <Power className="w-3 h-3 text-emerald-600" />
             <span>Portal Open/Halt</span>
           </span>
         );
       case 'phase_change':
         return (
-          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-amber-50 text-amber-800 border border-amber-200/60">
+          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-amber-50 text-amber-800 border border-amber-200/80">
             <RotateCcw className="w-3 h-3 text-amber-600" />
             <span>Phase Switch</span>
           </span>
         );
       case 'schedule_change':
         return (
-          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
-            <Clock className="w-3 h-3 text-slate-500" />
+          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-sky-50 text-sky-800 border border-sky-200/80">
+            <Clock className="w-3 h-3 text-sky-600" />
             <span>Schedule</span>
           </span>
         );
       case 'order_wipe':
         return (
-          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-rose-50 text-rose-700 border border-rose-200/60">
+          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-rose-50 text-rose-800 border border-rose-200/80">
             <Trash2 className="w-3 h-3 text-rose-600" />
             <span>Order Wipe</span>
           </span>
         );
       case 'tier_update':
         return (
-          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-purple-50 text-purple-700 border border-purple-200/60">
+          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-purple-50 text-purple-800 border border-purple-200/80">
             <IndianRupee className="w-3 h-3 text-purple-600" />
             <span>Pricing Tiers</span>
           </span>
         );
       case 'credential_change':
         return (
-          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-amber-50 text-amber-800 border border-amber-200/60">
-            <KeyRound className="w-3 h-3 text-amber-600" />
+          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-orange-50 text-orange-800 border border-orange-200/80">
+            <KeyRound className="w-3 h-3 text-orange-600" />
             <span>Password Update</span>
           </span>
         );
       case 'session_resume':
         return (
-          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
             <Radio className="w-3 h-3 text-slate-500" />
             <span>Session Resumed</span>
           </span>
@@ -401,8 +425,8 @@ export const LoginHistoryManager: React.FC = () => {
       case 'login':
       default:
         return (
-          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
-            <CheckCircle2 className="w-3 h-3 text-slate-500" />
+          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-teal-50 text-teal-800 border border-teal-200/80">
+            <CheckCircle2 className="w-3 h-3 text-teal-600" />
             <span>Login Authorized</span>
           </span>
         );
@@ -420,10 +444,11 @@ export const LoginHistoryManager: React.FC = () => {
   return (
     <div className="space-y-4 text-slate-800 animate-in fade-in duration-150">
       
-      {/* 1. Sleek Minimal Header */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-2xs">
+      {/* 1. Sleek Minimal Header with subtle top accent */}
+      <div className="relative overflow-hidden bg-white border border-slate-200 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-2xs">
+        <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-indigo-500/70 via-purple-500/50 to-emerald-500/70" />
         <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 shrink-0">
+          <div className="w-9 h-9 rounded-lg bg-indigo-50 border border-indigo-100/80 flex items-center justify-center text-indigo-600 shrink-0">
             <History className="w-4 h-4" />
           </div>
           <div>
@@ -431,7 +456,7 @@ export const LoginHistoryManager: React.FC = () => {
               <h2 className="text-base font-bold text-slate-900 tracking-tight">
                 Activity & Login Audit Trail
               </h2>
-              <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+              <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
                 Boss Access
               </span>
             </div>
@@ -443,7 +468,7 @@ export const LoginHistoryManager: React.FC = () => {
 
         {/* Header Actions */}
         <div className="flex items-center space-x-2 shrink-0">
-          <div className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] font-medium text-slate-600">
+          <div className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-50/80 border border-emerald-200/80 text-[11px] font-medium text-emerald-700">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span>Live Sync</span>
           </div>
@@ -452,10 +477,10 @@ export const LoginHistoryManager: React.FC = () => {
             type="button"
             onClick={fetchAllData}
             disabled={isLoading}
-            className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium text-xs flex items-center space-x-1.5 transition-colors cursor-pointer disabled:opacity-50"
+            className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-indigo-200 hover:text-indigo-600 text-slate-700 font-medium text-xs flex items-center space-x-1.5 transition-colors cursor-pointer disabled:opacity-50"
             title="Refresh logs"
           >
-            <RotateCcw className={`w-3.5 h-3.5 text-slate-500 ${isLoading ? 'animate-spin' : ''}`} />
+            <RotateCcw className={`w-3.5 h-3.5 text-slate-500 ${isLoading ? 'animate-spin text-indigo-600' : ''}`} />
             <span>{isLoading ? 'Syncing...' : 'Refresh'}</span>
           </button>
 
@@ -474,44 +499,56 @@ export const LoginHistoryManager: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Overview Strip: Evenly distributed metrics and presence across full width */}
+      {/* 2. Overview Strip: Evenly distributed metrics and presence with subtle color accents */}
       <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-0 lg:divide-x divide-slate-100">
           
           <div className="lg:px-4 first:lg:pl-0">
-            <span className="text-[11px] font-medium text-slate-500 block uppercase tracking-wider">Total Actions</span>
-            <div className="flex items-baseline space-x-2 mt-0.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Total Actions</span>
+              <Activity className="w-3.5 h-3.5 text-indigo-500" />
+            </div>
+            <div className="flex items-baseline space-x-2 mt-1">
               <span className="text-xl font-bold text-slate-900 font-mono">{totalActivities}</span>
-              <span className="text-[11px] text-slate-400">logged</span>
+              <span className="text-[10px] font-medium text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100/70">logged</span>
             </div>
           </div>
 
           <div className="lg:px-4">
-            <span className="text-[11px] font-medium text-slate-500 block uppercase tracking-wider">Portal Toggles</span>
-            <div className="flex items-baseline space-x-2 mt-0.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Portal Toggles</span>
+              <Power className="w-3.5 h-3.5 text-emerald-500" />
+            </div>
+            <div className="flex items-baseline space-x-2 mt-1">
               <span className="text-xl font-bold text-slate-900 font-mono">{portalToggles}</span>
-              <span className="text-[11px] text-slate-400">open/halt</span>
+              <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100/70">open/halt</span>
             </div>
           </div>
 
           <div className="lg:px-4">
-            <span className="text-[11px] font-medium text-slate-500 block uppercase tracking-wider">System Changes</span>
-            <div className="flex items-baseline space-x-2 mt-0.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">System Changes</span>
+              <Layers className="w-3.5 h-3.5 text-amber-500" />
+            </div>
+            <div className="flex items-baseline space-x-2 mt-1">
               <span className="text-xl font-bold text-slate-900 font-mono">{systemChanges}</span>
-              <span className="text-[11px] text-slate-400">wipes/tiers</span>
+              <span className="text-[10px] font-medium text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100/70">wipes/tiers</span>
             </div>
           </div>
 
           <div className="lg:px-4">
-            <span className="text-[11px] font-medium text-slate-500 block uppercase tracking-wider">Login Sessions</span>
-            <div className="flex items-baseline space-x-2 mt-0.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Login Sessions</span>
+              <ShieldCheck className="w-3.5 h-3.5 text-sky-500" />
+            </div>
+            <div className="flex items-baseline space-x-2 mt-1">
               <span className="text-xl font-bold text-slate-900 font-mono">{totalLogins}</span>
-              <span className="text-[11px] text-slate-400">auths</span>
+              <span className="text-[10px] font-medium text-sky-700 bg-sky-50 px-1.5 py-0.5 rounded border border-sky-100/70">auths</span>
             </div>
           </div>
 
           <div className="col-span-2 sm:col-span-3 lg:col-span-1 lg:px-4 lg:pl-5">
-            <div className="flex items-center space-x-1.5 text-[11px] font-medium text-slate-500 uppercase tracking-wider">
+            <div className="flex items-center space-x-1.5 text-[11px] font-semibold text-emerald-800 uppercase tracking-wider">
               <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
               <span>Online Now ({activeCount})</span>
             </div>
@@ -520,7 +557,7 @@ export const LoginHistoryManager: React.FC = () => {
                 onlineAdmins.map((admin) => (
                   <div
                     key={admin.username}
-                    className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800"
+                    className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800 shadow-2xs"
                   >
                     {getRoleBadge(admin.role)}
                     <span className="text-[10px] text-slate-400">
@@ -540,18 +577,18 @@ export const LoginHistoryManager: React.FC = () => {
       {/* 3. Modern Segmented Toolbar: Sub-tabs, Filters & Search */}
       <div className="bg-white border border-slate-200 rounded-xl p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3 shadow-2xs">
         
-        {/* Left: Clean Segmented Sub-tab Control */}
+        {/* Left: Clean Segmented Sub-tab Control with Indigo Accent */}
         <div className="inline-flex p-1 bg-slate-100 rounded-lg shrink-0">
           <button
             type="button"
             onClick={() => setActiveSubTab('activities')}
             className={`px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer flex items-center space-x-1.5 ${
               activeSubTab === 'activities'
-                ? 'bg-white text-slate-900 shadow-2xs'
+                ? 'bg-indigo-600 text-white shadow-2xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Activity className="w-3.5 h-3.5 text-slate-500" />
+            <Activity className={`w-3.5 h-3.5 ${activeSubTab === 'activities' ? 'text-white' : 'text-slate-500'}`} />
             <span>Activity Log ({activities.length})</span>
           </button>
 
@@ -560,11 +597,11 @@ export const LoginHistoryManager: React.FC = () => {
             onClick={() => setActiveSubTab('logins')}
             className={`px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer flex items-center space-x-1.5 ${
               activeSubTab === 'logins'
-                ? 'bg-white text-slate-900 shadow-2xs'
+                ? 'bg-indigo-600 text-white shadow-2xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <History className="w-3.5 h-3.5 text-slate-500" />
+            <History className={`w-3.5 h-3.5 ${activeSubTab === 'logins' ? 'text-white' : 'text-slate-500'}`} />
             <span>Login Sessions ({history.length})</span>
           </button>
         </div>
@@ -656,9 +693,7 @@ export const LoginHistoryManager: React.FC = () => {
                       {/* Admin & Role */}
                       <td className="py-3 px-4 whitespace-nowrap">
                         <div className="flex items-center space-x-2">
-                          <div className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 shrink-0">
-                            <User className="w-3 h-3" />
-                          </div>
+                          {getRoleAvatar(act.role)}
                           {getRoleBadge(act.role)}
                         </div>
                       </td>
@@ -688,7 +723,7 @@ export const LoginHistoryManager: React.FC = () => {
                         <div className="text-slate-400 text-[11px] flex items-center space-x-1.5 mt-0.5">
                           <span>{getISTTimeDisplay(act.timestamp, act.timeDisplay)}</span>
                           <span>•</span>
-                          <span className="text-slate-500 font-medium">{formatRelativeTime(act.timestamp)}</span>
+                          <span className="text-indigo-600 font-medium">{formatRelativeTime(act.timestamp)}</span>
                         </div>
                       </td>
 
@@ -739,9 +774,7 @@ export const LoginHistoryManager: React.FC = () => {
                       {/* Role & Account */}
                       <td className="py-3 px-4 whitespace-nowrap">
                         <div className="flex items-center space-x-2">
-                          <div className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 shrink-0">
-                            <User className="w-3 h-3" />
-                          </div>
+                          {getRoleAvatar(item.role)}
                           {getRoleBadge(item.role)}
                         </div>
                       </td>
@@ -758,7 +791,7 @@ export const LoginHistoryManager: React.FC = () => {
 
                       {/* Elapsed */}
                       <td className="py-3 px-4 whitespace-nowrap">
-                        <span className="text-slate-600 font-medium text-xs">
+                        <span className="text-indigo-600 font-medium text-xs">
                           {formatRelativeTime(item.timestamp)}
                         </span>
                       </td>
