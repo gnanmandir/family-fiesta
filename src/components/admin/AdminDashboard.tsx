@@ -1212,12 +1212,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           </div>
                         </div>
 
-                        <span className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold shadow-2xs shrink-0 ${
+                        <span className={`inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full text-[10.5px] font-semibold border shadow-2xs shrink-0 ${
                           ordersOpen
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : 'bg-rose-50 text-rose-700 border border-rose-200'
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80'
+                            : 'bg-rose-50 text-rose-700 border border-rose-200/80'
                         }`}>
-                          <span className={`w-2 h-2 rounded-full ${ordersOpen ? 'bg-emerald-500 animate-pulse ring-4 ring-emerald-500/20' : 'bg-rose-500'}`} />
+                          <span className={`w-1.5 h-1.5 rounded-full ${ordersOpen ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
                           <span>{ordersOpen ? 'Accepting Orders' : 'Ordering Halted'}</span>
                         </span>
                       </div>
