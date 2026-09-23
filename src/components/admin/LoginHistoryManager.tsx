@@ -489,7 +489,6 @@ export const LoginHistoryManager: React.FC = () => {
                   key={admin.username}
                   className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800"
                 >
-                  <span className="font-semibold text-slate-900">{admin.username}</span>
                   {getRoleBadge(admin.role)}
                   <span className="text-[10px] text-slate-400">
                     {formatRelativeTime(admin.lastSeen)}
@@ -636,12 +635,7 @@ export const LoginHistoryManager: React.FC = () => {
                           <div className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 shrink-0">
                             <User className="w-3 h-3" />
                           </div>
-                          <div>
-                            <span className="font-semibold text-slate-900 block text-xs">
-                              {act.username}
-                            </span>
-                            <div className="mt-0.5">{getRoleBadge(act.role)}</div>
-                          </div>
+                          {getRoleBadge(act.role)}
                         </div>
                       </td>
 
@@ -714,12 +708,7 @@ export const LoginHistoryManager: React.FC = () => {
                           <div className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 shrink-0">
                             <User className="w-3 h-3" />
                           </div>
-                          <div>
-                            <span className="font-semibold text-slate-900 block text-xs">
-                              {item.username}
-                            </span>
-                            <div className="mt-0.5">{getRoleBadge(item.role)}</div>
-                          </div>
+                          {getRoleBadge(item.role)}
                         </div>
                       </td>
 
