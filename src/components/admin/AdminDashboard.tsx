@@ -1587,28 +1587,43 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {/* Tab: Boss Exclusive System Control Switchboard */}
         {activeTab === 'controls' && isBoss && (
-          <div className="space-y-6 animate-in fade-in duration-200">
+          <div className="space-y-4 animate-in fade-in duration-150">
             {/* Header Banner */}
-            <div className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-7 shadow-xl text-white">
-              <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 relative z-10">
-                <div className="flex items-center space-x-3.5">
-                  <div className="w-12 h-12 rounded-2xl bg-indigo-600/30 border border-indigo-400/30 flex items-center justify-center text-indigo-400 shadow-inner shrink-0">
-                    <ShieldCheck className="w-6 h-6" />
+            <div className="relative overflow-hidden bg-white border border-slate-200 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-2xs">
+              <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-indigo-500/70 via-purple-500/50 to-emerald-500/70" />
+              <div className="flex items-center space-x-3">
+                <div className="w-9 h-9 rounded-lg bg-indigo-50 border border-indigo-100/80 flex items-center justify-center text-indigo-600 shrink-0">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <h2 className="text-base font-bold text-slate-900 tracking-tight">
+                      System Control Switchboard
+                    </h2>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                      Boss Access
+                    </span>
                   </div>
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
-                        System Control Switchboard
-                      </h2>
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-400/20 text-amber-300 border border-amber-400/30">
-                        Boss Authority
-                      </span>
-                    </div>
-                    <p className="text-xs sm:text-sm text-slate-400 font-medium mt-1">
-                      Master toggle controls for platform operations. When disabled, features are grayed out for Super Admins without revealing system overrides.
-                    </p>
-                  </div>
+                  <p className="text-slate-500 text-xs mt-0.5">
+                    Master toggle controls for platform operations. When disabled, features are locked for Super Admins.
+                  </p>
+                </div>
+              </div>
+
+              {/* Status summary tag */}
+              <div className="flex items-center space-x-2 shrink-0">
+                <div className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] font-medium text-slate-600">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span>
+                    {
+                      [
+                        systemControls?.allowOrderPortal !== false,
+                        systemControls?.allowPhaseChange !== false,
+                        systemControls?.allowOrderWipe !== false,
+                        systemControls?.allowRosterEdit !== false,
+                      ].filter(Boolean).length
+                    } of 4 Active
+                  </span>
                 </div>
               </div>
             </div>
@@ -1620,58 +1635,59 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   key: 'allowOrderPortal' as const,
                   title: 'Food Ordering Portal & Schedule',
                   desc: 'Allow Super Admins to manually open/halt ordering and configure automated intake schedules. When disabled, the portal switch and schedule buttons are locked.',
-                  icon: <Power className="w-5 h-5" />,
+                  icon: <Power className="w-4 h-4" />,
                 },
                 {
                   key: 'allowPhaseChange' as const,
                   title: 'Intake Phase Switching',
                   desc: 'Allow Super Admins to change the active intake phase (Parent, Student, Staff, Closed). When disabled, phase selection is locked.',
-                  icon: <Settings className="w-5 h-5" />,
+                  icon: <Settings className="w-4 h-4" />,
                 },
                 {
                   key: 'allowOrderWipe' as const,
                   title: 'Order Wipe Controls',
                   desc: 'Allow Super Admins to wipe individual orders and registers. When disabled, every order wipe button across the system is locked and grayed out.',
-                  icon: <Trash2 className="w-5 h-5" />,
+                  icon: <Trash2 className="w-4 h-4" />,
                 },
                 {
                   key: 'allowRosterEdit' as const,
                   title: 'Roster Management',
                   desc: 'Allow Super Admins to add, update, or remove Students and Staff credentials. When disabled, rosters cannot be altered.',
-                  icon: <Users className="w-5 h-5" />,
+                  icon: <Users className="w-4 h-4" />,
                 },
               ].map((ctrl) => {
                 const isEnabled = systemControls ? systemControls[ctrl.key] !== false : true;
                 return (
                   <div
                     key={ctrl.key}
-                    className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-4"
+                    className="p-4 sm:p-5 rounded-xl bg-white border border-slate-200 shadow-2xs hover:border-slate-300 transition-colors flex flex-col justify-between space-y-4"
                   >
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2.5">
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center border shadow-2xs ${
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center border shadow-2xs ${
                             isEnabled
                               ? 'bg-emerald-50 text-emerald-600 border-emerald-200/80'
-                              : 'bg-rose-50 text-rose-600 border-rose-200/80'
+                              : 'bg-slate-100 text-slate-400 border-slate-200'
                           }`}>
                             {ctrl.icon}
                           </div>
-                          <h3 className="font-bold text-slate-900 text-sm">{ctrl.title}</h3>
+                          <h3 className="font-semibold text-slate-900 text-sm">{ctrl.title}</h3>
                         </div>
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-2xs ${
+                        <span className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-semibold border shadow-2xs ${
                           isEnabled
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                            : 'bg-rose-50 text-rose-700 border-rose-200'
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80'
+                            : 'bg-slate-100 text-slate-600 border-slate-200'
                         }`}>
-                          {isEnabled ? 'Enabled' : 'Disabled'}
+                          <span className={`w-1.5 h-1.5 rounded-full ${isEnabled ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                          <span>{isEnabled ? 'Enabled' : 'Disabled'}</span>
                         </span>
                       </div>
-                      <p className="text-xs text-slate-500 leading-relaxed">{ctrl.desc}</p>
+                      <p className="text-xs text-slate-500 leading-relaxed font-normal">{ctrl.desc}</p>
                     </div>
 
                     <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                      <span className="text-[11px] font-semibold text-slate-400">
+                      <span className="text-[11px] font-medium text-slate-400">
                         {isEnabled ? 'Currently permitted' : 'Currently restricted'}
                       </span>
                       <button
@@ -1691,10 +1707,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             await onUpdateSystemControls(updated);
                           }
                         }}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-2xs active:scale-95 border ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center space-x-1.5 cursor-pointer border ${
                           isEnabled
-                            ? 'bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border-rose-200 hover:border-rose-600'
-                            : 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600 shadow-sm'
+                            ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 hover:text-rose-600 hover:border-rose-200'
+                            : 'bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-600 shadow-2xs'
                         }`}
                       >
                         <Power className="w-3.5 h-3.5" />
