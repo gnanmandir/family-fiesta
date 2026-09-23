@@ -894,11 +894,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <button
                 type="button"
                 onClick={handleInstallClick}
-                className="p-2 sm:px-3 sm:py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 font-semibold text-xs tracking-wide flex items-center space-x-1.5 active:scale-95 transition-all cursor-pointer shrink-0 shadow-2xs"
+                className="p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 font-semibold text-xs tracking-wide flex items-center space-x-2 active:scale-95 transition-all cursor-pointer shrink-0 shadow-2xs"
                 title="Install Family Fiesta Admin App"
               >
-                <Download className="w-4 h-4 text-indigo-600" />
+                <img src="/pwa-192x192.png" alt="Family Fiesta" className="w-5 h-5 rounded-md object-contain border border-indigo-200/60 bg-white" />
                 <span className="hidden sm:inline">Install App</span>
+                <Download className="w-3.5 h-3.5 text-indigo-600 hidden sm:inline" />
               </button>
             )}
 
@@ -1633,8 +1634,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {/* SECTION: Admin Application (PWA) */}
             <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-start space-x-3.5">
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 mt-0.5">
-                  <Smartphone className="w-5 h-5" />
+                <div className="w-11 h-11 rounded-xl bg-white border border-slate-200/90 p-1 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs overflow-hidden">
+                  <img src="/pwa-192x192.png" alt="Family Fiesta App" className="w-full h-full object-contain" />
                 </div>
                 <div>
                   <div className="flex items-center space-x-2">
@@ -2511,8 +2512,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="w-full max-w-sm bg-white border border-slate-200 rounded-2xl p-5 shadow-2xl space-y-4 text-slate-900">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
-                  <Smartphone className="w-4 h-4" />
+                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200/90 p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+                  <img src="/pwa-192x192.png" alt="Family Fiesta App" className="w-full h-full object-contain" />
                 </div>
                 <h3 className="text-sm font-bold text-slate-900">Install on iPhone / iPad</h3>
               </div>
