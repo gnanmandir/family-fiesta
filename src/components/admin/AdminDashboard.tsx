@@ -30,7 +30,11 @@ import {
   Calendar,
   Clock,
   History,
+  Download,
+  Smartphone,
+  Share2,
 } from 'lucide-react';
+import { canInstallPwa, promptAdminInstall, isPwaStandalone } from '../../services/pwa';
 import {
   evaluateSchedule,
   isScheduleDone,
@@ -540,6 +544,42 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const isBoss = adminRole === 'boss';
   const isSuper = adminRole === 'super' || isBoss;
 
+  // PWA App Installation State (strictly Admin-only)
+  const [canInstall, setCanInstall] = useState(false);
+  const [isStandaloneApp, setIsStandaloneApp] = useState(false);
+  const [showIosInstallModal, setShowIosInstallModal] = useState(false);
+
+  useEffect(() => {
+    setIsStandaloneApp(isPwaStandalone());
+    setCanInstall(canInstallPwa());
+
+    const handleReady = () => {
+      setCanInstall(canInstallPwa());
+    };
+    const handleInstalled = () => {
+      setCanInstall(false);
+      setIsStandaloneApp(true);
+    };
+
+    window.addEventListener('pwa-install-ready', handleReady);
+    window.addEventListener('pwa-installed', handleInstalled);
+
+    return () => {
+      window.removeEventListener('pwa-install-ready', handleReady);
+      window.removeEventListener('pwa-installed', handleInstalled);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    const outcome = await promptAdminInstall();
+    if (outcome === 'ios') {
+      setShowIosInstallModal(true);
+    } else if (outcome === 'accepted') {
+      setCanInstall(false);
+      setIsStandaloneApp(true);
+    }
+  };
+
   type AdminTab = 'overview' | 'orders' | 'students' | 'staff' | 'food' | 'settings' | 'pricing' | 'login_history' | 'controls';
   const VALID_ADMIN_TABS: AdminTab[] = ['overview', 'orders', 'students', 'staff', 'food', 'settings', 'pricing', 'login_history', 'controls'];
 
@@ -848,8 +888,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           </div>
 
-          {/* Right: Log Out Button */}
+          {/* Right: Actions */}
           <div className="flex items-center space-x-2 shrink-0">
+            {canInstall && !isStandaloneApp && (
+              <button
+                type="button"
+                onClick={handleInstallClick}
+                className="p-2 sm:px-3 sm:py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 font-semibold text-xs tracking-wide flex items-center space-x-1.5 active:scale-95 transition-all cursor-pointer shrink-0 shadow-2xs"
+                title="Install Family Fiesta Admin App"
+              >
+                <Download className="w-4 h-4 text-indigo-600" />
+                <span className="hidden sm:inline">Install App</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={onLogoutAdmin}
@@ -1576,6 +1628,46 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </button>
                 </div>
               </div>
+            </div>
+
+            {/* SECTION: Admin Application (PWA) */}
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-start space-x-3.5">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 mt-0.5">
+                  <Smartphone className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <h3 className="font-bold text-slate-900 text-sm">Family Fiesta Admin App (PWA)</h3>
+                    {isStandaloneApp ? (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 inline-flex items-center space-x-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        <span>Installed (Standalone)</span>
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        PWA Ready
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1 max-w-xl">
+                    {isStandaloneApp
+                      ? 'Running as a standalone application on your device. Live auto-sync, zero caching on dynamic orders, and master controls are active.'
+                      : 'Install Family Fiesta as a dedicated app on your phone, tablet, or PC for fast, distraction-free admin access.'}
+                  </p>
+                </div>
+              </div>
+
+              {!isStandaloneApp && (
+                <button
+                  type="button"
+                  onClick={handleInstallClick}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-sm transition-colors cursor-pointer shrink-0"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Install Admin App</span>
+                </button>
+              )}
             </div>
 
           </div>
@@ -2409,6 +2501,63 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* iOS PWA Install Instruction Modal */}
+      {showIosInstallModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-sm bg-white border border-slate-200 rounded-2xl p-5 shadow-2xl space-y-4 text-slate-900">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                  <Smartphone className="w-4 h-4" />
+                </div>
+                <h3 className="text-sm font-bold text-slate-900">Install on iPhone / iPad</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowIosInstallModal(false)}
+                className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Apple Safari does not allow automatic app install popups. Follow these two quick steps to install the Family Fiesta Admin app:
+            </p>
+
+            <div className="space-y-2.5 text-xs text-slate-700">
+              <div className="flex items-start space-x-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                <span className="w-5 h-5 rounded-full bg-indigo-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                  1
+                </span>
+                <div>
+                  <span>Tap the <strong>Share</strong> button (</span>
+                  <Share2 className="w-3.5 h-3.5 inline text-indigo-600 -mt-0.5" />
+                  <span>) in the Safari bottom toolbar.</span>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                <span className="w-5 h-5 rounded-full bg-indigo-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                  2
+                </span>
+                <div>
+                  <span>Scroll down and select <strong>Add to Home Screen</strong>, then tap <strong>Add</strong>.</span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowIosInstallModal(false)}
+              className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs cursor-pointer transition-colors"
+            >
+              Got it
+            </button>
           </div>
         </div>
       )}
