@@ -823,24 +823,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <Logo size="sm" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-sm sm:text-lg lg:text-xl font-bold text-slate-900 tracking-tight whitespace-nowrap">
-                  Family Fiesta <span className="hidden md:inline font-bold">Admin</span>
-                </h1>
-                <p className="text-[9px] sm:text-[10px] text-indigo-600 font-semibold uppercase tracking-wider truncate mt-0.5">
-                  {isSuper ? (
-                    <>
-                      <span className="sm:hidden">Full System Authority</span>
-                      <span className="hidden sm:inline">Full System & Operations Authority</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="sm:hidden">Stall Operations</span>
-                      <span className="hidden sm:inline">Stall Operations & Reports</span>
-                    </>
-                  )}
-                </p>
-                <div className="mt-1">
-                  {isSuper ? (
+                <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                  <h1 className="text-sm sm:text-lg lg:text-xl font-bold text-slate-900 tracking-tight whitespace-nowrap">
+                    Family Fiesta <span className="hidden md:inline font-bold">Admin</span>
+                  </h1>
+                  {isBoss ? (
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs whitespace-nowrap inline-flex items-center space-x-1.5 shrink-0">
+                      <Crown className="w-3 h-3 text-amber-600 shrink-0" />
+                      <span>Boss</span>
+                    </span>
+                  ) : isSuper ? (
                     <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200/80 shadow-2xs whitespace-nowrap inline-flex items-center space-x-1.5 shrink-0">
                       <Crown className="w-3 h-3 text-indigo-600 shrink-0" />
                       <span>Super Admin</span>
@@ -1057,9 +1049,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
 
                 <div className="flex items-center shrink-0">
-                  <span className="px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200/80 text-xs font-bold inline-flex items-center space-x-1.5 shadow-2xs">
-                    <Crown className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                    <span>Super Admin Authorized</span>
+                  <span className={`px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center space-x-1.5 shadow-2xs ${
+                    isBoss
+                      ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                      : 'bg-indigo-50 text-indigo-700 border border-indigo-200/80'
+                  }`}>
+                    <Crown className={`w-3.5 h-3.5 shrink-0 ${isBoss ? 'text-amber-600' : 'text-indigo-600'}`} />
+                    <span>{isBoss ? 'Boss Authorized' : 'Super Admin Authorized'}</span>
                   </span>
                 </div>
               </div>
