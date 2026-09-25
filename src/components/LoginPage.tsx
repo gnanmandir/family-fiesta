@@ -3,6 +3,7 @@ import { Student, Order } from '../types';
 import { INITIAL_STUDENTS } from '../data/students';
 import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
 import { formatNameDisplay } from '../utils/nameFormatter';
+import { parseActivePhases, isPhaseActive } from '../utils/phaseUtils';
 import { AlertCircle, User, Info, Calendar } from 'lucide-react';
 
 interface LoginPageProps {
@@ -282,32 +283,25 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       // If they already placed an order, ALWAYS allow them to sign in
       // so they can view their order summary and download their receipt!
       if (!existingOrder) {
-        const isStaffPhase = intakePhase === 'staff' || intakePhase === 'guest';
+        const activePhases = parseActivePhases(intakePhase);
 
         // Overall Orders Closed Check
-        if (!ordersOpen || intakePhase === 'closed') {
+        if (!ordersOpen || activePhases.length === 0) {
           setIsLoading(false);
           setError('Online ordering is closed. No prior order was found for this student.');
           return;
         }
 
-        // Staff Phase Restriction (only for new orders)
-        if (isStaffPhase && (role === 'parent' || role === 'student')) {
+        // Check if user's role (parent or student) is allowed right now
+        if (!isPhaseActive(activePhases, role)) {
           setIsLoading(false);
-          setError('Ordering is currently open exclusively for Gurukul Staff.');
-          return;
-        }
-
-        // Parent vs Student Phase Restrictions (only for new orders)
-        if (intakePhase === 'parent' && role === 'student') {
-          setIsLoading(false);
-          setError('Student ordering is not yet open.');
-          return;
-        }
-
-        if (intakePhase === 'student' && role === 'parent') {
-          setIsLoading(false);
-          setError('Parent ordering has concluded.');
+          if (role === 'student') {
+            setError('Student ordering is currently not active.');
+          } else if (role === 'parent') {
+            setError('Parent ordering is currently not active.');
+          } else {
+            setError('Ordering is currently not active for your role.');
+          }
           return;
         }
       }

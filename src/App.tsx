@@ -47,6 +47,7 @@ import { LoginPage } from './components/LoginPage';
 import { StaffLoginPage } from './components/StaffLoginPage';
 import { calculateAllowedBudget } from './utils/budget';
 import { evaluateSchedule, isScheduleDone, DEFAULT_SCHEDULE, formatISTDateTime } from './utils/schedule';
+import { parseActivePhases, isPhaseActive } from './utils/phaseUtils';
 
 export default function App() {
   // Navigation & Core States
@@ -1016,19 +1017,14 @@ export default function App() {
     if (existing) {
       setActiveOrder(existing);
       setCurrentView('submitted');
-    } else if (intakePhase !== currentRole && intakePhase !== 'closed') {
-      // If they haven't ordered, and the phase is not theirs, they are blocked!
+    } else if (!isPhaseActive(intakePhase, currentRole)) {
+      // If they haven't ordered, and their phase is not currently active, block
       setSelectedStudent(null);
       localStorage.removeItem('active_student_id');
       localStorage.removeItem('active_login_role');
-      // Wait, we need to show an error, but App.tsx doesn't have a login error state.
-      // It's better to let LoginPage handle this block!
-      // But we are here now. Let's just send them to 'home' and handle it or let LoginPage block it.
-      // Actually, if we just send them to 'home', they will see it. Let's let them go to home, but wait, if phase is student and parent logs in, they can't order!
-      // I'll update LoginPage to block this instead.
       setCurrentView('home');
-    } else if (!ordersOpen || intakePhase === 'closed') {
-      // Orders are closed and student has no order — show closed notice
+    } else if (!ordersOpen || parseActivePhases(intakePhase).length === 0) {
+      // Orders are closed and user has no order — show closed notice
       setActiveOrder(null);
       setCurrentView('home');
     } else {
@@ -1401,6 +1397,7 @@ export default function App() {
             onStaffLogin={handleStudentLogin}
             onAdminLogin={handleAdminLogin}
             ordersOpen={ordersOpen}
+            intakePhase={intakePhase}
           />
         )}
 
@@ -1448,8 +1445,8 @@ export default function App() {
           <OrderConfirmation
             order={activeOrder}
             onRefreshOrder={(up) => setActiveOrder(up)}
-            onEditOrder={(ordersOpen && (intakePhase === activeOrder.orderType || activeOrder.orderType === undefined)) ? handleEditOrder : undefined}
-            ordersOpen={ordersOpen && (intakePhase === activeOrder.orderType || activeOrder.orderType === undefined)}
+            onEditOrder={(ordersOpen && (isPhaseActive(intakePhase, activeOrder.orderType || 'parent') || activeOrder.orderType === undefined)) ? handleEditOrder : undefined}
+            ordersOpen={ordersOpen && (isPhaseActive(intakePhase, activeOrder.orderType || 'parent') || activeOrder.orderType === undefined)}
           />
         )}
 

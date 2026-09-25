@@ -41,6 +41,12 @@ import {
   formatScheduleDisplay,
   toDateTimeLocalString,
 } from '../../utils/schedule';
+import {
+  parseActivePhases,
+  serializeActivePhases,
+  formatActivePhasesLabel,
+  ActivePhase,
+} from '../../utils/phaseUtils';
 import { AnalyticsCharts } from './AnalyticsCharts';
 import { OrderTable } from './OrderTable';
 import { StudentManager } from './StudentManager';
@@ -1127,68 +1133,188 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 {/* Card 0: Intake Phase */}
-                {onSetIntakePhase && (
-                  <div className="bg-white border border-slate-200 hover:border-indigo-300 transition-colors rounded-2xl p-5 flex flex-col justify-between shadow-2xs">
-                    <div className="space-y-3.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center space-x-3 min-w-0">
-                          <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-200/70 flex items-center justify-center shrink-0 shadow-2xs">
-                            <Settings className="w-5 h-5" />
+                {onSetIntakePhase && (() => {
+                  const currentActivePhases = parseActivePhases(intakePhase);
+                  const isParentActive = currentActivePhases.includes('parent');
+                  const isStudentActive = currentActivePhases.includes('student');
+                  const isStaffActive = currentActivePhases.includes('staff');
+                  const isClosed = currentActivePhases.length === 0;
+
+                  const handleTogglePhase = (phaseToToggle: ActivePhase) => {
+                    const next = currentActivePhases.includes(phaseToToggle)
+                      ? currentActivePhases.filter((p) => p !== phaseToToggle)
+                      : [...currentActivePhases, phaseToToggle];
+                    const nextVal = serializeActivePhases(next);
+                    const desc = next.length > 0
+                      ? next.map((p) => p.toUpperCase()).join(' + ')
+                      : 'CLOSED (ALL DISABLED)';
+
+                    openProtectedAction(
+                      'Change Intake Phase',
+                      `Enter system password to update active intake phases to: ${desc}.`,
+                      () => { onSetIntakePhase(nextVal); },
+                      false,
+                      'Confirm Phase Change'
+                    );
+                  };
+
+                  const handleSetAll = (allOpen: boolean) => {
+                    const nextVal = allOpen ? ('parent,student,staff' as import('../../types').IntakePhase) : 'closed';
+                    openProtectedAction(
+                      allOpen ? 'Open All Intake Phases' : 'Close All Intake Phases',
+                      allOpen
+                        ? 'Enter system password to open ordering for Parents, Students, and Staff simultaneously.'
+                        : 'Enter system password to suspend all intake phases.',
+                      () => { onSetIntakePhase(nextVal); },
+                      false,
+                      allOpen ? 'Open All Phases' : 'Close All Phases'
+                    );
+                  };
+
+                  return (
+                    <div className="bg-white border border-slate-200 hover:border-indigo-300 transition-colors rounded-2xl p-5 flex flex-col justify-between shadow-2xs">
+                      <div className="space-y-3.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center space-x-3 min-w-0">
+                            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-200/70 flex items-center justify-center shrink-0 shadow-2xs">
+                              <Settings className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-bold text-slate-900 truncate">
+                                Intake Phase
+                              </h4>
+                              <p className="text-xs text-slate-500">
+                                Simultaneous active audiences
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="text-sm font-bold text-slate-900 truncate">
-                              Intake Phase
-                            </h4>
-                            <p className="text-xs text-slate-500">
-                              Active login and ordering audience
-                            </p>
+
+                          <span className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-bold border shadow-2xs shrink-0 ${
+                            isClosed
+                              ? 'bg-rose-50 text-rose-700 border-rose-200'
+                              : 'bg-emerald-50 text-emerald-800 border-emerald-200/80'
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${isClosed ? 'bg-rose-500' : 'bg-emerald-500 animate-pulse'}`} />
+                            <span>{formatActivePhasesLabel(intakePhase)}</span>
+                          </span>
+                        </div>
+
+                        <div className="bg-slate-50/80 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-600 font-medium leading-relaxed">
+                          Select one or multiple phases below to accept orders simultaneously. Deselecting all will close intake.
+                        </div>
+                      </div>
+
+                      <div className={`pt-3.5 mt-3.5 border-t border-slate-100 space-y-2.5 ${(!isBoss && systemControls?.allowPhaseChange === false) ? 'opacity-40 cursor-not-allowed pointer-events-none select-none' : ''}`}>
+                        <div className="flex items-center justify-between">
+                          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                            Active Ordering Audiences
+                          </label>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              type="button"
+                              onClick={() => handleSetAll(true)}
+                              className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer"
+                            >
+                              Open All
+                            </button>
+                            <span className="text-slate-300">•</span>
+                            <button
+                              type="button"
+                              onClick={() => handleSetAll(false)}
+                              className="text-[11px] font-semibold text-rose-600 hover:text-rose-800 hover:underline cursor-pointer"
+                            >
+                              Close All
+                            </button>
                           </div>
                         </div>
 
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide shrink-0 border ${
-                          intakePhase === 'parent' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                          intakePhase === 'student' ? 'bg-violet-50 text-violet-700 border-violet-200' :
-                          (intakePhase === 'guest' || intakePhase === 'staff') ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                          'bg-rose-50 text-rose-700 border-rose-200'
-                        }`}>
-                          {intakePhase === 'guest' ? 'staff' : intakePhase} Phase
-                        </span>
-                      </div>
+                        {/* Multi-Phase Selector Buttons */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          {/* Parent Phase */}
+                          <button
+                            type="button"
+                            onClick={() => handleTogglePhase('parent')}
+                            className={`p-2.5 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer ${
+                              isParentActive
+                                ? 'bg-blue-50/90 border-blue-300 text-blue-900 shadow-2xs'
+                                : 'bg-slate-50/60 hover:bg-slate-100/80 border-slate-200 text-slate-600'
+                            }`}
+                          >
+                            <div className="min-w-0 pr-1">
+                              <span className="text-xs font-bold block truncate">
+                                Parent Phase
+                              </span>
+                              <span className="text-[10px] text-slate-500 block truncate">
+                                Parents Only
+                              </span>
+                            </div>
+                            <span className={`w-5 h-5 rounded-lg flex items-center justify-center shrink-0 border transition-colors ${
+                              isParentActive
+                                ? 'bg-blue-600 border-blue-600 text-white'
+                                : 'border-slate-300 bg-white text-transparent'
+                            }`}>
+                              <Check className="w-3.5 h-3.5 stroke-[3]" />
+                            </span>
+                          </button>
 
-                      <div className="bg-indigo-50/50 border border-indigo-100/80 rounded-xl px-3.5 py-2.5 text-xs text-indigo-950 font-medium leading-relaxed">
-                        Controls which user role is currently allowed to log in and submit orders. Other roles are restricted to read-only mode.
+                          {/* Student Phase */}
+                          <button
+                            type="button"
+                            onClick={() => handleTogglePhase('student')}
+                            className={`p-2.5 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer ${
+                              isStudentActive
+                                ? 'bg-violet-50/90 border-violet-300 text-violet-900 shadow-2xs'
+                                : 'bg-slate-50/60 hover:bg-slate-100/80 border-slate-200 text-slate-600'
+                            }`}
+                          >
+                            <div className="min-w-0 pr-1">
+                              <span className="text-xs font-bold block truncate">
+                                Student Phase
+                              </span>
+                              <span className="text-[10px] text-slate-500 block truncate">
+                                Students Only
+                              </span>
+                            </div>
+                            <span className={`w-5 h-5 rounded-lg flex items-center justify-center shrink-0 border transition-colors ${
+                              isStudentActive
+                                ? 'bg-violet-600 border-violet-600 text-white'
+                                : 'border-slate-300 bg-white text-transparent'
+                            }`}>
+                              <Check className="w-3.5 h-3.5 stroke-[3]" />
+                            </span>
+                          </button>
+
+                          {/* Staff Phase */}
+                          <button
+                            type="button"
+                            onClick={() => handleTogglePhase('staff')}
+                            className={`p-2.5 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer ${
+                              isStaffActive
+                                ? 'bg-amber-50/90 border-amber-300 text-amber-900 shadow-2xs'
+                                : 'bg-slate-50/60 hover:bg-slate-100/80 border-slate-200 text-slate-600'
+                            }`}
+                          >
+                            <div className="min-w-0 pr-1">
+                              <span className="text-xs font-bold block truncate">
+                                Staff Phase
+                              </span>
+                              <span className="text-[10px] text-slate-500 block truncate">
+                                Staff & Faculty
+                              </span>
+                            </div>
+                            <span className={`w-5 h-5 rounded-lg flex items-center justify-center shrink-0 border transition-colors ${
+                              isStaffActive
+                                ? 'bg-amber-600 border-amber-600 text-white'
+                                : 'border-slate-300 bg-white text-transparent'
+                            }`}>
+                              <Check className="w-3.5 h-3.5 stroke-[3]" />
+                            </span>
+                          </button>
+                        </div>
                       </div>
                     </div>
-
-                    <div className={`pt-4 mt-4 border-t border-slate-100 ${(!isBoss && systemControls?.allowPhaseChange === false) ? 'opacity-40 cursor-not-allowed pointer-events-none select-none' : ''}`}>
-                      <label className="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
-                        Switch Active Intake Phase
-                      </label>
-                      <select
-                        disabled={!isBoss && systemControls?.allowPhaseChange === false}
-                        value={intakePhase === 'guest' ? 'staff' : intakePhase}
-                        onChange={(e) => {
-                          const newPhase = e.target.value as import('../types').IntakePhase;
-                          openProtectedAction(
-                            'Change Intake Phase',
-                            `Enter system password to change the intake phase to ${newPhase.toUpperCase()}.`,
-                            () => { onSetIntakePhase(newPhase); },
-                            false,
-                            'Confirm Phase Change'
-                          );
-                        }}
-                        className={`w-full bg-slate-50 hover:bg-slate-100/80 border border-slate-200 text-slate-900 text-xs sm:text-sm rounded-xl px-3.5 py-2.5 font-bold focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors ${
-                          (!isBoss && systemControls?.allowPhaseChange === false) ? 'cursor-not-allowed' : 'cursor-pointer'
-                        }`}
-                      >
-                        <option value="parent">Parent Phase (Parents Only)</option>
-                        <option value="student">Student Phase (Students Only)</option>
-                        <option value="staff">Staff Phase (Staff & Faculty Only)</option>
-                        <option value="closed">Closed Phase (All Ordering Disabled)</option>
-                      </select>
-                    </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* Card 1: Food Ordering Portal */}
                 {onToggleOrdering && (

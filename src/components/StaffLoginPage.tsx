@@ -4,17 +4,20 @@ import { INITIAL_STAFF } from '../data/staff';
 import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
 import { AlertCircle, User, Eye, EyeOff, Info } from 'lucide-react';
 import { api } from '../services/api';
+import { parseActivePhases, isPhaseActive } from '../utils/phaseUtils';
 
 interface StaffLoginPageProps {
   onStaffLogin: (staffMember: Student, role: import('../types').IntakePhase) => void;
   onAdminLogin: (role?: import('../types').AdminRole) => void;
   ordersOpen?: boolean;
+  intakePhase?: import('../types').IntakePhase;
 }
 
 export const StaffLoginPage: React.FC<StaffLoginPageProps> = ({
   onStaffLogin,
   onAdminLogin,
   ordersOpen = true,
+  intakePhase = 'staff',
 }) => {
   const [staffName, setStaffName] = useState('');
   const [password, setPassword] = useState('');
@@ -124,6 +127,27 @@ export const StaffLoginPage: React.FC<StaffLoginPageProps> = ({
       setIsLoading(false);
       setError('Incorrect password for this staff member.');
       return;
+    }
+
+    // Check if staff has an existing order (already placed)
+    let existingOrder = false;
+    try {
+      const order = await api.getOrderByStudent(matchedGuest.id);
+      if (order) existingOrder = true;
+    } catch (e) {}
+
+    if (!existingOrder) {
+      const activePhases = parseActivePhases(intakePhase);
+      if (!ordersOpen || activePhases.length === 0) {
+        setIsLoading(false);
+        setError('Online ordering is currently closed. No prior order was found for your account.');
+        return;
+      }
+      if (!isPhaseActive(activePhases, 'staff')) {
+        setIsLoading(false);
+        setError('Staff ordering is currently not active.');
+        return;
+      }
     }
 
     // Successfully verified!
