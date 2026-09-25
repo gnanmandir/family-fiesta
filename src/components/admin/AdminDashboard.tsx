@@ -903,7 +903,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 className="p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 font-semibold text-xs tracking-wide flex items-center space-x-2 active:scale-95 transition-all cursor-pointer shrink-0 shadow-2xs"
                 title="Install Family Fiesta Admin App"
               >
-                <img src="/pwa-192x192.png" alt="Family Fiesta" className="w-5 h-5 rounded-md object-contain border border-indigo-200/60 bg-white" />
+                <img src="/pwa-192x192-v2.png" alt="Family Fiesta" className="w-5 h-5 rounded-md object-contain border border-indigo-200/60 bg-white" />
                 <span className="hidden sm:inline">Install App</span>
                 <Download className="w-3.5 h-3.5 text-indigo-600 hidden sm:inline" />
               </button>
@@ -1761,7 +1761,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-start space-x-3.5">
                 <div className="w-11 h-11 rounded-xl bg-white border border-slate-200/90 p-1 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs overflow-hidden">
-                  <img src="/pwa-192x192.png" alt="Family Fiesta App" className="w-full h-full object-contain" />
+                  <img src="/pwa-192x192-v2.png" alt="Family Fiesta App" className="w-full h-full object-contain" />
                 </div>
                 <div>
                   <div className="flex items-center space-x-2">
@@ -2639,7 +2639,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 rounded-lg bg-white border border-slate-200/90 p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
-                  <img src="/pwa-192x192.png" alt="Family Fiesta App" className="w-full h-full object-contain" />
+                  <img src="/pwa-192x192-v2.png" alt="Family Fiesta App" className="w-full h-full object-contain" />
                 </div>
                 <h3 className="text-sm font-bold text-slate-900">Install on iPhone / iPad</h3>
               </div>

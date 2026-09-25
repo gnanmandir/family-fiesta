@@ -1,4 +1,4 @@
-const CACHE_NAME = 'family-fiesta-v1';
+const CACHE_NAME = 'family-fiesta-v2';
 
 // Install event - activate immediately
 self.addEventListener('install', () => {
