@@ -4,7 +4,8 @@ import { INITIAL_STUDENTS } from '../data/students';
 import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
 import { formatNameDisplay } from '../utils/nameFormatter';
 import { parseActivePhases, isPhaseActive } from '../utils/phaseUtils';
-import { AlertCircle, User, Info, Calendar } from 'lucide-react';
+import { AlertCircle, User, Info, Calendar, ShieldAlert } from 'lucide-react';
+import { checkLockout, recordFailedAttempt, resetAttempts } from '../services/security';
 
 interface LoginPageProps {
   students: Student[];
@@ -30,8 +31,33 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
+  const [lockoutSec, setLockoutSec] = useState(0);
   const passwordInputRef = useRef<HTMLInputElement>(null);
   const datePickerRef = useRef<HTMLInputElement>(null);
+
+  // Check initial rate limit status on mount
+  useEffect(() => {
+    const lock = checkLockout('user_login');
+    if (lock.isLocked) {
+      setLockoutSec(lock.remainingSeconds);
+      setError(`Security Lockout: Too many failed login attempts. Please wait ${lock.remainingSeconds}s before trying again.`);
+    }
+  }, []);
+
+  // Lockout countdown timer
+  useEffect(() => {
+    if (lockoutSec <= 0) return;
+    const timer = setInterval(() => {
+      setLockoutSec((prev) => {
+        if (prev <= 1) {
+          setError(null);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [lockoutSec]);
 
   const toIsoDate = (val: string) => {
     const parts = (val || '').split('/');
@@ -144,6 +170,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     e.preventDefault();
     setError(null);
     setShowNameSuggestions(false);
+
+    // Pre-check rate limit lockout
+    const lock = checkLockout('user_login');
+    if (lock.isLocked) {
+      setLockoutSec(lock.remainingSeconds);
+      setError(`Security Lockout: Too many failed login attempts. Please wait ${lock.remainingSeconds}s before trying again.`);
+      return;
+    }
+
     const cleanId = identifier.trim().toLowerCase();
     const cleanIdNorm = normalize(identifier);
     const cleanPwd = password.trim();
@@ -160,6 +195,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       const { api } = await import('../services/api');
       const authResult = await api.verifyAdminLogin(cleanId, cleanPwd);
       if (authResult.success && authResult.role) {
+        resetAttempts('user_login');
         localStorage.setItem('admin_token', 'session_' + Date.now());
         localStorage.setItem('admin_role', authResult.role);
         setIsLoading(false);
@@ -259,8 +295,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         }
 
       if (!isPasswordCorrect) {
+        const fail = recordFailedAttempt('user_login');
         setIsLoading(false);
-        setError('Incorrect password.');
+        if (fail.isLocked) {
+          setLockoutSec(fail.remainingSeconds);
+          setError(`Security Alert: 5 consecutive failed attempts. Sign-in temporarily locked for ${Math.ceil(fail.remainingSeconds / 60)} minutes.`);
+        } else {
+          setError(`Incorrect password. (${fail.attemptsLeft} attempt${fail.attemptsLeft === 1 ? '' : 's'} remaining)`);
+        }
         return;
       }
 
@@ -311,6 +353,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       }
 
       // Successfully authenticated!
+      resetAttempts('user_login');
       const finalStudent: Student = {
         ...matchedStudent,
         birthDate: effectiveBirthDate,
@@ -322,8 +365,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       setIsLoading(false);
       onStudentLogin(finalStudent, role);
     } else {
+      const fail = recordFailedAttempt('user_login');
       setIsLoading(false);
-      setError('Name not found. Please search and select your name from the suggestions.');
+      if (fail.isLocked) {
+        setLockoutSec(fail.remainingSeconds);
+        setError(`Security Alert: 5 consecutive failed attempts. Sign-in temporarily locked for ${Math.ceil(fail.remainingSeconds / 60)} minutes.`);
+      } else {
+        setError(`Name not found. Please search and select your name from suggestions. (${fail.attemptsLeft} attempt${fail.attemptsLeft === 1 ? '' : 's'} remaining)`);
+      }
     }
   };
 
@@ -499,10 +548,23 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           <div className="pt-2 space-y-3">
             <button
               type="submit"
-              disabled={isLoading}
-              className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-md shadow-indigo-500/20 transition-all cursor-pointer disabled:opacity-60 flex items-center justify-center"
+              disabled={isLoading || lockoutSec > 0}
+              className={`w-full py-2.5 px-4 rounded-xl font-semibold text-sm shadow-md transition-all flex items-center justify-center ${
+                lockoutSec > 0
+                  ? 'bg-rose-100 text-rose-700 border border-rose-200 cursor-not-allowed opacity-90'
+                  : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20 cursor-pointer disabled:opacity-60'
+              }`}
             >
-              {isLoading ? 'Signing In...' : 'Sign In'}
+              {lockoutSec > 0 ? (
+                <span className="flex items-center space-x-1.5">
+                  <ShieldAlert className="w-4 h-4" />
+                  <span>Security Lockout ({lockoutSec}s)</span>
+                </span>
+              ) : isLoading ? (
+                'Signing In...'
+              ) : (
+                'Sign In'
+              )}
             </button>
           </div>
         </form>

@@ -2,9 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Student, GuestCredential } from '../types';
 import { INITIAL_STAFF } from '../data/staff';
 import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
-import { AlertCircle, User, Eye, EyeOff, Info } from 'lucide-react';
+import { AlertCircle, User, Eye, EyeOff, Info, ShieldAlert } from 'lucide-react';
 import { api } from '../services/api';
 import { parseActivePhases, isPhaseActive } from '../utils/phaseUtils';
+import { checkLockout, recordFailedAttempt, resetAttempts } from '../services/security';
 
 interface StaffLoginPageProps {
   onStaffLogin: (staffMember: Student, role: import('../types').IntakePhase) => void;
@@ -26,7 +27,32 @@ export const StaffLoginPage: React.FC<StaffLoginPageProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [guests, setGuests] = useState<GuestCredential[]>(INITIAL_STAFF);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [lockoutSec, setLockoutSec] = useState(0);
   const passwordInputRef = useRef<HTMLInputElement>(null);
+
+  // Check initial rate limit status on mount
+  useEffect(() => {
+    const lock = checkLockout('staff_login');
+    if (lock.isLocked) {
+      setLockoutSec(lock.remainingSeconds);
+      setError(`Security Lockout: Too many failed login attempts. Please wait ${lock.remainingSeconds}s before trying again.`);
+    }
+  }, []);
+
+  // Lockout countdown timer
+  useEffect(() => {
+    if (lockoutSec <= 0) return;
+    const timer = setInterval(() => {
+      setLockoutSec((prev) => {
+        if (prev <= 1) {
+          setError(null);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [lockoutSec]);
 
   // Load staff/guests from database
   useEffect(() => {
@@ -61,6 +87,15 @@ export const StaffLoginPage: React.FC<StaffLoginPageProps> = ({
     e.preventDefault();
     setError(null);
     setShowSuggestions(false);
+
+    // Pre-check rate limit lockout
+    const lock = checkLockout('staff_login');
+    if (lock.isLocked) {
+      setLockoutSec(lock.remainingSeconds);
+      setError(`Security Lockout: Too many failed login attempts. Please wait ${lock.remainingSeconds}s.`);
+      return;
+    }
+
     const cleanName = staffName.trim().toLowerCase();
     const cleanNorm = normalize(staffName);
     const cleanPwd = password.trim();
@@ -80,6 +115,7 @@ export const StaffLoginPage: React.FC<StaffLoginPageProps> = ({
       // 1. Check if Admin Login was entered here
       const authResult = await api.verifyAdminLogin(cleanName, cleanPwd);
       if (authResult.success && authResult.role) {
+        resetAttempts('staff_login');
         localStorage.setItem('admin_token', 'session_' + Date.now());
         localStorage.setItem('admin_role', authResult.role);
         setIsLoading(false);
@@ -108,8 +144,14 @@ export const StaffLoginPage: React.FC<StaffLoginPageProps> = ({
     });
 
     if (!matchedGuest) {
+      const fail = recordFailedAttempt('staff_login');
       setIsLoading(false);
-      setError('Staff Name not recognized. Please check with the coordinator or admin.');
+      if (fail.isLocked) {
+        setLockoutSec(fail.remainingSeconds);
+        setError(`Security Alert: 5 failed attempts. Login locked for ${Math.ceil(fail.remainingSeconds / 60)} minutes.`);
+      } else {
+        setError(`Staff name not recognized. (${fail.attemptsLeft} attempts remaining)`);
+      }
       return;
     }
 
@@ -124,10 +166,19 @@ export const StaffLoginPage: React.FC<StaffLoginPageProps> = ({
     };
 
     if (!pwdMatches(matchedGuest.password, cleanPwd)) {
+      const fail = recordFailedAttempt('staff_login');
       setIsLoading(false);
-      setError('Incorrect password for this staff member.');
+      if (fail.isLocked) {
+        setLockoutSec(fail.remainingSeconds);
+        setError(`Security Alert: 5 failed attempts. Login locked for ${Math.ceil(fail.remainingSeconds / 60)} minutes.`);
+      } else {
+        setError(`Incorrect password. (${fail.attemptsLeft} attempts remaining)`);
+      }
       return;
     }
+
+    // Reset rate limit on success
+    resetAttempts('staff_login');
 
     // Check if staff has an existing order (already placed)
     let existingOrder = false;
@@ -297,10 +348,19 @@ export const StaffLoginPage: React.FC<StaffLoginPageProps> = ({
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={isLoading}
-            className="w-full mt-2 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white text-sm font-semibold rounded-xl shadow-md shadow-indigo-600/20 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            disabled={isLoading || lockoutSec > 0}
+            className={`w-full mt-2 py-2.5 px-4 text-sm font-semibold rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 ${
+              lockoutSec > 0
+                ? 'bg-rose-100 text-rose-700 border border-rose-200 cursor-not-allowed opacity-90'
+                : 'bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white shadow-indigo-600/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'
+            }`}
           >
-            {isLoading ? (
+            {lockoutSec > 0 ? (
+              <span className="flex items-center space-x-1.5">
+                <ShieldAlert className="w-4 h-4" />
+                <span>Security Lockout ({lockoutSec}s)</span>
+              </span>
+            ) : isLoading ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
               <span>Sign In as Staff</span>

@@ -284,14 +284,27 @@ export const api = {
   },
 
   placeOrder: async (orderPayload: Partial<Order>): Promise<Order> => {
+    // 1. Try secure Serverless API proxy first if deployed
+    try {
+      const res = await fetchJson<{ success: boolean; data: Order }>(`${API_BASE}/orders`, {
+        method: 'POST',
+        body: JSON.stringify(orderPayload),
+      });
+      if (res && res.data) {
+        return res.data;
+      }
+    } catch (apiErr: any) {
+      const errMsg = apiErr?.message || '';
+      if (errMsg.includes('exceeds') || errMsg.includes('sold out') || errMsg.includes('halted') || errMsg.includes('Invalid') || errMsg.includes('already exists')) {
+        throw apiErr;
+      }
+    }
+
+    // 2. Fallback to direct Turso service with client anti-tampering validation
     if (isTursoConfigured) {
       return await tursoService.placeOrder(orderPayload as Order);
     }
-    const res = await fetchJson<{ success: boolean; data: Order }>(`${API_BASE}/orders`, {
-      method: 'POST',
-      body: JSON.stringify(orderPayload),
-    });
-    return res.data;
+    throw new Error('Database service is unavailable. Please check your network connection.');
   },
 
   updateOrder: async (orderNumber: string, orderPayload: Partial<Order>): Promise<Order> => {

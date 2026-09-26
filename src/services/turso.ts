@@ -296,7 +296,107 @@ export const tursoService = {
     };
   },
 
+  // --- Anti-Tampering & Security Validation ---
+  validateOrderIntegrity: async (order: Partial<Order>): Promise<{ items: any[]; totalAmount: number; allowedBudget: number }> => {
+    if (!order.items || !Array.isArray(order.items) || order.items.length === 0) {
+      throw new Error('Your cart is empty. Please select food items before placing an order.');
+    }
+
+    // 1. Authoritative Menu Validation & Price Recalculation
+    const officialMenuItems = await tursoService.getMenuItems();
+    const validatedItems: any[] = [];
+    let recalculatedTotal = 0;
+
+    for (const clientItem of order.items) {
+      const official = officialMenuItems.find((m) => m.id === clientItem.id);
+      if (!official) {
+        throw new Error(`Security Exception: Invalid menu item "${clientItem.name || clientItem.id}".`);
+      }
+      if (!official.isAvailable) {
+        throw new Error(`Item Unavailable: "${official.name}" is currently sold out.`);
+      }
+      const qty = Math.max(1, parseInt(String(clientItem.quantity || 1), 10));
+      const officialPrice = Number(official.price) || 0;
+      const itemTotal = officialPrice * qty;
+
+      validatedItems.push({
+        ...clientItem,
+        id: official.id,
+        name: official.name,
+        price: officialPrice,
+        quantity: qty,
+        total: itemTotal,
+        portion: official.portionValue && official.portionUnit ? `${official.portionValue} ${official.portionUnit}` : clientItem.portion,
+      });
+      recalculatedTotal += itemTotal;
+    }
+
+    // 2. Authoritative Budget Validation
+    const role = (order.orderType as any) || 'parent';
+    const allTiers = await tursoService.getAllRoleTiers();
+    const tiers = role === 'student' ? allTiers.student : (role === 'guest' || role === 'staff') ? allTiers.guest : allTiers.parent;
+
+    const people = Math.max(1, parseInt(String(order.peopleCount || 1), 10));
+    let officialBudget = 0;
+    if (role === 'parent') {
+      for (let i = 0; i < Math.min(people, tiers.length); i++) {
+        officialBudget += (tiers[i] || 0);
+      }
+    } else {
+      officialBudget = (tiers[0] || 230) * people;
+    }
+
+    // Strict Anti-Tamper check: Does total exceed allowed budget?
+    if (recalculatedTotal > officialBudget) {
+      throw new Error(
+        `Budget Limit Exceeded: Order total (₹${recalculatedTotal}) exceeds the authorized meal allowance (₹${officialBudget}).`
+      );
+    }
+
+    return {
+      items: validatedItems,
+      totalAmount: recalculatedTotal,
+      allowedBudget: officialBudget,
+    };
+  },
+
   placeOrder: async (order: Order): Promise<Order> => {
+    // 1. Authoritative Anti-Tamper Validation
+    const validated = await tursoService.validateOrderIntegrity(order);
+    order.items = validated.items;
+    order.totalAmount = validated.totalAmount;
+    order.allowedBudget = validated.allowedBudget;
+
+    // 2. Ordering Window / Status Check
+    const statusRows = await tursoQuery<{ value: string }>("SELECT value FROM app_settings WHERE key = 'ordering_status'");
+    if (statusRows.length > 0 && (statusRows[0].value === '0' || statusRows[0].value === 'false')) {
+      throw new Error('Food ordering is currently closed by administration.');
+    }
+
+    // 3. Intake Phase Check
+    const phaseRows = await tursoQuery<{ value: string }>("SELECT value FROM app_settings WHERE key = 'intake_phase'");
+    if (phaseRows.length > 0 && phaseRows[0].value) {
+      const activePhase = phaseRows[0].value;
+      const role = order.orderType || 'parent';
+      if (activePhase !== 'all' && activePhase !== 'both') {
+        if (activePhase === 'student' && role !== 'student') {
+          throw new Error('Student-only ordering phase is active. Parent ordering is currently closed.');
+        }
+        if (activePhase === 'parent' && role !== 'parent') {
+          throw new Error('Parent-only ordering phase is active. Student ordering is currently closed.');
+        }
+        if (activePhase === 'staff' && role !== 'staff' && role !== 'guest') {
+          throw new Error('Staff-only ordering phase is active.');
+        }
+      }
+    }
+
+    // 4. Duplicate Check
+    const existing = await tursoService.getOrderByStudent(order.studentId, order.orderType || 'parent');
+    if (existing && existing.orderNumber !== order.orderNumber) {
+      throw new Error(`An order (#${existing.orderNumber}) has already been registered for this account.`);
+    }
+
     const itemsJson = JSON.stringify(order.items || []);
     await tursoQuery(
       `INSERT INTO orders (order_number, student_id, student_name, parent_name, full_name, device_id, people_count, allowed_budget, items, total_amount, status, created_at, date_display, time_display, order_type)
@@ -332,6 +432,18 @@ export const tursoService = {
   },
 
   updateOrder: async (orderNumber: string, orderPayload: Partial<Order>): Promise<Order> => {
+    // If updating items, run authoritative price & budget validation
+    if (orderPayload.items !== undefined) {
+      const validated = await tursoService.validateOrderIntegrity({
+        items: orderPayload.items,
+        peopleCount: orderPayload.peopleCount,
+        orderType: orderPayload.orderType,
+      });
+      orderPayload.items = validated.items;
+      orderPayload.totalAmount = validated.totalAmount;
+      orderPayload.allowedBudget = validated.allowedBudget;
+    }
+
     const sets: string[] = [];
     const args: any[] = [];
 

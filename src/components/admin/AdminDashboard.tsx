@@ -35,6 +35,7 @@ import {
   Share2,
 } from 'lucide-react';
 import { canInstallPwa, promptAdminInstall, isPwaStandalone } from '../../services/pwa';
+import { validateAdminSession, touchAdminActivity } from '../../services/security';
 import {
   evaluateSchedule,
   isScheduleDone,
@@ -575,6 +576,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       window.removeEventListener('pwa-installed', handleInstalled);
     };
   }, []);
+
+  // Strict Admin Session Expiry & Inactivity Auto-Logout
+  useEffect(() => {
+    const checkSession = () => {
+      const session = validateAdminSession();
+      if (!session.isValid) {
+        if (session.reason === 'expired') {
+          alert('Security Alert: Your administrator session reached the 4-hour security limit. Please sign in again.');
+        } else if (session.reason === 'inactive') {
+          alert('Security Alert: Your administrator session timed out due to 60 minutes of inactivity. Please sign in again.');
+        }
+        onLogoutAdmin?.();
+      }
+    };
+
+    const interval = setInterval(checkSession, 30000);
+
+    const onActivity = () => touchAdminActivity();
+    window.addEventListener('click', onActivity, { passive: true });
+    window.addEventListener('keydown', onActivity, { passive: true });
+    window.addEventListener('scroll', onActivity, { passive: true });
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('click', onActivity);
+      window.removeEventListener('keydown', onActivity);
+      window.removeEventListener('scroll', onActivity);
+    };
+  }, [onLogoutAdmin]);
 
   const handleInstallClick = async () => {
     const outcome = await promptAdminInstall();
