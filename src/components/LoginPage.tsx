@@ -264,9 +264,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         return;
       }
 
-      // 2. Check if student/parent has an existing order (in local orders prop or database)
+      // 2. Check if this student/parent has an existing order for THIS SPECIFIC ROLE
       const normName = normalize(matchedStudent.fullName);
       let existingOrder = (orders || []).find((o) => {
+        if ((o.orderType || 'parent') !== role) return false;
         if (o.studentId && matchedStudent.id && o.studentId.toLowerCase() === matchedStudent.id.toLowerCase()) return true;
         if (o.fullName && normalize(o.fullName) === normName) return true;
         if (o.studentName && normalize(o.studentName) === normName) return true;
@@ -276,7 +277,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       if (!existingOrder) {
         try {
           const { api } = await import('../services/api');
-          existingOrder = (await api.getOrderByStudent(matchedStudent.id, role)) || (await api.getOrderByStudent(matchedStudent.id));
+          const onlineOrder = await api.getOrderByStudent(matchedStudent.id, role);
+          if (onlineOrder && (onlineOrder.orderType || 'parent') === role) {
+            existingOrder = onlineOrder;
+          }
         } catch (e) {}
       }
 

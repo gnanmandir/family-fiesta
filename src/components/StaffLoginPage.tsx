@@ -132,8 +132,8 @@ export const StaffLoginPage: React.FC<StaffLoginPageProps> = ({
     // Check if staff has an existing order (already placed)
     let existingOrder = false;
     try {
-      const order = await api.getOrderByStudent(matchedGuest.id);
-      if (order) existingOrder = true;
+      const order = await api.getOrderByStudent(matchedGuest.id, 'staff');
+      if (order && (order.orderType === 'staff' || order.orderType === 'guest')) existingOrder = true;
     } catch (e) {}
 
     if (!existingOrder) {
