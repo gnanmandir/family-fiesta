@@ -206,8 +206,11 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
       setLocalStudents((prev) =>
         prev.filter(
           (s) =>
-            s.id.toLowerCase() !== studentToDelete.id.toLowerCase() &&
-            normalize(s.fullName) !== normalize(studentToDelete.fullName)
+            !(
+              (studentToDelete.id && s.id.toLowerCase() === studentToDelete.id.toLowerCase()) ||
+              (normalize(s.fullName) === normalize(studentToDelete.fullName) &&
+                (!studentToDelete.gmNo || s.gmNo === studentToDelete.gmNo))
+            )
         )
       );
       alert(`Student "${studentToDelete.fullName}" has been permanently removed.`);
@@ -233,9 +236,9 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
       if (regRaw) reg = JSON.parse(regRaw);
     } catch (e) {}
 
-    return localStudents.map((s) => {
+    const mapped = localStudents.map((s) => {
       const init = INITIAL_STUDENTS.find(
-        (i) => normalize(i.fullName) === normalize(s.fullName) || i.id === s.id
+        (i) => (s.gmNo && i.gmNo === s.gmNo) || normalize(i.fullName) === normalize(s.fullName) || i.id === s.id
       );
       let gm = s.gmNo || init?.gmNo || reg[s.fullName.toLowerCase()] || reg[s.id?.toLowerCase()] || 0;
       if (!gm) {
@@ -251,6 +254,21 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
         gmNo: gm,
       };
     });
+
+    const seenGms = new Set<number>();
+    const seenIds = new Set<string>();
+    const deduplicated: Student[] = [];
+    for (const st of mapped) {
+      if (st.gmNo && st.gmNo > 0) {
+        if (seenGms.has(st.gmNo)) continue;
+        seenGms.add(st.gmNo);
+      } else if (st.id) {
+        if (seenIds.has(st.id.toLowerCase())) continue;
+        seenIds.add(st.id.toLowerCase());
+      }
+      deduplicated.push(st);
+    }
+    return deduplicated;
   }, [localStudents]);
 
   const totalStudents = enrichedStudents.length;
@@ -556,26 +574,28 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
               onSubmit={async (e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
-                const fullName = ((formData.get('fullName') as string) || editingStudent.fullName || '').trim();
-                const birthDate = ((formData.get('birthDate') as string) || editingStudent.birthDate || '').trim();
-                const grade = ((formData.get('grade') as string) || selectedGrade || editingStudent.grade || 'Std 5').trim();
+                const origStudent = editingStudent;
+                const fullName = ((formData.get('fullName') as string) || origStudent.fullName || '').trim();
+                const birthDate = ((formData.get('birthDate') as string) || origStudent.birthDate || '').trim();
+                const grade = ((formData.get('grade') as string) || selectedGrade || origStudent.grade || 'Std 5').trim();
                 const gmNoParsed = parseInt((formData.get('gmNo') as string) || '0', 10);
-                const gmNo = !isNaN(gmNoParsed) && gmNoParsed > 0 ? gmNoParsed : (editingStudent.gmNo || 0);
+                const gmNo = !isNaN(gmNoParsed) && gmNoParsed > 0 ? gmNoParsed : (origStudent.gmNo || 0);
                 
                 const firstName = fullName.split(' ')[0] || fullName;
-                const parentName = ((formData.get('parentName') as string) || editingStudent.parentName || '').trim();
+                const parentName = ((formData.get('parentName') as string) || origStudent.parentName || '').trim();
                 
-                let studentId = editingStudent.id || '';
-                if (!studentId || !studentId.match(/-(\d+)$/)) {
-                  studentId = `${fullName}-${gmNo || 0}`;
-                } else if (gmNo && !studentId.endsWith(`-${gmNo}`)) {
-                  studentId = studentId.replace(/-(\d+)$/, `-${gmNo}`);
-                }
+                const studentId = `${fullName}-${gmNo || 0}`;
 
                 // Register in GM registry so it is immediately available across the whole application
                 try {
                   const regRaw = localStorage.getItem('student_gm_registry');
                   const reg = regRaw ? JSON.parse(regRaw) : {};
+                  if (origStudent.fullName && origStudent.fullName.toLowerCase() !== fullName.toLowerCase()) {
+                    delete reg[origStudent.fullName.toLowerCase()];
+                  }
+                  if (origStudent.id && origStudent.id.toLowerCase() !== studentId.toLowerCase()) {
+                    delete reg[origStudent.id.toLowerCase()];
+                  }
                   if (gmNo) {
                     reg[fullName.toLowerCase()] = gmNo;
                     reg[studentId.toLowerCase()] = gmNo;
@@ -584,11 +604,11 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                 } catch (e) {}
 
                 const newStudent: Student = {
-                  ...editingStudent,
+                  ...origStudent,
                   id: studentId,
                   fullName,
                   firstName,
-                  parentName: parentName || editingStudent.parentName || 'Parent',
+                  parentName: parentName || origStudent.parentName || 'Parent',
                   birthDate,
                   gmNo,
                   grade,
@@ -597,16 +617,42 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                 try {
                   setIsSaving(true);
                   const { saveStudent } = await import('../../services/storage');
-                  const saved = await saveStudent(newStudent);
+                  const saved = await saveStudent(newStudent, origStudent);
 
-                  // Update local list in StudentManager so table updates IMMEDIATELY without reload
+                  // Update local list in StudentManager so table updates IMMEDIATELY without duplicate
                   setLocalStudents((prev) => {
+                    const targetId = origStudent.id?.toLowerCase();
+                    const targetGm = origStudent.gmNo || gmNo;
+                    const targetName = origStudent.fullName ? normalize(origStudent.fullName) : '';
+
                     const idx = prev.findIndex(
-                      (s) => s.id === saved.id || s.fullName.toLowerCase() === saved.fullName.toLowerCase()
+                      (s) =>
+                        (targetId && s.id.toLowerCase() === targetId) ||
+                        (targetGm && targetGm > 0 && s.gmNo === targetGm) ||
+                        (targetName && normalize(s.fullName) === targetName) ||
+                        s.id.toLowerCase() === saved.id.toLowerCase() ||
+                        normalize(s.fullName) === normalize(saved.fullName)
                     );
+
                     if (idx >= 0) {
-                      const copy = [...prev];
-                      copy[idx] = saved;
+                      const copy = prev.filter(
+                        (s, i) =>
+                          i === idx ||
+                          !((targetGm && targetGm > 0 && s.gmNo === targetGm) || (targetId && s.id.toLowerCase() === targetId))
+                      );
+                      const targetIdx = copy.findIndex(
+                        (s) =>
+                          (targetId && s.id.toLowerCase() === targetId) ||
+                          (targetGm && targetGm > 0 && s.gmNo === targetGm) ||
+                          (targetName && normalize(s.fullName) === targetName) ||
+                          s.id.toLowerCase() === saved.id.toLowerCase() ||
+                          normalize(s.fullName) === normalize(saved.fullName)
+                      );
+                      if (targetIdx >= 0) {
+                        copy[targetIdx] = saved;
+                      } else {
+                        copy.push(saved);
+                      }
                       return copy;
                     }
                     return [...prev, saved];

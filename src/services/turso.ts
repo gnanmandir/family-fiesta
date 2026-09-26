@@ -596,7 +596,47 @@ export const tursoService = {
   },
 
   // --- Save Student ---
-  saveStudent: async (student: Student): Promise<Student> => {
+  saveStudent: async (student: Student, originalStudent?: Student): Promise<Student> => {
+    // 1. Clean up old student row if ID or Name changed
+    if (originalStudent && (originalStudent.id !== student.id || originalStudent.fullName !== student.fullName)) {
+      try {
+        if (originalStudent.id) {
+          await tursoQuery('DELETE FROM students WHERE id = ? OR LOWER(id) = LOWER(?)', [originalStudent.id, originalStudent.id]).catch(() => {});
+        }
+        if (originalStudent.fullName) {
+          await tursoQuery('DELETE FROM students WHERE full_name = ? OR LOWER(full_name) = LOWER(?)', [originalStudent.fullName, originalStudent.fullName]).catch(() => {});
+        }
+      } catch (e) {}
+    }
+
+    // 2. Clean up any other student row sharing the same gm_no to avoid duplicates
+    if (student.gmNo && student.gmNo > 0) {
+      try {
+        await tursoQuery('DELETE FROM students WHERE gm_no = ? AND id != ?', [student.gmNo, student.id]).catch(() => {});
+      } catch (e) {}
+    }
+
+    // 3. Keep existing student orders in sync with updated student id and name
+    try {
+      const oldId = originalStudent?.id || student.id;
+      const oldName = originalStudent?.fullName || student.fullName;
+      await tursoQuery(
+        `UPDATE orders SET student_id = ?, student_name = ?, full_name = ?
+         WHERE student_id = ? OR student_id = ? OR full_name = ? OR student_name = ?`,
+        [student.id, student.fullName, student.fullName, oldId, student.id, oldName, oldName]
+      ).catch(() => {});
+    } catch (e) {}
+
+    // 4. Update device_locks if ID changed
+    if (originalStudent?.id && originalStudent.id !== student.id) {
+      try {
+        await tursoQuery(
+          `UPDATE device_locks SET student_id = ?, student_name = ? WHERE student_id = ?`,
+          [student.id, student.fullName, originalStudent.id]
+        ).catch(() => {});
+      } catch (e) {}
+    }
+
     try {
       await tursoQuery(
         `INSERT INTO students (id, first_name, parent_name, full_name, grade, birth_date, gm_no)
@@ -644,14 +684,6 @@ export const tursoService = {
         throw err;
       }
     }
-
-    // Keep existing student orders in sync with updated student name
-    try {
-      await tursoQuery(
-        `UPDATE orders SET student_name = ?, full_name = ? WHERE student_id = ?`,
-        [student.fullName, student.fullName, student.id]
-      );
-    } catch (e) {}
 
     return student;
   },

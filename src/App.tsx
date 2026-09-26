@@ -1091,16 +1091,49 @@ export default function App() {
   };
 
   const handleStudentUpdated = (updatedStudent: Student) => {
+    const targetGm = updatedStudent.gmNo;
+    const targetId = updatedStudent.id?.toLowerCase();
+    const targetName = updatedStudent.fullName?.toLowerCase();
+
     setStudents((prev) => {
       const idx = prev.findIndex(
-        (s) => s.id === updatedStudent.id || s.fullName.toLowerCase() === updatedStudent.fullName.toLowerCase()
+        (s) =>
+          (targetGm && targetGm > 0 && s.gmNo === targetGm) ||
+          (targetId && s.id.toLowerCase() === targetId) ||
+          (targetName && s.fullName.toLowerCase() === targetName)
       );
       if (idx >= 0) {
-        const copy = [...prev];
-        copy[idx] = updatedStudent;
+        const copy = prev.filter(
+          (s, i) =>
+            i === idx ||
+            !((targetGm && targetGm > 0 && s.gmNo === targetGm) || (targetId && s.id.toLowerCase() === targetId))
+        );
+        const targetIdx = copy.findIndex(
+          (s) =>
+            (targetGm && targetGm > 0 && s.gmNo === targetGm) ||
+            (targetId && s.id.toLowerCase() === targetId) ||
+            (targetName && s.fullName.toLowerCase() === targetName)
+        );
+        if (targetIdx >= 0) {
+          copy[targetIdx] = updatedStudent;
+        } else {
+          copy.push(updatedStudent);
+        }
         return copy;
       }
       return [...prev, updatedStudent];
+    });
+
+    setSelectedStudent((curr) => {
+      if (!curr) return null;
+      if (
+        (targetGm && targetGm > 0 && curr.gmNo === targetGm) ||
+        (targetId && curr.id.toLowerCase() === targetId) ||
+        (targetName && curr.fullName.toLowerCase() === targetName)
+      ) {
+        return updatedStudent;
+      }
+      return curr;
     });
   };
 

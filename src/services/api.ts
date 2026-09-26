@@ -59,9 +59,9 @@ export const api = {
     }
   },
 
-  saveStudent: async (student: Student): Promise<Student> => {
+  saveStudent: async (student: Student, originalStudent?: Student): Promise<Student> => {
     if (isTursoConfigured) {
-      return await tursoService.saveStudent(student);
+      return await tursoService.saveStudent(student, originalStudent);
     }
     return student;
   },

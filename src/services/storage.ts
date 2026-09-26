@@ -107,16 +107,21 @@ export async function fetchStudents(): Promise<Student[]> {
       // Check cached edits to ensure custom edits like 'Diploma' are preserved
       const cached = getCachedStudents();
       const cachedMap = new Map<string, Student>();
+      const cachedByGm = new Map<number, Student>();
       cached.forEach((c) => {
         if (!isStudentDeleted(c.id, c.fullName, deletedList)) {
           cachedMap.set(normalizeName(c.fullName), c);
+          if (c.gmNo && c.gmNo > 0) {
+            cachedByGm.set(c.gmNo, c);
+          }
         }
       });
 
       const map = new Map<string, Student>();
       INITIAL_STUDENTS.forEach((init) => {
         if (!isStudentDeleted(init.id, init.fullName, deletedList)) {
-          map.set(normalizeName(init.fullName), { ...init });
+          const key = init.gmNo && init.gmNo > 0 ? `gm_${init.gmNo}` : (init.id ? `id_${init.id.toLowerCase()}` : `name_${normalizeName(init.fullName)}`);
+          map.set(key, { ...init });
         }
       });
 
@@ -125,45 +130,80 @@ export async function fetchStudents(): Promise<Student[]> {
           return;
         }
 
-        const key = normalizeName(s.fullName);
-        const existing = map.get(key);
-        const localCached = cachedMap.get(key);
+        const gmNo = resolveGm(s) || (s.gmNo || 0);
+        const key = gmNo && gmNo > 0 ? `gm_${gmNo}` : (s.id ? `id_${s.id.toLowerCase()}` : `name_${normalizeName(s.fullName)}`);
 
-        if (existing) {
-          const grade =
-            s.grade && s.grade !== 'Gurukul Roster'
-              ? s.grade
-              : localCached?.grade && localCached.grade !== 'Gurukul Roster'
-              ? localCached.grade
-              : existing.grade || s.grade || 'Gurukul Roster';
-
-          const gmNo = resolveGm(s, existing) || resolveGm(localCached || {});
-
-          map.set(key, {
-            ...existing,
-            ...s,
-            id: existing.id,
-            birthDate: s.birthDate || localCached?.birthDate || existing.birthDate,
-            gmNo,
-            fullName: existing.fullName,
-            grade,
-          });
-        } else {
-          const gmNo = resolveGm(s, localCached);
-          map.set(key, {
-            ...s,
-            id: s.id && s.id.match(/-(\d+)$/) ? s.id : `${s.fullName}-${gmNo || 0}`,
-            birthDate: s.birthDate || localCached?.birthDate || '',
-            gmNo,
-            fullName: s.fullName,
-            grade: s.grade || localCached?.grade || 'Gurukul Roster',
-          });
+        // Check if there is an existing student record by GM, ID, or Name
+        let existing = map.get(key);
+        if (!existing && gmNo > 0) {
+          existing = map.get(`gm_${gmNo}`);
         }
+        if (!existing && s.id) {
+          existing = map.get(`id_${s.id.toLowerCase()}`);
+        }
+        if (!existing) {
+          existing = map.get(`name_${normalizeName(s.fullName)}`);
+        }
+
+        const localCached = (gmNo > 0 ? cachedByGm.get(gmNo) : undefined) || cachedMap.get(normalizeName(s.fullName));
+
+        const fullName = s.fullName || existing?.fullName || '';
+        const firstName = s.firstName || fullName.split(' ')[0] || fullName;
+        const studentId = s.id && s.id.match(/-(\d+)$/) ? s.id : `${fullName}-${gmNo || 0}`;
+
+        const grade =
+          s.grade && s.grade !== 'Gurukul Roster'
+            ? s.grade
+            : localCached?.grade && localCached.grade !== 'Gurukul Roster'
+            ? localCached.grade
+            : existing?.grade || s.grade || 'Gurukul Roster';
+
+        const mergedStudent: Student = {
+          ...(existing || {}),
+          ...s,
+          id: studentId,
+          fullName,
+          firstName,
+          parentName: s.parentName || existing?.parentName || 'Parent',
+          birthDate: s.birthDate || localCached?.birthDate || existing?.birthDate || '',
+          gmNo,
+          grade,
+        };
+
+        // If existing was under a different key (e.g. name changed), remove old key
+        if (existing) {
+          const oldKey = existing.gmNo && existing.gmNo > 0
+            ? `gm_${existing.gmNo}`
+            : (existing.id ? `id_${existing.id.toLowerCase()}` : `name_${normalizeName(existing.fullName)}`);
+          if (oldKey !== key) {
+            map.delete(oldKey);
+          }
+          const oldNameKey = `name_${normalizeName(existing.fullName)}`;
+          if (oldNameKey !== key) {
+            map.delete(oldNameKey);
+          }
+        }
+
+        map.set(key, mergedStudent);
       });
 
-      const merged = Array.from(map.values()).filter(
-        (s) => !isStudentDeleted(s.id, s.fullName, deletedList)
-      );
+      // Filter and deduplicate merged results
+      const seenGm = new Set<number>();
+      const seenId = new Set<string>();
+      const merged: Student[] = [];
+
+      for (const st of map.values()) {
+        if (isStudentDeleted(st.id, st.fullName, deletedList)) continue;
+        if (st.gmNo && st.gmNo > 0) {
+          if (seenGm.has(st.gmNo)) continue;
+          seenGm.add(st.gmNo);
+        } else if (st.id) {
+          if (seenId.has(st.id.toLowerCase())) continue;
+          seenId.add(st.id.toLowerCase());
+        }
+        merged.push(st);
+      }
+
       localStorage.setItem(KEYS.STUDENTS, JSON.stringify(merged));
       return merged;
     }
@@ -186,11 +226,11 @@ export function getCachedStudents(): Student[] {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed
+        const mapped = parsed
           .filter((s: Student) => !isStudentDeleted(s.id, s.fullName, deletedList))
           .map((s: Student) => {
             const initial = INITIAL_STUDENTS.find(
-              (i) => normalizeName(i.fullName) === normalizeName(s.fullName) || i.id === s.id
+              (i) => (s.gmNo && i.gmNo === s.gmNo) || normalizeName(i.fullName) === normalizeName(s.fullName) || i.id === s.id
             );
             let gm = s.gmNo || initial?.gmNo || (s.fullName ? reg[s.fullName.toLowerCase()] : 0) || (s.id ? reg[s.id.toLowerCase()] : 0) || 0;
             if (!gm && s.id) {
@@ -206,6 +246,22 @@ export function getCachedStudents(): Student[] {
               gmNo: gm,
             };
           });
+
+        // Deduplicate to ensure no stale duplicate names or GM entries exist in cache
+        const seenGm = new Set<number>();
+        const seenId = new Set<string>();
+        const deduplicated: Student[] = [];
+        for (const st of mapped) {
+          if (st.gmNo && st.gmNo > 0) {
+            if (seenGm.has(st.gmNo)) continue;
+            seenGm.add(st.gmNo);
+          } else if (st.id) {
+            if (seenId.has(st.id.toLowerCase())) continue;
+            seenId.add(st.id.toLowerCase());
+          }
+          deduplicated.push(st);
+        }
+        return deduplicated;
       }
     }
   } catch (e) {}
@@ -213,23 +269,29 @@ export function getCachedStudents(): Student[] {
   return INITIAL_STUDENTS.filter((s) => !isStudentDeleted(s.id, s.fullName, deletedList));
 }
 
-export async function saveStudent(student: Student): Promise<Student> {
-  // If previously marked deleted, unmark it so it can be re-added
+export async function saveStudent(student: Student, originalStudent?: Student): Promise<Student> {
+  // If previously marked deleted, unmark it so it can be re-added or updated
   try {
     const deleted = getLocalDeletedStudents();
     const norm = normalizeName(student.fullName);
+    const origNorm = originalStudent?.fullName ? normalizeName(originalStudent.fullName) : '';
     const updatedDeleted = deleted.filter(
       (d) =>
         d.id?.toLowerCase() !== student.id?.toLowerCase() &&
-        (!norm || d.normalizedName !== norm)
+        (!originalStudent?.id || d.id?.toLowerCase() !== originalStudent.id.toLowerCase()) &&
+        (!norm || d.normalizedName !== norm) &&
+        (!origNorm || d.normalizedName !== origNorm)
     );
     if (updatedDeleted.length !== deleted.length) {
       localStorage.setItem(KEYS.DELETED_STUDENTS, JSON.stringify(updatedDeleted));
       api.removeDeletedStudent(student.id, student.fullName).catch(() => {});
+      if (originalStudent) {
+        api.removeDeletedStudent(originalStudent.id, originalStudent.fullName).catch(() => {});
+      }
     }
   } catch (e) {}
 
-  let gmNo = student.gmNo || 0;
+  let gmNo = student.gmNo || originalStudent?.gmNo || 0;
   if (!gmNo && student.id) {
     const m = student.id.match(/-(\d+)$/);
     if (m) gmNo = parseInt(m[1], 10);
@@ -238,12 +300,8 @@ export async function saveStudent(student: Student): Promise<Student> {
     gmNo = 999;
   }
 
-  let studentId = student.id || '';
-  if (!studentId || !studentId.match(/-(\d+)$/)) {
-    studentId = `${student.fullName}-${gmNo}`;
-  } else if (gmNo && !studentId.endsWith(`-${gmNo}`)) {
-    studentId = studentId.replace(/-(\d+)$/, `-${gmNo}`);
-  }
+  // Consistent ID based on current name and gmNo
+  const studentId = `${student.fullName.trim()}-${gmNo || 0}`;
 
   const normalizedStudent: Student = {
     ...student,
@@ -254,6 +312,10 @@ export async function saveStudent(student: Student): Promise<Student> {
   try {
     const regRaw = localStorage.getItem('student_gm_registry');
     const reg = regRaw ? JSON.parse(regRaw) : {};
+    if (originalStudent) {
+      if (originalStudent.fullName) delete reg[originalStudent.fullName.toLowerCase()];
+      if (originalStudent.id) delete reg[originalStudent.id.toLowerCase()];
+    }
     if (gmNo) {
       reg[student.fullName.toLowerCase()] = gmNo;
       reg[studentId.toLowerCase()] = gmNo;
@@ -263,33 +325,59 @@ export async function saveStudent(student: Student): Promise<Student> {
 
   let saved = normalizedStudent;
   try {
-    saved = await api.saveStudent(normalizedStudent);
+    saved = await api.saveStudent(normalizedStudent, originalStudent);
   } catch (e) {
     console.warn('API saveStudent error, saving locally:', e);
   }
   saved = { ...normalizedStudent, ...saved, id: studentId, gmNo };
 
   const existing = getCachedStudents();
+  const targetId = originalStudent?.id?.toLowerCase();
+  const targetGm = originalStudent?.gmNo || gmNo;
+  const targetName = originalStudent?.fullName ? normalizeName(originalStudent.fullName) : '';
+
   const index = existing.findIndex(
-    (s) => s.id === saved.id || normalizeName(s.fullName) === normalizeName(saved.fullName)
+    (s) =>
+      (targetId && s.id.toLowerCase() === targetId) ||
+      (targetGm && targetGm > 0 && s.gmNo === targetGm) ||
+      (targetName && normalizeName(s.fullName) === targetName) ||
+      s.id.toLowerCase() === saved.id.toLowerCase() ||
+      normalizeName(s.fullName) === normalizeName(saved.fullName)
   );
-  
+
   let updated: Student[];
   if (index >= 0) {
-    updated = [...existing];
-    updated[index] = {
-      ...existing[index],
-      ...saved,
-      grade: saved.grade || existing[index].grade,
-      birthDate: saved.birthDate || existing[index].birthDate,
-      fullName: saved.fullName || existing[index].fullName,
-      parentName: saved.parentName || existing[index].parentName,
-      gmNo: saved.gmNo || existing[index].gmNo,
-    };
+    // Purge any other entry that shared targetGm or targetId so no duplicate lingers
+    updated = existing.filter(
+      (s, i) =>
+        i === index ||
+        !((targetGm && targetGm > 0 && s.gmNo === targetGm) || (targetId && s.id.toLowerCase() === targetId))
+    );
+    const targetIdx = updated.findIndex(
+      (s) =>
+        (targetId && s.id.toLowerCase() === targetId) ||
+        (targetGm && targetGm > 0 && s.gmNo === targetGm) ||
+        (targetName && normalizeName(s.fullName) === targetName) ||
+        s.id.toLowerCase() === saved.id.toLowerCase() ||
+        normalizeName(s.fullName) === normalizeName(saved.fullName)
+    );
+    if (targetIdx >= 0) {
+      updated[targetIdx] = {
+        ...updated[targetIdx],
+        ...saved,
+        grade: saved.grade || updated[targetIdx].grade,
+        birthDate: saved.birthDate || updated[targetIdx].birthDate,
+        fullName: saved.fullName || updated[targetIdx].fullName,
+        parentName: saved.parentName || updated[targetIdx].parentName,
+        gmNo: saved.gmNo || updated[targetIdx].gmNo,
+      };
+    } else {
+      updated.push(saved);
+    }
   } else {
     updated = [...existing, saved];
   }
-  
+
   // Sort alphabetically by first name
   updated.sort((a, b) => a.firstName.localeCompare(b.firstName));
   localStorage.setItem(KEYS.STUDENTS, JSON.stringify(updated));
@@ -302,9 +390,19 @@ export async function saveStudent(student: Student): Promise<Student> {
       if (Array.isArray(parsedOrders)) {
         let changed = false;
         const mappedOrders = parsedOrders.map((o: Order) => {
-          if (o.studentId === saved.id || normalizeName(o.fullName) === normalizeName(saved.fullName)) {
+          const matchOldId = targetId && o.studentId?.toLowerCase() === targetId;
+          const matchOldName = targetName && normalizeName(o.fullName) === targetName;
+          const matchCurrId = o.studentId?.toLowerCase() === saved.id.toLowerCase();
+          const matchCurrName = normalizeName(o.fullName) === normalizeName(saved.fullName);
+          if (matchOldId || matchOldName || matchCurrId || matchCurrName) {
             changed = true;
-            return { ...o, fullName: saved.fullName, studentName: saved.fullName };
+            return {
+              ...o,
+              studentId: saved.id,
+              studentName: saved.fullName,
+              fullName: saved.fullName,
+              parentName: saved.parentName || o.parentName,
+            };
           }
           return o;
         });
@@ -315,7 +413,7 @@ export async function saveStudent(student: Student): Promise<Student> {
     }
   } catch (e) {}
 
-  return index >= 0 ? updated[index] : saved;
+  return saved;
 }
 
 export async function deleteStudent(studentId: string, fullName?: string): Promise<void> {
