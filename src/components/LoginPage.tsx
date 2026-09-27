@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Student, Order } from '../types';
 import { INITIAL_STUDENTS } from '../data/students';
 import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
-const campusBg = '/campus.jpg?v=4';
+const campusBg = '/campus.jpg?v=5';
 import { formatNameDisplay } from '../utils/nameFormatter';
 import { parseActivePhases, isPhaseActive } from '../utils/phaseUtils';
 import { AlertCircle, User, Info, Calendar, ShieldAlert } from 'lucide-react';
