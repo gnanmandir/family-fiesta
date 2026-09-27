@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Student, Order } from '../types';
 import { INITIAL_STUDENTS } from '../data/students';
 import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
-const campusBg = '/campus.webp?v=2';
+const campusBg = '/campus.webp?v=3';
 import { formatNameDisplay } from '../utils/nameFormatter';
 import { parseActivePhases, isPhaseActive } from '../utils/phaseUtils';
 import { AlertCircle, User, Info, Calendar, ShieldAlert } from 'lucide-react';
@@ -380,12 +380,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center lg:justify-start lg:pl-16 xl:pl-28 bg-slate-50 lg:bg-white overflow-hidden selection:bg-indigo-500/20 p-4">
       
-      {/* Right-Side Campus Photo Background with Alpha Blend Confined to Tree (Full Opacity on Banner) */}
+      {/* Right-Side Campus Photo Background for PC (Desktop/Laptops) */}
       <div 
         className="hidden lg:block absolute inset-y-0 right-0 w-[60%] xl:w-[66%] h-full overflow-hidden pointer-events-none z-0"
         style={{
-          maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.04) 5%, rgba(0,0,0,0.2) 12%, rgba(0,0,0,0.6) 20%, rgba(0,0,0,0.9) 27%, black 33%)',
-          WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.04) 5%, rgba(0,0,0,0.2) 12%, rgba(0,0,0,0.6) 20%, rgba(0,0,0,0.9) 27%, black 33%)'
+          maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.04) 5%, rgba(0,0,0,0.2) 12%, rgba(0,0,0,0.6) 20%, rgba(0,0,0,0.9) 26%, black 32%)',
+          WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.04) 5%, rgba(0,0,0,0.2) 12%, rgba(0,0,0,0.6) 20%, rgba(0,0,0,0.9) 26%, black 32%)'
         }}
       >
         <img
@@ -397,20 +397,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           decoding="sync"
           className="w-full h-full object-cover object-center filter brightness-[1.02] contrast-[1.03]"
         />
-      </div>
-
-      {/* Ambient Campus Photo Background for Mobile */}
-      <div className="lg:hidden absolute inset-0 overflow-hidden pointer-events-none z-0">
-        <img
-          src={campusBg}
-          alt="Gnan Mandir Gurukul Campus"
-          loading="eager"
-          // @ts-ignore
-          fetchpriority="high"
-          decoding="sync"
-          className="w-full h-full object-cover object-center opacity-15 blur-[1.5px] scale-105"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-white/95 via-white/80 to-white/95" />
       </div>
 
       {/* Login Card (Exact clean old card with zero unnecessary clutter) */}
