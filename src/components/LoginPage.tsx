@@ -387,9 +387,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           alt="Gnan Mandir Gurukul Campus"
           className="w-full h-full object-cover object-center filter brightness-[1.02] contrast-[1.03]"
         />
-        {/* Soft feathered gradient transition into white on the left */}
-        <div className="absolute inset-0 bg-gradient-to-r from-white via-white/50 to-transparent" />
-        <div className="absolute inset-y-0 left-0 w-36 bg-gradient-to-r from-white to-transparent" />
+        {/* Subtle narrow edge blend on the left seam only */}
+        <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-white to-transparent" />
       </div>
 
       {/* Ambient Campus Photo Background for Mobile */}
