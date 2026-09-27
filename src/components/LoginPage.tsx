@@ -380,12 +380,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center lg:justify-start lg:pl-16 xl:pl-28 bg-slate-50 lg:bg-white overflow-hidden selection:bg-indigo-500/20 p-4">
       
-      {/* Right-Side Campus Photo Background with Silky Smooth Alpha Mask Blend */}
+      {/* Right-Side Campus Photo Background with Alpha Blend Confined to Tree (Full Opacity on Banner) */}
       <div 
-        className="hidden lg:block absolute inset-y-0 right-0 w-[62%] xl:w-[68%] h-full overflow-hidden pointer-events-none z-0"
+        className="hidden lg:block absolute inset-y-0 right-0 w-[60%] xl:w-[66%] h-full overflow-hidden pointer-events-none z-0"
         style={{
-          maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.02) 6%, rgba(0,0,0,0.15) 18%, rgba(0,0,0,0.45) 34%, rgba(0,0,0,0.82) 52%, black 70%)',
-          WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.02) 6%, rgba(0,0,0,0.15) 18%, rgba(0,0,0,0.45) 34%, rgba(0,0,0,0.82) 52%, black 70%)'
+          maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.04) 5%, rgba(0,0,0,0.2) 12%, rgba(0,0,0,0.6) 20%, rgba(0,0,0,0.9) 27%, black 33%)',
+          WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.04) 5%, rgba(0,0,0,0.2) 12%, rgba(0,0,0,0.6) 20%, rgba(0,0,0,0.9) 27%, black 33%)'
         }}
       >
         <img
