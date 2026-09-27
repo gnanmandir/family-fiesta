@@ -378,12 +378,29 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 p-4 sm:p-6 lg:p-8 selection:bg-indigo-500/20">
-      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-        
-        {/* Left Column: Clean Login Card */}
-        <div className="lg:col-span-5 flex justify-center">
-          <div className="w-full max-w-[390px] bg-white border border-slate-100 rounded-2xl p-5 sm:p-6 space-y-3 shadow-xl">
+    <div className="relative min-h-screen w-full flex items-center justify-center lg:justify-start lg:pl-16 xl:pl-28 bg-slate-50 lg:bg-white overflow-hidden selection:bg-indigo-500/20 p-4">
+      
+      {/* Right-Side Campus Photo Background for PC (Desktop/Laptops) */}
+      <div 
+        className="hidden lg:block absolute inset-y-0 right-0 w-[60%] xl:w-[66%] h-full overflow-hidden pointer-events-none z-0"
+        style={{
+          maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.04) 5%, rgba(0,0,0,0.2) 12%, rgba(0,0,0,0.6) 20%, rgba(0,0,0,0.9) 26%, black 32%)',
+          WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.04) 5%, rgba(0,0,0,0.2) 12%, rgba(0,0,0,0.6) 20%, rgba(0,0,0,0.9) 26%, black 32%)'
+        }}
+      >
+        <img
+          src={campusBg}
+          alt="Gnan Mandir Gurukul Campus"
+          loading="eager"
+          // @ts-ignore
+          fetchpriority="high"
+          decoding="sync"
+          className="w-full h-full object-cover object-center filter brightness-[1.02] contrast-[1.03]"
+        />
+      </div>
+
+      {/* Login Card (Exact clean old card with zero unnecessary clutter) */}
+      <div className="relative z-10 w-full max-w-[390px] bg-white border border-slate-100 rounded-2xl p-5 sm:p-6 space-y-3 shadow-xl">
         
         {/* Hero Image Logo */}
         <img
@@ -575,23 +592,5 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         </form>
       </div>
     </div>
-
-      {/* Right Column: Framed Campus Showcase (PC / Laptops) */}
-      <div className="hidden lg:block lg:col-span-7">
-        <div className="relative w-full h-[520px] xl:h-[560px] rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-slate-100">
-          <img
-            src={campusBg}
-            alt="Gnan Mandir Gurukul Campus"
-            loading="eager"
-            // @ts-ignore
-            fetchpriority="high"
-            decoding="sync"
-            className="w-full h-full object-cover object-center"
-          />
-        </div>
-      </div>
-
-    </div>
-  </div>
-);
+  );
 };
