@@ -380,15 +380,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center lg:justify-start lg:pl-16 xl:pl-28 bg-slate-50 lg:bg-white overflow-hidden selection:bg-indigo-500/20 p-4">
       
-      {/* Right-Side Campus Photo Background (Desktop & Tablets) */}
-      <div className="hidden lg:block absolute inset-y-0 right-0 w-[56%] xl:w-[62%] h-full overflow-hidden pointer-events-none z-0">
+      {/* Right-Side Campus Photo Background with Silky Smooth Alpha Mask Blend */}
+      <div 
+        className="hidden lg:block absolute inset-y-0 right-0 w-[62%] xl:w-[68%] h-full overflow-hidden pointer-events-none z-0"
+        style={{
+          maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.02) 6%, rgba(0,0,0,0.15) 18%, rgba(0,0,0,0.45) 34%, rgba(0,0,0,0.82) 52%, black 70%)',
+          WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.02) 6%, rgba(0,0,0,0.15) 18%, rgba(0,0,0,0.45) 34%, rgba(0,0,0,0.82) 52%, black 70%)'
+        }}
+      >
         <img
           src={campusBg}
           alt="Gnan Mandir Gurukul Campus"
           className="w-full h-full object-cover object-center filter brightness-[1.02] contrast-[1.03]"
         />
-        {/* Subtle narrow edge blend on the left seam only */}
-        <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-white to-transparent" />
       </div>
 
       {/* Ambient Campus Photo Background for Mobile */}
