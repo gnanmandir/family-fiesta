@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Student, Order } from '../types';
 import { INITIAL_STUDENTS } from '../data/students';
 import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
-import campusBg from '../assets/images/gnanmandir_campus.jpg';
+const campusBg = '/campus.webp';
 import { formatNameDisplay } from '../utils/nameFormatter';
 import { parseActivePhases, isPhaseActive } from '../utils/phaseUtils';
 import { AlertCircle, User, Info, Calendar, ShieldAlert } from 'lucide-react';
@@ -391,6 +391,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         <img
           src={campusBg}
           alt="Gnan Mandir Gurukul Campus"
+          loading="eager"
+          // @ts-ignore
+          fetchpriority="high"
+          decoding="sync"
           className="w-full h-full object-cover object-center filter brightness-[1.02] contrast-[1.03]"
         />
       </div>
@@ -400,6 +404,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         <img
           src={campusBg}
           alt="Gnan Mandir Gurukul Campus"
+          loading="eager"
+          // @ts-ignore
+          fetchpriority="high"
+          decoding="sync"
           className="w-full h-full object-cover object-center opacity-15 blur-[1.5px] scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-white/95 via-white/80 to-white/95" />
