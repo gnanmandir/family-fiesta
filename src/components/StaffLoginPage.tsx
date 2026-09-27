@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Student, GuestCredential } from '../types';
 import { INITIAL_STAFF } from '../data/staff';
 import familyFiestaLogo from '../assets/images/family_fiesta_logo_new.png';
+const campusBg = '/campus.jpg?v=6';
 import { AlertCircle, User, Eye, EyeOff, Info, ShieldAlert } from 'lucide-react';
 import { api } from '../services/api';
 import { parseActivePhases, isPhaseActive } from '../utils/phaseUtils';
@@ -221,8 +222,29 @@ export const StaffLoginPage: React.FC<StaffLoginPageProps> = ({
   };
 
   return (
-    <div className="h-screen overflow-hidden flex items-center justify-center bg-slate-50 p-4">
-      <div className="w-full max-w-[400px] bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 space-y-3.5 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+    <div className="relative min-h-screen w-full flex items-center justify-center lg:justify-start lg:pl-16 xl:pl-28 bg-slate-50 lg:bg-white overflow-hidden selection:bg-indigo-500/20 p-4">
+      
+      {/* Right-Side Campus Photo Background for PC (Desktop/Laptops) */}
+      <div 
+        className="hidden lg:block absolute inset-y-0 right-0 w-[60%] xl:w-[66%] h-full overflow-hidden pointer-events-none z-0"
+        style={{
+          maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.04) 5%, rgba(0,0,0,0.2) 12%, rgba(0,0,0,0.6) 20%, rgba(0,0,0,0.9) 26%, black 32%)',
+          WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.04) 5%, rgba(0,0,0,0.2) 12%, rgba(0,0,0,0.6) 20%, rgba(0,0,0,0.9) 26%, black 32%)'
+        }}
+      >
+        <img
+          src={campusBg}
+          alt="Gnan Mandir Gurukul Campus"
+          loading="eager"
+          // @ts-ignore
+          fetchpriority="high"
+          decoding="sync"
+          className="w-full h-full object-cover object-center filter brightness-[1.02] contrast-[1.03]"
+        />
+      </div>
+
+      {/* Login Card (Exact clean card with zero unnecessary clutter) */}
+      <div className="relative z-10 w-full max-w-[390px] bg-white border border-slate-100 rounded-2xl p-5 sm:p-6 space-y-3 shadow-xl">
         
         {/* Hero Image Logo */}
         <img
