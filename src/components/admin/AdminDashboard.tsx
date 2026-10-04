@@ -2084,62 +2084,50 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           </div>
                         </div>
 
-                        {/* Interactive iOS-style Toggle Switch + Pill */}
-                        <div className="flex items-center space-x-2 shrink-0">
-                          <span className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-semibold border shadow-2xs ${
+                        {/* Interactive Single Control: iOS-style Toggle Switch + Status Pill */}
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={isEnabled}
+                          disabled={isUpdating}
+                          onClick={toggleThisControl}
+                          className="flex items-center space-x-2 shrink-0 group focus:outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
+                          title={isEnabled ? 'Click to disable control' : 'Click to enable control'}
+                        >
+                          <span className={`inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold border shadow-2xs transition-colors ${
                             isEnabled
-                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80'
-                              : 'bg-rose-50 text-rose-700 border-rose-200'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80 group-hover:bg-emerald-100'
+                              : 'bg-rose-50 text-rose-700 border-rose-200 group-hover:bg-rose-100'
                           }`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${isEnabled ? 'bg-emerald-500' : 'bg-rose-500'}`} />
                             <span>{isEnabled ? 'Enabled' : 'Disabled'}</span>
                           </span>
 
-                          <button
-                            type="button"
-                            role="switch"
-                            aria-checked={isEnabled}
-                            disabled={isUpdating}
-                            onClick={toggleThisControl}
-                            className={`w-10 h-5.5 rounded-full transition-colors relative p-0.5 focus:outline-none cursor-pointer ${
+                          <div
+                            className={`w-11 h-6 rounded-full transition-colors relative p-0.5 flex items-center ${
                               isEnabled
-                                ? 'bg-emerald-500 hover:bg-emerald-600'
-                                : 'bg-slate-300 hover:bg-slate-400'
-                            } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            title={isEnabled ? 'Click to disable' : 'Click to enable'}
+                                ? 'bg-emerald-500 group-hover:bg-emerald-600'
+                                : 'bg-slate-300 group-hover:bg-slate-400'
+                            }`}
                           >
                             <span
-                              className={`block w-4.5 h-4.5 rounded-full bg-white shadow-md transform transition-transform duration-200 ease-in-out ${
-                                isEnabled ? 'translate-x-4.5' : 'translate-x-0'
+                              className={`block w-5 h-5 rounded-full bg-white shadow-md transform transition-transform duration-200 ease-in-out flex items-center justify-center ${
+                                isEnabled ? 'translate-x-5' : 'translate-x-0'
                               }`}
-                            />
-                          </button>
-                        </div>
+                            >
+                              {isUpdating && <Loader2 className="w-3 h-3 text-slate-500 animate-spin" />}
+                            </span>
+                          </div>
+                        </button>
                       </div>
                       <p className="text-xs text-slate-500 leading-relaxed font-normal">{ctrl.desc}</p>
                     </div>
 
-                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                      <span className={`text-[11px] font-medium ${isEnabled ? 'text-slate-400' : 'text-rose-600 font-semibold'}`}>
+                    <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                      <span className="text-slate-400 font-medium">Status</span>
+                      <span className={`font-semibold ${isEnabled ? 'text-emerald-600' : 'text-rose-600'}`}>
                         {isEnabled ? 'Currently permitted' : 'Currently locked & restricted'}
                       </span>
-                      <button
-                        type="button"
-                        disabled={isUpdating}
-                        onClick={toggleThisControl}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center space-x-1.5 cursor-pointer border ${
-                          isEnabled
-                            ? 'bg-white hover:bg-rose-50 border-slate-200 text-slate-700 hover:text-rose-600 hover:border-rose-200'
-                            : 'bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-600 shadow-2xs'
-                        } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        {isUpdating ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <Power className="w-3.5 h-3.5" />
-                        )}
-                        <span>{isEnabled ? 'Disable Control' : 'Enable Control'}</span>
-                      </button>
                     </div>
                   </div>
                 );
