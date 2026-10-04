@@ -819,7 +819,7 @@ Thank you for ordering from Family Fiesta!
                               type="button"
                               disabled={!allowOrderWipe}
                               onClick={() => allowOrderWipe && handleOpenWipeModal(order)}
-                              title={!allowOrderWipe ? 'Order wiping is disabled' : 'Wipe/Delete Order'}
+                              title={!allowOrderWipe ? undefined : 'Wipe/Delete Order'}
                               className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center space-x-1 active:scale-95 transition-all ${
                                 !allowOrderWipe
                                   ? 'bg-stone-100 text-stone-400 border border-stone-200 opacity-40 cursor-not-allowed pointer-events-none select-none'

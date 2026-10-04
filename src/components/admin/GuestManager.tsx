@@ -19,7 +19,6 @@ import {
   Eye,
   EyeOff,
   AlertTriangle,
-  Lock,
 } from 'lucide-react';
 
 interface GuestManagerProps {
@@ -330,28 +329,6 @@ export const GuestManager: React.FC<GuestManagerProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* System Controls Lock Notification Banners */}
-      {!allowEdit && (
-        <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-3 sm:p-3.5 text-xs flex items-center justify-between shadow-2xs">
-          <div className="flex items-center space-x-2.5">
-            <Lock className="w-4 h-4 text-amber-600 shrink-0" />
-            <span>
-              <strong>Staff Roster Locked:</strong> Adding, editing, and deleting staff credentials is disabled by System Controls.
-            </span>
-          </div>
-        </div>
-      )}
-      {!allowOrderWipe && (
-        <div className="bg-rose-50 border border-rose-200 text-rose-900 rounded-xl p-3 sm:p-3.5 text-xs flex items-center justify-between shadow-2xs">
-          <div className="flex items-center space-x-2.5">
-            <Lock className="w-4 h-4 text-rose-600 shrink-0" />
-            <span>
-              <strong>Staff Order Wipes Locked:</strong> Individual staff order wiping is disabled by System Controls.
-            </span>
-          </div>
-        </div>
-      )}
-
       {/* 1. Stat Cards Row */}
       <div className="grid grid-cols-3 gap-3">
         <div className="p-4 rounded-xl bg-white border border-stone-200 text-center shadow-xs">
@@ -497,7 +474,7 @@ export const GuestManager: React.FC<GuestManagerProps> = ({
                               setWipePasswordError('');
                               setShowWipePassword(false);
                             }}
-                            title={!canWipe ? 'Order wiping is disabled' : `Wipe order #${ord.orderNumber}`}
+                            title={!canWipe ? undefined : `Wipe order #${ord.orderNumber}`}
                             className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors inline-flex items-center space-x-1 ${
                               !canWipe
                                 ? 'bg-stone-100 text-stone-400 border border-stone-200 opacity-40 cursor-not-allowed pointer-events-none select-none'

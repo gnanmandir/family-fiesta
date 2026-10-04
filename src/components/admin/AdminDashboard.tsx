@@ -1059,36 +1059,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {/* Tab 2: Orders Table */}
         {activeTab === 'orders' && (
-          <div className="space-y-4">
-            {systemControls?.allowOrderWipe === false && (
-              <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-3 sm:p-3.5 text-xs flex items-center justify-between shadow-2xs">
-                <div className="flex items-center space-x-2.5">
-                  <Lock className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>
-                    <strong>Order Deletion Locked:</strong> Order wiping and deletion are currently locked by the System Control Switchboard.
-                  </span>
-                </div>
-                {isBoss && (
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('controls')}
-                    className="font-bold text-indigo-700 hover:underline shrink-0 ml-3 cursor-pointer"
-                  >
-                    Open Switchboard
-                  </button>
-                )}
-              </div>
-            )}
-            <div className="rounded-2xl bg-white border border-stone-200 p-6 shadow-xs">
-              <OrderTable
-                orders={orders}
-                students={students}
-                onUpdateStatus={onUpdateOrderStatus}
-                onDeleteOrder={isSuper ? onDeleteOrder : undefined}
-                onRefreshOrders={onRefreshOrders}
-                allowOrderWipe={systemControls?.allowOrderWipe !== false}
-              />
-            </div>
+          <div className="rounded-2xl bg-white border border-stone-200 p-6 shadow-xs">
+            <OrderTable
+              orders={orders}
+              students={students}
+              onUpdateStatus={onUpdateOrderStatus}
+              onDeleteOrder={isSuper ? onDeleteOrder : undefined}
+              onRefreshOrders={onRefreshOrders}
+              allowOrderWipe={systemControls?.allowOrderWipe !== false}
+            />
           </div>
         )}
 
@@ -1267,26 +1246,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                       </div>
 
-                      {systemControls?.allowPhaseChange === false && (
-                        <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-3 text-xs flex items-center justify-between shadow-2xs mt-3">
-                          <div className="flex items-center space-x-2">
-                            <Lock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                            <span>
-                              <strong>Phase Selection Locked:</strong> Intake phase switching is disabled by System Controls.
-                            </span>
-                          </div>
-                          {isBoss && (
-                            <button
-                              type="button"
-                              onClick={() => setActiveTab('controls')}
-                              className="font-bold text-indigo-700 hover:underline shrink-0 ml-2 cursor-pointer"
-                            >
-                              Open Switchboard
-                            </button>
-                          )}
-                        </div>
-                      )}
-
                       <div className={`pt-3.5 mt-3.5 border-t border-slate-100 space-y-2.5 ${(systemControls?.allowPhaseChange === false) ? 'opacity-40 cursor-not-allowed pointer-events-none select-none' : ''}`}>
                         <div className="flex items-center justify-between">
                           <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
@@ -1457,26 +1416,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </span>
                       </div>
                     </div>
-
-                    {systemControls?.allowOrderPortal === false && (
-                      <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-3 text-xs flex items-center justify-between shadow-2xs mt-3">
-                        <div className="flex items-center space-x-2">
-                          <Lock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                          <span>
-                            <strong>Portal & Schedule Locked:</strong> Manual portal toggling and schedule configuration are disabled by System Controls.
-                          </span>
-                        </div>
-                        {isBoss && (
-                          <button
-                            type="button"
-                            onClick={() => setActiveTab('controls')}
-                            className="font-bold text-indigo-700 hover:underline shrink-0 ml-2 cursor-pointer"
-                          >
-                            Open Switchboard
-                          </button>
-                        )}
-                      </div>
-                    )}
 
                     {/* Action buttons */}
                     <div className={`pt-4 mt-4 border-t border-slate-100 flex items-center justify-between gap-3 ${
@@ -1657,26 +1596,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   Danger Zone & Order Database Wipes
                 </h3>
               </div>
-
-              {systemControls?.allowOrderWipe === false && (
-                <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-3 sm:p-3.5 text-xs flex items-center justify-between shadow-2xs">
-                  <div className="flex items-center space-x-2.5">
-                    <Lock className="w-4 h-4 text-amber-600 shrink-0" />
-                    <span>
-                      <strong>Order Database Wipes Locked:</strong> Order register wiping is disabled by System Controls.
-                    </span>
-                  </div>
-                  {isBoss && (
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('controls')}
-                      className="font-bold text-indigo-700 hover:underline shrink-0 ml-2 cursor-pointer"
-                    >
-                      Open Switchboard
-                    </button>
-                  )}
-                </div>
-              )}
 
               <div className={`bg-white border border-rose-200/90 rounded-2xl overflow-hidden shadow-xs ${
                 (systemControls?.allowOrderWipe === false) ? 'opacity-40 cursor-not-allowed pointer-events-none select-none' : ''

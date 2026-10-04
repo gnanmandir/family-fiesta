@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Student, Order } from '../../types';
-import { Search, CheckCircle2, Clock, Calendar, Trash2, ShieldAlert, X, Eye, EyeOff, UserMinus, Lock } from 'lucide-react';
+import { Search, CheckCircle2, Clock, Calendar, Trash2, ShieldAlert, X, Eye, EyeOff, UserMinus } from 'lucide-react';
 import { INITIAL_STUDENTS, getStudentDisplayName } from '../../data/students';
 import { formatNameDisplay } from '../../utils/nameFormatter';
 
@@ -301,28 +301,6 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* System Controls Lock Notification Banners */}
-      {!allowEdit && (
-        <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-3 sm:p-3.5 text-xs flex items-center justify-between shadow-2xs">
-          <div className="flex items-center space-x-2.5">
-            <Lock className="w-4 h-4 text-amber-600 shrink-0" />
-            <span>
-              <strong>Student Roster Locked:</strong> Adding, editing, and deleting students is disabled by System Controls.
-            </span>
-          </div>
-        </div>
-      )}
-      {!allowOrderWipe && (
-        <div className="bg-rose-50 border border-rose-200 text-rose-900 rounded-xl p-3 sm:p-3.5 text-xs flex items-center justify-between shadow-2xs">
-          <div className="flex items-center space-x-2.5">
-            <Lock className="w-4 h-4 text-rose-600 shrink-0" />
-            <span>
-              <strong>Student Order Wipes Locked:</strong> Individual order wiping is disabled by System Controls.
-            </span>
-          </div>
-        </div>
-      )}
-
       {/* Phase Selector Toggle */}
       <div className="flex items-center space-x-2 bg-stone-100 p-1.5 rounded-2xl w-fit border border-stone-200/80 shadow-2xs">
         <button
@@ -532,7 +510,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
                                 type="button"
                                 disabled={!allowOrderWipe}
                                 onClick={() => allowOrderWipe && handleOpenWipeModal(student, existingOrder)}
-                                title={!allowOrderWipe ? 'Order wiping is disabled' : `Wipe order #${existingOrder.orderNumber} and allow re-ordering`}
+                                title={!allowOrderWipe ? undefined : `Wipe order #${existingOrder.orderNumber} and allow re-ordering`}
                                 className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors inline-flex items-center space-x-1 ${
                                   !allowOrderWipe
                                     ? 'bg-stone-100 text-stone-400 border border-stone-200 opacity-40 cursor-not-allowed pointer-events-none select-none'
