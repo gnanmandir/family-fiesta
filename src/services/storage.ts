@@ -806,6 +806,9 @@ export function getCachedSystemControls(): SystemControls {
 export function setCachedSystemControls(controls: SystemControls): void {
   try {
     localStorage.setItem('system_controls', JSON.stringify(controls));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('system_controls_updated', { detail: controls }));
+    }
   } catch (e) {}
 }
 

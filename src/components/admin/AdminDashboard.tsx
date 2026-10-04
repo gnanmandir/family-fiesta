@@ -33,6 +33,8 @@ import {
   Download,
   Smartphone,
   Share2,
+  Loader2,
+  CheckCircle2,
 } from 'lucide-react';
 import { canInstallPwa, promptAdminInstall, isPwaStandalone } from '../../services/pwa';
 import { validateAdminSession, touchAdminActivity } from '../../services/security';
@@ -551,6 +553,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const isBoss = adminRole === 'boss';
   const isSuper = adminRole === 'super' || isBoss;
 
+  // System Controls Switchboard State
+  const [updatingControlKey, setUpdatingControlKey] = useState<string | null>(null);
+  const [switchToast, setSwitchToast] = useState<{ message: string; type: 'success' | 'rose' } | null>(null);
+
+  useEffect(() => {
+    if (!switchToast) return;
+    const timer = setTimeout(() => setSwitchToast(null), 3500);
+    return () => clearTimeout(timer);
+  }, [switchToast]);
+
   // PWA App Installation State (strictly Admin-only)
   const [canInstall, setCanInstall] = useState(false);
   const [isStandaloneApp, setIsStandaloneApp] = useState(false);
@@ -1047,15 +1059,36 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {/* Tab 2: Orders Table */}
         {activeTab === 'orders' && (
-          <div className="rounded-2xl bg-white border border-stone-200 p-6 shadow-xs">
-            <OrderTable
-              orders={orders}
-              students={students}
-              onUpdateStatus={onUpdateOrderStatus}
-              onDeleteOrder={isSuper ? onDeleteOrder : undefined}
-              onRefreshOrders={onRefreshOrders}
-              allowOrderWipe={isBoss || systemControls?.allowOrderWipe !== false}
-            />
+          <div className="space-y-4">
+            {systemControls?.allowOrderWipe === false && (
+              <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-3 sm:p-3.5 text-xs flex items-center justify-between shadow-2xs">
+                <div className="flex items-center space-x-2.5">
+                  <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>
+                    <strong>Order Deletion Locked:</strong> Order wiping and deletion are currently locked by the System Control Switchboard.
+                  </span>
+                </div>
+                {isBoss && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('controls')}
+                    className="font-bold text-indigo-700 hover:underline shrink-0 ml-3 cursor-pointer"
+                  >
+                    Open Switchboard
+                  </button>
+                )}
+              </div>
+            )}
+            <div className="rounded-2xl bg-white border border-stone-200 p-6 shadow-xs">
+              <OrderTable
+                orders={orders}
+                students={students}
+                onUpdateStatus={onUpdateOrderStatus}
+                onDeleteOrder={isSuper ? onDeleteOrder : undefined}
+                onRefreshOrders={onRefreshOrders}
+                allowOrderWipe={systemControls?.allowOrderWipe !== false}
+              />
+            </div>
           </div>
         )}
 
@@ -1066,8 +1099,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               students={students}
               orders={orders}
               adminRole={adminRole}
-              allowEdit={isBoss || systemControls?.allowRosterEdit !== false}
-              allowOrderWipe={isBoss || systemControls?.allowOrderWipe !== false}
+              allowEdit={systemControls?.allowRosterEdit !== false}
+              allowOrderWipe={systemControls?.allowOrderWipe !== false}
               onStudentUpdated={onStudentUpdated}
               onStudentDeleted={onStudentDeleted}
               onDeleteOrder={onDeleteOrder}
@@ -1083,8 +1116,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               initialGuests={guests}
               orders={orders}
               adminRole={adminRole}
-              allowEdit={isBoss || systemControls?.allowRosterEdit !== false}
-              allowOrderWipe={isBoss || systemControls?.allowOrderWipe !== false}
+              allowEdit={systemControls?.allowRosterEdit !== false}
+              allowOrderWipe={systemControls?.allowOrderWipe !== false}
               onDeleteOrder={onDeleteOrder}
               onWipeStaffOrder={async (staff, order) => {
                 if (order?.orderNumber && onDeleteOrder) {
@@ -1234,7 +1267,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                       </div>
 
-                      <div className={`pt-3.5 mt-3.5 border-t border-slate-100 space-y-2.5 ${(!isBoss && systemControls?.allowPhaseChange === false) ? 'opacity-40 cursor-not-allowed pointer-events-none select-none' : ''}`}>
+                      {systemControls?.allowPhaseChange === false && (
+                        <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-3 text-xs flex items-center justify-between shadow-2xs mt-3">
+                          <div className="flex items-center space-x-2">
+                            <Lock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                            <span>
+                              <strong>Phase Selection Locked:</strong> Intake phase switching is disabled by System Controls.
+                            </span>
+                          </div>
+                          {isBoss && (
+                            <button
+                              type="button"
+                              onClick={() => setActiveTab('controls')}
+                              className="font-bold text-indigo-700 hover:underline shrink-0 ml-2 cursor-pointer"
+                            >
+                              Open Switchboard
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      <div className={`pt-3.5 mt-3.5 border-t border-slate-100 space-y-2.5 ${(systemControls?.allowPhaseChange === false) ? 'opacity-40 cursor-not-allowed pointer-events-none select-none' : ''}`}>
                         <div className="flex items-center justify-between">
                           <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                             Active Ordering Audiences
@@ -1405,13 +1458,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </div>
                     </div>
 
+                    {systemControls?.allowOrderPortal === false && (
+                      <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-3 text-xs flex items-center justify-between shadow-2xs mt-3">
+                        <div className="flex items-center space-x-2">
+                          <Lock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                          <span>
+                            <strong>Portal & Schedule Locked:</strong> Manual portal toggling and schedule configuration are disabled by System Controls.
+                          </span>
+                        </div>
+                        {isBoss && (
+                          <button
+                            type="button"
+                            onClick={() => setActiveTab('controls')}
+                            className="font-bold text-indigo-700 hover:underline shrink-0 ml-2 cursor-pointer"
+                          >
+                            Open Switchboard
+                          </button>
+                        )}
+                      </div>
+                    )}
+
                     {/* Action buttons */}
                     <div className={`pt-4 mt-4 border-t border-slate-100 flex items-center justify-between gap-3 ${
-                      (!isBoss && systemControls?.allowOrderPortal === false) ? 'opacity-40 cursor-not-allowed pointer-events-none select-none' : ''
+                      (systemControls?.allowOrderPortal === false) ? 'opacity-40 cursor-not-allowed pointer-events-none select-none' : ''
                     }`}>
                       <button
                         type="button"
-                        disabled={!isBoss && systemControls?.allowOrderPortal === false}
+                        disabled={systemControls?.allowOrderPortal === false}
                         onClick={() => {
                           setScheduleError('');
                           if (isScheduleActuallyActive && orderSchedule) {
@@ -1424,7 +1497,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           setIsScheduleModalOpen(true);
                         }}
                         className={`flex-1 px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 border border-slate-200 bg-white hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 text-slate-700 active:scale-98 shadow-2xs ${
-                          (!isBoss && systemControls?.allowOrderPortal === false) ? 'cursor-not-allowed' : 'cursor-pointer'
+                          (systemControls?.allowOrderPortal === false) ? 'cursor-not-allowed' : 'cursor-pointer'
                         }`}
                       >
                         <Calendar className="w-3.5 h-3.5 text-indigo-600" />
@@ -1433,7 +1506,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                       <button
                         type="button"
-                        disabled={!isBoss && systemControls?.allowOrderPortal === false}
+                        disabled={systemControls?.allowOrderPortal === false}
                         onClick={() => {
                           const newState = !ordersOpen;
                           openProtectedAction(
@@ -1451,7 +1524,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           );
                         }}
                         className={`flex-1 px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 active:scale-98 shadow-2xs ${
-                          (!isBoss && systemControls?.allowOrderPortal === false) ? 'cursor-not-allowed' : 'cursor-pointer'
+                          (systemControls?.allowOrderPortal === false) ? 'cursor-not-allowed' : 'cursor-pointer'
                         } ${
                           ordersOpen
                             ? 'bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 hover:border-rose-600'
@@ -1585,8 +1658,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </h3>
               </div>
 
+              {systemControls?.allowOrderWipe === false && (
+                <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-3 sm:p-3.5 text-xs flex items-center justify-between shadow-2xs">
+                  <div className="flex items-center space-x-2.5">
+                    <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>
+                      <strong>Order Database Wipes Locked:</strong> Order register wiping is disabled by System Controls.
+                    </span>
+                  </div>
+                  {isBoss && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('controls')}
+                      className="font-bold text-indigo-700 hover:underline shrink-0 ml-2 cursor-pointer"
+                    >
+                      Open Switchboard
+                    </button>
+                  )}
+                </div>
+              )}
+
               <div className={`bg-white border border-rose-200/90 rounded-2xl overflow-hidden shadow-xs ${
-                (!isBoss && systemControls?.allowOrderWipe === false) ? 'opacity-40 cursor-not-allowed pointer-events-none select-none' : ''
+                (systemControls?.allowOrderWipe === false) ? 'opacity-40 cursor-not-allowed pointer-events-none select-none' : ''
               }`}>
                 {/* Danger zone header note */}
                 <div className="p-4 sm:p-5 border-b border-rose-100 bg-rose-50/30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -1627,7 +1720,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                     <button
                       type="button"
-                      disabled={parentOrdersCount === 0 || (!isBoss && systemControls?.allowOrderWipe === false)}
+                      disabled={parentOrdersCount === 0 || (systemControls?.allowOrderWipe === false)}
                       onClick={() => {
                         openProtectedAction(
                           'Permanently Wipe Parent Orders',
@@ -1645,7 +1738,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         );
                       }}
                       className={`w-full py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all shadow-2xs ${
-                        parentOrdersCount === 0 || (!isBoss && systemControls?.allowOrderWipe === false)
+                        parentOrdersCount === 0 || (systemControls?.allowOrderWipe === false)
                           ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                           : 'bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 hover:border-rose-600 cursor-pointer active:scale-98'
                       }`}
@@ -1671,7 +1764,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                     <button
                       type="button"
-                      disabled={studentOrdersCount === 0 || (!isBoss && systemControls?.allowOrderWipe === false)}
+                      disabled={studentOrdersCount === 0 || (systemControls?.allowOrderWipe === false)}
                       onClick={() => {
                         openProtectedAction(
                           'Permanently Wipe Student Orders',
@@ -1689,7 +1782,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         );
                       }}
                       className={`w-full py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all shadow-2xs ${
-                        studentOrdersCount === 0 || (!isBoss && systemControls?.allowOrderWipe === false)
+                        studentOrdersCount === 0 || (systemControls?.allowOrderWipe === false)
                           ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                           : 'bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 hover:border-rose-600 cursor-pointer active:scale-98'
                       }`}
@@ -1715,7 +1808,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                     <button
                       type="button"
-                      disabled={staffOrdersCount === 0 || (!isBoss && systemControls?.allowOrderWipe === false)}
+                      disabled={staffOrdersCount === 0 || (systemControls?.allowOrderWipe === false)}
                       onClick={() => {
                         openProtectedAction(
                           'Permanently Wipe Staff Orders',
@@ -1733,7 +1826,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         );
                       }}
                       className={`w-full py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all shadow-2xs ${
-                        staffOrdersCount === 0 || (!isBoss && systemControls?.allowOrderWipe === false)
+                        staffOrdersCount === 0 || (systemControls?.allowOrderWipe === false)
                           ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                           : 'bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 hover:border-rose-600 cursor-pointer active:scale-98'
                       }`}
@@ -1757,7 +1850,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                   <button
                     type="button"
-                    disabled={orders.length === 0 || (!isBoss && systemControls?.allowOrderWipe === false)}
+                    disabled={orders.length === 0 || (systemControls?.allowOrderWipe === false)}
                     onClick={() => {
                       openProtectedAction(
                         'Permanently Wipe All Orders',
@@ -1834,43 +1927,152 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {activeTab === 'controls' && isBoss && (
           <div className="space-y-4 animate-in fade-in duration-150">
             {/* Header Banner */}
-            <div className="relative overflow-hidden bg-white border border-slate-200 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-2xs">
+            <div className="relative overflow-hidden bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-2xs">
               <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-indigo-500/70 via-purple-500/50 to-emerald-500/70" />
-              <div className="flex items-center space-x-3">
-                <div className="w-9 h-9 rounded-lg bg-indigo-50 border border-indigo-100/80 flex items-center justify-center text-indigo-600 shrink-0">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                      System Control Switchboard
-                    </h2>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-                      Boss Access
-                    </span>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center space-x-3">
+                  <div className="w-9 h-9 rounded-lg bg-indigo-50 border border-indigo-100/80 flex items-center justify-center text-indigo-600 shrink-0">
+                    <ShieldCheck className="w-4 h-4" />
                   </div>
-                  <p className="text-slate-500 text-xs mt-0.5">
-                    Master toggle controls for platform operations. When disabled, features are locked for Super Admins.
-                  </p>
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <h2 className="text-base font-bold text-slate-900 tracking-tight">
+                        System Control Switchboard
+                      </h2>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                        Boss Access
+                      </span>
+                    </div>
+                    <p className="text-slate-500 text-xs mt-0.5">
+                      Master toggle controls for platform operations. When disabled, features are locked and protected system-wide.
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              {/* Status summary tag */}
-              <div className="flex items-center space-x-2 shrink-0">
-                <div className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] font-medium text-slate-600">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span>
-                    {
+                {/* Status summary tag & Quick batch actions */}
+                <div className="flex items-center space-x-2 shrink-0 flex-wrap gap-y-2">
+                  <div className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] font-medium text-slate-600">
+                    <span className={`w-2 h-2 rounded-full ${
                       [
                         systemControls?.allowOrderPortal !== false,
                         systemControls?.allowPhaseChange !== false,
                         systemControls?.allowOrderWipe !== false,
                         systemControls?.allowRosterEdit !== false,
-                      ].filter(Boolean).length
-                    } of 4 Active
-                  </span>
+                      ].filter(Boolean).length === 4
+                        ? 'bg-emerald-500 animate-pulse'
+                        : [
+                            systemControls?.allowOrderPortal !== false,
+                            systemControls?.allowPhaseChange !== false,
+                            systemControls?.allowOrderWipe !== false,
+                            systemControls?.allowRosterEdit !== false,
+                          ].filter(Boolean).length === 0
+                        ? 'bg-rose-500'
+                        : 'bg-amber-500'
+                    }`} />
+                    <span>
+                      {
+                        [
+                          systemControls?.allowOrderPortal !== false,
+                          systemControls?.allowPhaseChange !== false,
+                          systemControls?.allowOrderWipe !== false,
+                          systemControls?.allowRosterEdit !== false,
+                        ].filter(Boolean).length
+                      } of 4 Active
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={updatingControlKey !== null}
+                    onClick={async () => {
+                      setUpdatingControlKey('batch');
+                      try {
+                        const updated = {
+                          allowPhaseChange: true,
+                          allowOrderWipe: true,
+                          allowRosterEdit: true,
+                          allowOrderPortal: true,
+                        };
+                        if (onUpdateSystemControls) {
+                          await onUpdateSystemControls(updated);
+                        }
+                        setSwitchToast({
+                          message: 'All 4 System Controls have been ENABLED.',
+                          type: 'success',
+                        });
+                      } catch (e) {
+                        setSwitchToast({
+                          message: 'Failed to update controls.',
+                          type: 'rose',
+                        });
+                      } finally {
+                        setUpdatingControlKey(null);
+                      }
+                    }}
+                    className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition-colors cursor-pointer disabled:opacity-40"
+                  >
+                    Enable All
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={updatingControlKey !== null}
+                    onClick={async () => {
+                      setUpdatingControlKey('batch');
+                      try {
+                        const updated = {
+                          allowPhaseChange: false,
+                          allowOrderWipe: false,
+                          allowRosterEdit: false,
+                          allowOrderPortal: false,
+                        };
+                        if (onUpdateSystemControls) {
+                          await onUpdateSystemControls(updated);
+                        }
+                        setSwitchToast({
+                          message: 'All 4 System Controls have been LOCKED & DISABLED.',
+                          type: 'rose',
+                        });
+                      } catch (e) {
+                        setSwitchToast({
+                          message: 'Failed to update controls.',
+                          type: 'rose',
+                        });
+                      } finally {
+                        setUpdatingControlKey(null);
+                      }
+                    }}
+                    className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 transition-colors cursor-pointer disabled:opacity-40"
+                  >
+                    Lock All
+                  </button>
                 </div>
               </div>
+
+              {/* Toast banner inside switchboard */}
+              {switchToast && (
+                <div className={`mt-3 p-2.5 rounded-lg border text-xs font-medium flex items-center justify-between animate-in fade-in slide-in-from-top-1 duration-200 ${
+                  switchToast.type === 'success'
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                    : 'bg-rose-50 border-rose-200 text-rose-900'
+                }`}>
+                  <div className="flex items-center space-x-2">
+                    {switchToast.type === 'success' ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    ) : (
+                      <Lock className="w-4 h-4 text-rose-600 shrink-0" />
+                    )}
+                    <span>{switchToast.message}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSwitchToast(null)}
+                    className="text-slate-400 hover:text-slate-600 ml-2 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Controls Grid */}
@@ -1879,86 +2081,144 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 {
                   key: 'allowOrderPortal' as const,
                   title: 'Food Ordering Portal & Schedule',
-                  desc: 'Allow Super Admins to manually open/halt ordering and configure automated intake schedules. When disabled, the portal switch and schedule buttons are locked.',
+                  desc: 'Allow opening/halting ordering and configuring automated intake schedules in Operations. When disabled, the portal switch and schedule buttons are locked.',
+                  scope: 'Operations & Wipe tab',
                   icon: <Power className="w-4 h-4" />,
                 },
                 {
                   key: 'allowPhaseChange' as const,
                   title: 'Intake Phase Switching',
-                  desc: 'Allow Super Admins to change the active intake phase (Parent, Student, Staff, Closed). When disabled, phase selection is locked.',
+                  desc: 'Allow changing the active intake phase (Parent, Student, Staff, Closed). When disabled, audience phase selection is locked.',
+                  scope: 'Operations & Wipe tab',
                   icon: <Settings className="w-4 h-4" />,
                 },
                 {
                   key: 'allowOrderWipe' as const,
                   title: 'Order Wipe Controls',
-                  desc: 'Allow Super Admins to wipe individual orders and registers. When disabled, every order wipe button across the system is locked and grayed out.',
+                  desc: 'Allow wiping individual orders and databases. When disabled, every order wipe button across Orders, Students, Staff, and Operations is locked.',
+                  scope: 'Orders, Students, Staff & Operations tabs',
                   icon: <Trash2 className="w-4 h-4" />,
                 },
                 {
                   key: 'allowRosterEdit' as const,
                   title: 'Roster Management',
-                  desc: 'Allow Super Admins to add, update, or remove Students and Staff credentials. When disabled, rosters cannot be altered.',
+                  desc: 'Allow adding, updating, or removing Students and Staff credentials. When disabled, rosters cannot be altered.',
+                  scope: 'Students & Staff tabs',
                   icon: <Users className="w-4 h-4" />,
                 },
               ].map((ctrl) => {
                 const isEnabled = systemControls ? systemControls[ctrl.key] !== false : true;
+                const isUpdating = updatingControlKey === ctrl.key || updatingControlKey === 'batch';
+
+                const toggleThisControl = async () => {
+                  if (isUpdating) return;
+                  setUpdatingControlKey(ctrl.key);
+                  try {
+                    const current = systemControls || {
+                      allowPhaseChange: true,
+                      allowOrderWipe: true,
+                      allowRosterEdit: true,
+                      allowOrderPortal: true,
+                    };
+                    const targetState = !isEnabled;
+                    const updated = {
+                      ...current,
+                      [ctrl.key]: targetState,
+                    };
+                    if (onUpdateSystemControls) {
+                      await onUpdateSystemControls(updated);
+                    }
+                    setSwitchToast({
+                      message: `${ctrl.title} is now ${targetState ? 'ENABLED & PERMITTED' : 'LOCKED & RESTRICTED'}.`,
+                      type: targetState ? 'success' : 'rose',
+                    });
+                  } catch (e) {
+                    setSwitchToast({
+                      message: `Failed to update ${ctrl.title}.`,
+                      type: 'rose',
+                    });
+                  } finally {
+                    setUpdatingControlKey(null);
+                  }
+                };
+
                 return (
                   <div
                     key={ctrl.key}
-                    className="p-4 sm:p-5 rounded-xl bg-white border border-slate-200 shadow-2xs hover:border-slate-300 transition-colors flex flex-col justify-between space-y-4"
+                    className={`p-4 sm:p-5 rounded-xl bg-white border shadow-2xs hover:border-slate-300 transition-colors flex flex-col justify-between space-y-4 ${
+                      isEnabled ? 'border-slate-200' : 'border-rose-200 bg-rose-50/20'
+                    }`}
                   >
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center space-x-2.5">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center border shadow-2xs ${
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center border shadow-2xs transition-colors shrink-0 ${
                             isEnabled
                               ? 'bg-emerald-50 text-emerald-600 border-emerald-200/80'
-                              : 'bg-slate-100 text-slate-400 border-slate-200'
+                              : 'bg-rose-50 text-rose-600 border-rose-200'
                           }`}>
                             {ctrl.icon}
                           </div>
-                          <h3 className="font-semibold text-slate-900 text-sm">{ctrl.title}</h3>
+                          <div>
+                            <h3 className="font-semibold text-slate-900 text-sm">{ctrl.title}</h3>
+                            <span className="text-[10px] font-medium text-slate-400 block">{ctrl.scope}</span>
+                          </div>
                         </div>
-                        <span className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-semibold border shadow-2xs ${
-                          isEnabled
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80'
-                            : 'bg-slate-100 text-slate-600 border-slate-200'
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${isEnabled ? 'bg-emerald-500' : 'bg-slate-400'}`} />
-                          <span>{isEnabled ? 'Enabled' : 'Disabled'}</span>
-                        </span>
+
+                        {/* Interactive iOS-style Toggle Switch + Pill */}
+                        <div className="flex items-center space-x-2 shrink-0">
+                          <span className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10.5px] font-semibold border shadow-2xs ${
+                            isEnabled
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80'
+                              : 'bg-rose-50 text-rose-700 border-rose-200'
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${isEnabled ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                            <span>{isEnabled ? 'Enabled' : 'Disabled'}</span>
+                          </span>
+
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={isEnabled}
+                            disabled={isUpdating}
+                            onClick={toggleThisControl}
+                            className={`w-10 h-5.5 rounded-full transition-colors relative p-0.5 focus:outline-none cursor-pointer ${
+                              isEnabled
+                                ? 'bg-emerald-500 hover:bg-emerald-600'
+                                : 'bg-slate-300 hover:bg-slate-400'
+                            } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            title={isEnabled ? 'Click to disable' : 'Click to enable'}
+                          >
+                            <span
+                              className={`block w-4.5 h-4.5 rounded-full bg-white shadow-md transform transition-transform duration-200 ease-in-out ${
+                                isEnabled ? 'translate-x-4.5' : 'translate-x-0'
+                              }`}
+                            />
+                          </button>
+                        </div>
                       </div>
                       <p className="text-xs text-slate-500 leading-relaxed font-normal">{ctrl.desc}</p>
                     </div>
 
-                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                      <span className="text-[11px] font-medium text-slate-400">
-                        {isEnabled ? 'Currently permitted' : 'Currently restricted'}
+                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                      <span className={`text-[11px] font-medium ${isEnabled ? 'text-slate-400' : 'text-rose-600 font-semibold'}`}>
+                        {isEnabled ? 'Currently permitted' : 'Currently locked & restricted'}
                       </span>
                       <button
                         type="button"
-                        onClick={async () => {
-                          const current = systemControls || {
-                            allowPhaseChange: true,
-                            allowOrderWipe: true,
-                            allowRosterEdit: true,
-                            allowOrderPortal: true,
-                          };
-                          const updated = {
-                            ...current,
-                            [ctrl.key]: !isEnabled,
-                          };
-                          if (onUpdateSystemControls) {
-                            await onUpdateSystemControls(updated);
-                          }
-                        }}
+                        disabled={isUpdating}
+                        onClick={toggleThisControl}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center space-x-1.5 cursor-pointer border ${
                           isEnabled
-                            ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 hover:text-rose-600 hover:border-rose-200'
+                            ? 'bg-white hover:bg-rose-50 border-slate-200 text-slate-700 hover:text-rose-600 hover:border-rose-200'
                             : 'bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-600 shadow-2xs'
-                        }`}
+                        } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
-                        <Power className="w-3.5 h-3.5" />
+                        {isUpdating ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Power className="w-3.5 h-3.5" />
+                        )}
                         <span>{isEnabled ? 'Disable Control' : 'Enable Control'}</span>
                       </button>
                     </div>

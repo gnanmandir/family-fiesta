@@ -1033,10 +1033,26 @@ export const tursoService = {
 
   setSystemControls: async (controls: SystemControls): Promise<void> => {
     const now = new Date().toISOString();
-    await tursoQuery(
-      `INSERT INTO app_settings (key, value, updated_at) VALUES ('system_controls', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
-      [JSON.stringify(controls), now]
-    );
+    try {
+      await tursoQuery(
+        `INSERT INTO app_settings (key, value, updated_at) VALUES ('system_controls', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+        [JSON.stringify(controls), now]
+      );
+    } catch (e: any) {
+      if (String(e).toLowerCase().includes('no such table')) {
+        await tursoQuery(`CREATE TABLE IF NOT EXISTS app_settings (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL,
+          updated_at TEXT DEFAULT (datetime('now'))
+        )`);
+        await tursoQuery(
+          `INSERT INTO app_settings (key, value, updated_at) VALUES ('system_controls', ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+          [JSON.stringify(controls), now]
+        );
+      } else {
+        throw e;
+      }
+    }
   },
 
   // --- Admin Login History ---

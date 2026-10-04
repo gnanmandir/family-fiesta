@@ -418,12 +418,13 @@ export default function App() {
       try {
         // 2. Fast background sync when user is viewing the Admin Dashboard
         if (currentView === 'admin') {
-          const [freshOrders, isOpen, schedule, currentPhase, freshGuests] = await Promise.all([
+          const [freshOrders, isOpen, schedule, currentPhase, freshGuests, freshControls] = await Promise.all([
             fetchOrders(),
             api.getOrderingStatus(),
             api.getOrderSchedule(),
             api.getIntakePhase(),
             api.getGuests(),
+            api.getSystemControls(),
           ]);
           if (freshOrders) {
             setOrders(freshOrders);
@@ -433,6 +434,9 @@ export default function App() {
           }
           if (currentPhase) {
             setIntakePhase(currentPhase);
+          }
+          if (freshControls) {
+            setSystemControls(freshControls);
           }
 
           if (schedule && schedule.enabled && isScheduleDone(schedule)) {
@@ -566,6 +570,28 @@ export default function App() {
     const ticker = setInterval(updateEffective, 2000);
     return () => clearInterval(ticker);
   }, [orderSchedule, rawOrdersOpen, ordersOpen, adminRole]);
+
+  // Live multi-tab and cross-session system controls synchronization
+  useEffect(() => {
+    const handleControlsUpdated = (e: any) => {
+      if (e?.detail) {
+        setSystemControls(e.detail);
+      }
+    };
+    const handleStorageEvent = (e: StorageEvent) => {
+      if (e.key === 'system_controls' && e.newValue) {
+        try {
+          setSystemControls(JSON.parse(e.newValue));
+        } catch {}
+      }
+    };
+    window.addEventListener('system_controls_updated', handleControlsUpdated);
+    window.addEventListener('storage', handleStorageEvent);
+    return () => {
+      window.removeEventListener('system_controls_updated', handleControlsUpdated);
+      window.removeEventListener('storage', handleStorageEvent);
+    };
+  }, []);
 
   // Persist session navigation state to localStorage so refresh keeps current view
   useEffect(() => {

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Student, Order } from '../../types';
-import { Search, CheckCircle2, Clock, Calendar, Trash2, ShieldAlert, X, Eye, EyeOff, UserMinus } from 'lucide-react';
+import { Search, CheckCircle2, Clock, Calendar, Trash2, ShieldAlert, X, Eye, EyeOff, UserMinus, Lock } from 'lucide-react';
 import { INITIAL_STUDENTS, getStudentDisplayName } from '../../data/students';
 import { formatNameDisplay } from '../../utils/nameFormatter';
 
@@ -41,7 +41,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
   onWipeStudentOrder,
 }) => {
   const isBoss = adminRole === 'boss';
-  const isSuper = (adminRole === 'super' || isBoss) && (isBoss || allowEdit);
+  const isSuper = (adminRole === 'super' || isBoss) && allowEdit;
   const [localStudents, setLocalStudents] = useState<Student[]>(students);
   const [phaseTab, setPhaseTab] = useState<'parent' | 'student'>(() => {
     try {
@@ -301,6 +301,27 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
 
   return (
     <div className="space-y-4">
+      {/* System Controls Lock Notification Banners */}
+      {!allowEdit && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-3 sm:p-3.5 text-xs flex items-center justify-between shadow-2xs">
+          <div className="flex items-center space-x-2.5">
+            <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>
+              <strong>Student Roster Locked:</strong> Adding, editing, and deleting students is disabled by System Controls.
+            </span>
+          </div>
+        </div>
+      )}
+      {!allowOrderWipe && (
+        <div className="bg-rose-50 border border-rose-200 text-rose-900 rounded-xl p-3 sm:p-3.5 text-xs flex items-center justify-between shadow-2xs">
+          <div className="flex items-center space-x-2.5">
+            <Lock className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>
+              <strong>Student Order Wipes Locked:</strong> Individual order wiping is disabled by System Controls.
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Phase Selector Toggle */}
       <div className="flex items-center space-x-2 bg-stone-100 p-1.5 rounded-2xl w-fit border border-stone-200/80 shadow-2xs">
@@ -383,17 +404,19 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
               className="w-full pl-9 pr-3 py-2 bg-stone-50 border border-stone-200 rounded-lg text-stone-900 placeholder-stone-400 text-xs focus:outline-none focus:border-indigo-600 focus:bg-white transition-all"
             />
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              setEditingStudent({ id: '', fullName: '', firstName: '', lastName: '', parentName: '', birthDate: '', gmNo: 0, grade: 'Std 5' } as any);
-              setSelectedGrade('Std 5');
-            }}
-            className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm whitespace-nowrap transition-colors shrink-0"
-          >
-            <span className="sm:hidden">+ Add</span>
-            <span className="hidden sm:inline">+ Add Student</span>
-          </button>
+          {isSuper && (
+            <button
+              type="button"
+              onClick={() => {
+                setEditingStudent({ id: '', fullName: '', firstName: '', lastName: '', parentName: '', birthDate: '', gmNo: 0, grade: 'Std 5' } as any);
+                setSelectedGrade('Std 5');
+              }}
+              className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm whitespace-nowrap transition-colors shrink-0 cursor-pointer"
+            >
+              <span className="sm:hidden">+ Add</span>
+              <span className="hidden sm:inline">+ Add Student</span>
+            </button>
+          )}
         </div>
 
         <div className="flex items-center space-x-1.5 self-center sm:self-auto">
