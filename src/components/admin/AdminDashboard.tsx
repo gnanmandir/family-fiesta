@@ -564,38 +564,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return () => clearTimeout(timer);
   }, [switchToast]);
 
-  // Notice text state for restricted admins
-  const [noticeTitle, setNoticeTitle] = useState(systemControls?.restrictedNoticeTitle || 'Portal Access Restricted');
+  // Notice message state for restricted admins
   const [noticeMessage, setNoticeMessage] = useState(systemControls?.restrictedNoticeMessage || 'You cannot access this portal at this time.');
   const [isSavingNotice, setIsSavingNotice] = useState(false);
 
   useEffect(() => {
-    if (systemControls?.restrictedNoticeTitle !== undefined) {
-      setNoticeTitle(systemControls.restrictedNoticeTitle);
-    }
     if (systemControls?.restrictedNoticeMessage !== undefined) {
       setNoticeMessage(systemControls.restrictedNoticeMessage);
     }
-  }, [systemControls?.restrictedNoticeTitle, systemControls?.restrictedNoticeMessage]);
+  }, [systemControls?.restrictedNoticeMessage]);
 
   const handleSaveNotice = async () => {
     setIsSavingNotice(true);
     try {
       const updated = {
         ...systemControls,
-        restrictedNoticeTitle: noticeTitle.trim() || 'Portal Access Restricted',
         restrictedNoticeMessage: noticeMessage.trim() || 'You cannot access this portal at this time.',
       };
       if (onUpdateSystemControls) {
         await onUpdateSystemControls(updated);
       }
       setSwitchToast({
-        message: 'Restricted screen notice text has been updated successfully.',
+        message: 'Restricted screen message has been updated successfully.',
         type: 'success',
       });
     } catch (e) {
       setSwitchToast({
-        message: 'Failed to update notice text.',
+        message: 'Failed to update message.',
         type: 'rose',
       });
     } finally {
@@ -935,19 +930,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
      (adminRole === 'admin' && systemControls?.allowNormalAdminAccess === false));
 
   if (isRestricted) {
-    const displayTitle = systemControls?.restrictedNoticeTitle || 'Portal Access Restricted';
     const displayMessage = systemControls?.restrictedNoticeMessage || 'You cannot access this portal at this time.';
 
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center select-none">
-        <div className="max-w-md space-y-3">
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
-            {displayTitle}
-          </h1>
-          <p className="text-sm text-slate-500 leading-relaxed whitespace-pre-wrap">
+        <div className="max-w-md space-y-4">
+          <p className="text-base sm:text-lg font-medium text-slate-700 leading-relaxed whitespace-pre-wrap">
             {displayMessage}
           </p>
-          <div className="pt-4">
+          <div className="pt-2">
             <button
               type="button"
               onClick={onLogoutAdmin || onExitAdmin}
@@ -2242,9 +2233,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <FileText className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-slate-900 text-sm">Restricted Screen Notice Text</h3>
+                    <h3 className="font-semibold text-slate-900 text-sm">Restricted Screen Message</h3>
                     <p className="text-[11px] text-slate-400">
-                      Customize the text displayed when an admin account is restricted from dashboard access.
+                      Customize the message displayed when an admin account is restricted from dashboard access.
                     </p>
                   </div>
                 </div>
@@ -2253,23 +2244,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <div className="space-y-3">
                 <div>
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                    Screen Title
-                  </label>
-                  <input
-                    type="text"
-                    value={noticeTitle}
-                    onChange={(e) => setNoticeTitle(e.target.value)}
-                    placeholder="Portal Access Restricted"
-                    className="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-slate-50/50"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
                     Screen Message
                   </label>
                   <textarea
-                    rows={2}
+                    rows={3}
                     value={noticeMessage}
                     onChange={(e) => setNoticeMessage(e.target.value)}
                     placeholder="You cannot access this portal at this time."
@@ -2288,7 +2266,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     className="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-2xs cursor-pointer flex items-center space-x-1.5 disabled:opacity-50"
                   >
                     {isSavingNotice ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                    <span>Save Notice Text</span>
+                    <span>Save Message</span>
                   </button>
                 </div>
               </div>
