@@ -97,6 +97,8 @@ export interface SystemControls {
   allowSuperAdminLogin?: boolean;// Allowing non-boss admins to log in (legacy/optional)
   allowSuperAdminAccess?: boolean; // When false, Super Admins see full-screen restricted screen
   allowNormalAdminAccess?: boolean;// When false, Normal Admins see full-screen restricted screen
+  restrictedNoticeTitle?: string;  // Custom title shown on restricted screen
+  restrictedNoticeMessage?: string;// Custom message shown on restricted screen
 }
 
 export interface LoginHistoryItem {

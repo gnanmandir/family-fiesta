@@ -795,6 +795,8 @@ const DEFAULT_SYSTEM_CONTROLS: SystemControls = {
   allowSuperAdminLogin: true,
   allowSuperAdminAccess: true,
   allowNormalAdminAccess: true,
+  restrictedNoticeTitle: 'Portal Access Restricted',
+  restrictedNoticeMessage: 'You cannot access this portal at this time.',
 };
 
 export function getCachedSystemControls(): SystemControls {

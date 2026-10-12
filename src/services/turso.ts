@@ -1020,6 +1020,8 @@ export const tursoService = {
       allowSuperAdminLogin: true,
       allowSuperAdminAccess: true,
       allowNormalAdminAccess: true,
+      restrictedNoticeTitle: 'Portal Access Restricted',
+      restrictedNoticeMessage: 'You cannot access this portal at this time.',
     };
     try {
       const rows = await tursoQuery("SELECT value FROM app_settings WHERE key = 'system_controls'");

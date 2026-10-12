@@ -737,6 +737,8 @@ export const supabaseService = {
       allowSuperAdminLogin: true,
       allowSuperAdminAccess: true,
       allowNormalAdminAccess: true,
+      restrictedNoticeTitle: 'Portal Access Restricted',
+      restrictedNoticeMessage: 'You cannot access this portal at this time.',
     };
     try {
       const rows = await supabaseFetch<any[]>('app_settings?key=eq.system_controls&select=value');
