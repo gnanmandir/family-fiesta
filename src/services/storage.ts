@@ -793,6 +793,8 @@ const DEFAULT_SYSTEM_CONTROLS: SystemControls = {
   allowOrderPortal: true,
   allowOrderEditing: true,
   allowSuperAdminLogin: true,
+  allowSuperAdminAccess: true,
+  allowNormalAdminAccess: true,
 };
 
 export function getCachedSystemControls(): SystemControls {

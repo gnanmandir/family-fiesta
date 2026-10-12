@@ -95,6 +95,8 @@ export interface SystemControls {
   allowOrderPortal?: boolean;    // Live food ordering portal for users (legacy/optional)
   allowOrderEditing?: boolean;   // Users editing already-submitted orders (legacy/optional)
   allowSuperAdminLogin?: boolean;// Allowing non-boss admins to log in (legacy/optional)
+  allowSuperAdminAccess?: boolean; // When false, Super Admins see full-screen restricted screen
+  allowNormalAdminAccess?: boolean;// When false, Normal Admins see full-screen restricted screen
 }
 
 export interface LoginHistoryItem {

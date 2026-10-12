@@ -735,6 +735,8 @@ export const supabaseService = {
       allowOrderPortal: true,
       allowOrderEditing: true,
       allowSuperAdminLogin: true,
+      allowSuperAdminAccess: true,
+      allowNormalAdminAccess: true,
     };
     try {
       const rows = await supabaseFetch<any[]>('app_settings?key=eq.system_controls&select=value');

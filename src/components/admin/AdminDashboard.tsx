@@ -888,6 +888,49 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const studentOrdersCount = orders.filter((o) => o.orderType === 'student').length;
   const staffOrdersCount = orders.filter((o) => o.orderType === 'guest' || o.orderType === 'staff').length;
 
+  // Check if current non-boss admin role is restricted from accessing the dashboard by Boss System Controls
+  const isRestricted =
+    !isBoss &&
+    ((adminRole === 'super' && systemControls?.allowSuperAdminAccess === false) ||
+     (adminRole === 'admin' && systemControls?.allowNormalAdminAccess === false));
+
+  if (isRestricted) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-slate-800 border border-slate-700/80 rounded-2xl p-6 sm:p-8 text-center shadow-2xl space-y-6 animate-in fade-in duration-300">
+          <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mx-auto shadow-inner">
+            <ShieldAlert className="w-8 h-8" />
+          </div>
+
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold text-white tracking-tight">
+              Portal Access Restricted
+            </h2>
+            <p className="text-sm text-slate-400 leading-relaxed">
+              Your access to this administrative portal has been temporarily restricted by the system administrator.
+            </p>
+          </div>
+
+          <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-700/50 text-xs text-slate-400 flex items-center justify-between">
+            <span className="text-slate-500 font-medium">Account Role:</span>
+            <span className="text-slate-200 font-bold uppercase tracking-wider">
+              {adminRole === 'super' ? 'Super Administrator' : 'Administrator'}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={onLogoutAdmin || onExitAdmin}
+            className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-900/30 transition-all flex items-center justify-center space-x-2 cursor-pointer active:scale-98"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
       
@@ -1877,13 +1920,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         systemControls?.allowPhaseChange !== false,
                         systemControls?.allowOrderWipe !== false,
                         systemControls?.allowRosterEdit !== false,
-                      ].filter(Boolean).length === 4
+                        systemControls?.allowSuperAdminAccess !== false,
+                        systemControls?.allowNormalAdminAccess !== false,
+                      ].filter(Boolean).length === 6
                         ? 'bg-emerald-500 animate-pulse'
                         : [
                             systemControls?.allowOrderPortal !== false,
                             systemControls?.allowPhaseChange !== false,
                             systemControls?.allowOrderWipe !== false,
                             systemControls?.allowRosterEdit !== false,
+                            systemControls?.allowSuperAdminAccess !== false,
+                            systemControls?.allowNormalAdminAccess !== false,
                           ].filter(Boolean).length === 0
                         ? 'bg-rose-500'
                         : 'bg-amber-500'
@@ -1895,8 +1942,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           systemControls?.allowPhaseChange !== false,
                           systemControls?.allowOrderWipe !== false,
                           systemControls?.allowRosterEdit !== false,
+                          systemControls?.allowSuperAdminAccess !== false,
+                          systemControls?.allowNormalAdminAccess !== false,
                         ].filter(Boolean).length
-                      } of 4 Active
+                      } of 6 Active
                     </span>
                   </div>
 
@@ -1911,12 +1960,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           allowOrderWipe: true,
                           allowRosterEdit: true,
                           allowOrderPortal: true,
+                          allowSuperAdminAccess: true,
+                          allowNormalAdminAccess: true,
                         };
                         if (onUpdateSystemControls) {
                           await onUpdateSystemControls(updated);
                         }
                         setSwitchToast({
-                          message: 'All 4 System Controls have been ENABLED.',
+                          message: 'All 6 System Controls have been ENABLED.',
                           type: 'success',
                         });
                       } catch (e) {
@@ -1944,12 +1995,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           allowOrderWipe: false,
                           allowRosterEdit: false,
                           allowOrderPortal: false,
+                          allowSuperAdminAccess: false,
+                          allowNormalAdminAccess: false,
                         };
                         if (onUpdateSystemControls) {
                           await onUpdateSystemControls(updated);
                         }
                         setSwitchToast({
-                          message: 'All 4 System Controls have been LOCKED & DISABLED.',
+                          message: 'All 6 System Controls have been LOCKED & DISABLED.',
                           type: 'rose',
                         });
                       } catch (e) {
@@ -1998,6 +2051,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
                 {
+                  key: 'allowSuperAdminAccess' as const,
+                  title: 'Super Admin Dashboard Access',
+                  desc: 'Allow Super Admins to view and access the administrative dashboard. When disabled, Super Admins will see a full-screen access restricted screen upon login.',
+                  scope: 'Super Admin Accounts',
+                  icon: <ShieldAlert className="w-4 h-4" />,
+                },
+                {
+                  key: 'allowNormalAdminAccess' as const,
+                  title: 'Normal Admin Dashboard Access',
+                  desc: 'Allow standard Administrators to view and access the administrative dashboard. When disabled, Normal Admins will see a full-screen access restricted screen upon login.',
+                  scope: 'Normal Admin Accounts',
+                  icon: <Users className="w-4 h-4" />,
+                },
+                {
                   key: 'allowOrderPortal' as const,
                   title: 'Food Ordering Portal & Schedule',
                   desc: 'Allow opening/halting ordering and configuring automated intake schedules in Operations. When disabled, the portal switch and schedule buttons are locked.',
@@ -2038,6 +2105,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       allowOrderWipe: true,
                       allowRosterEdit: true,
                       allowOrderPortal: true,
+                      allowSuperAdminAccess: true,
+                      allowNormalAdminAccess: true,
                     };
                     const targetState = !isEnabled;
                     const updated = {

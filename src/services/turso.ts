@@ -1018,6 +1018,8 @@ export const tursoService = {
       allowOrderPortal: true,
       allowOrderEditing: true,
       allowSuperAdminLogin: true,
+      allowSuperAdminAccess: true,
+      allowNormalAdminAccess: true,
     };
     try {
       const rows = await tursoQuery("SELECT value FROM app_settings WHERE key = 'system_controls'");
